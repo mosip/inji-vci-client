@@ -15,7 +15,7 @@ construct back the CBOR from the processed JSON.
 
 ## Decision
 
- - To avoid issues due to processing of CBOR to JSON by inji-vci-client library, the library will be sending the credential in unprocessed format.
+ - To support the consumer to interact with other services in the same format as OpenID4VCI specified credential response, the library will be sending the credential in unprocessed format.
  - The functionality of the library remains communicating with the issuing authority based on the issuer data provided by the wallet app and sending back the credential response to the wallet app
 
 
