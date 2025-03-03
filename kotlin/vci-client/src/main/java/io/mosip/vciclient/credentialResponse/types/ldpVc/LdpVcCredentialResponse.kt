@@ -1,10 +1,10 @@
 package io.mosip.vciclient.credentialResponse.types.ldpVc
 
-import com.google.gson.annotations.SerializedName
+import com.google.gson.JsonElement
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.credentialResponse.CredentialResponse
 
-data class LdpVcCredentialResponse(private val credential: Credential) : CredentialResponse {
+data class LdpVcCredentialResponse(private val credential: JsonElement) : CredentialResponse {
     override fun toJsonString(): String {
         return JsonUtils.serialize(this)
     }
@@ -20,37 +20,7 @@ data class LdpVcCredentialResponse(private val credential: Credential) : Credent
     }
 
     override fun hashCode(): Int {
-        var result = 31  + credential.hashCode()
+        val result = 31  + credential.hashCode()
         return result
     }
 }
-
-data class Credential(
-    val id: String,
-    val type: ArrayList<String>,
-    val proof: CredentialProof,
-    val issuer: String,
-    @SerializedName("@context")
-    val context: ArrayList<Any>,
-    @SerializedName("issuanceDate")
-    val issuanceDate: String,
-    @SerializedName("expirationDate")
-    val expirationDate: String?,
-    @SerializedName("credentialSubject")
-    val credentialSubject: Map<String, Any>,
-    val holder: Holder
-)
-
-data class CredentialProof(
-    val type: String,
-    val created: String,
-    @SerializedName("proofValue")
-    val proofValue: String?,
-    @SerializedName("proofPurpose")
-    val proofPurpose: String,
-    @SerializedName("verificationMethod")
-    val verificationMethod: String,
-    val jws: String?
-)
-
-data class Holder(val id: String)
