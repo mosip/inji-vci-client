@@ -1,10 +1,10 @@
 package io.mosip.vciclient
 
 import android.util.Log
+import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credentialRequest.CredentialRequestFactory
 import io.mosip.vciclient.credentialResponse.CredentialResponse
-import io.mosip.vciclient.credentialResponse.CredentialResponseFactory
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidAccessTokenException
@@ -66,10 +66,8 @@ class VCIClient(traceabilityId: String) {
             Log.d(logTag, "credential downloaded successfully!")
 
             if (responseBody != "") {
-                return CredentialResponseFactory.createCredentialResponse(
-                    issuerMetaData.credentialFormat,
-                    responseBody
-                )
+                return JsonUtils.deserialize(responseBody, CredentialResponse::class.java)
+
             }
 
             Log.w(

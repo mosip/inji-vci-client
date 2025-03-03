@@ -11,8 +11,8 @@ import io.mockk.mockkStatic
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.constants.JWTProofType
 import io.mosip.vciclient.constants.ProofType
+import io.mosip.vciclient.credentialResponse.CredentialResponse
 import io.mosip.vciclient.proof.jwt.JWTProof
-import io.mosip.vciclient.credentialResponse.types.ldpVc.LdpVcCredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidAccessTokenException
@@ -172,7 +172,7 @@ IGZojdVF+LrGiwRBRUvZMlSKUdsoYVAxz/a5ISGIrWCOd9PgDO5RNNUCAwEAAQ==
         )
 
         assertEquals(
-            Gson().fromJson(mockCredentialResponse, LdpVcCredentialResponse::class.java),
+            Gson().fromJson(mockCredentialResponse, CredentialResponse::class.java),
             credentialResponse
         )
     }
