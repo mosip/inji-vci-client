@@ -1,5 +1,6 @@
 package io.mosip.vciclient
 
+import PreAuthTokenService
 import com.google.gson.Gson
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
@@ -8,15 +9,21 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
+import kotlinx.coroutines.runBlocking
+import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.constants.JWTProofType
 import io.mosip.vciclient.constants.ProofType
+import io.mosip.vciclient.credentialOffer.CredentialOffer
+import io.mosip.vciclient.credentialOffer.CredentialOfferService
 import io.mosip.vciclient.credentialResponse.CredentialResponse
-import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidAccessTokenException
 import io.mosip.vciclient.exception.NetworkRequestTimeoutException
+import io.mosip.vciclient.exception.OfferFetchFailedException
+import io.mosip.vciclient.proof.jwt.JWTProof
+import io.mosip.vciclient.token.TokenResponse
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
@@ -29,6 +36,9 @@ import org.junit.Ignore
 import org.junit.Test
 import java.text.ParseException
 
+
+private const val mockCredentialOfferData =
+    "openid-credential-offer://?credential_offer=%7B%22credential_issuer%22:%22https://credential-issuer.example.com%22,%22credentials%22:%5B%22org.iso.18013.5.1.mDL%22%5D,%22grants%22:%7B%22urn:ietf:params:oauth:grant-type:pre-authorized_code%22:%7B%22pre-authorized_code%22:%22oaKazRN8I0IbtZ0C7JuMn5%22,%22tx_code%22:%7B%22input_mode%22:%22text%22,%22description%22:%22Please%20enter%20the%20serial%20number%20of%20your%20physical%20drivers%20license%22%7D%7D%7D%7D"
 
 class VCIClientTest {
     private var credentialEndpoint = "/https://domain.net/credential"
@@ -195,6 +205,7 @@ IGZojdVF+LrGiwRBRUvZMlSKUdsoYVAxz/a5ISGIrWCOd9PgDO5RNNUCAwEAAQ==
 
         assertNull(credentialResponse)
     }
+
     @Test
     fun `should throw download failure exception when credential endpoint api response is not 200`() {
         val mockCredentialRequestFailureResponse: MockResponse = MockResponse().setResponseCode(500)
@@ -237,7 +248,10 @@ IGZojdVF+LrGiwRBRUvZMlSKUdsoYVAxz/a5ISGIrWCOd9PgDO5RNNUCAwEAAQ==
             )
         }
 
-        assertEquals("Download failed due to request timeout", networkRequestTimeoutException.message)
+        assertEquals(
+            "Download failed due to request timeout",
+            networkRequestTimeoutException.message
+        )
     }
 
     @Test
@@ -305,6 +319,90 @@ IGZojdVF+LrGiwRBRUvZMlSKUdsoYVAxz/a5ISGIrWCOd9PgDO5RNNUCAwEAAQ==
         assertEquals(
             "Download failed due to Unknown exception",
             downloadFailedException.message
+        )
+    }
+
+    @Test
+    fun `should fetch credential-offer from embedded offer`() {
+        val offerJson = """
+            {
+              "credential_issuer": "https://issuer.example.com",
+              "credential_configuration_ids": ["UniversityDegreeCredential"]
+            }
+        """.trimIndent()
+
+        mockkConstructor(CredentialOfferService::class)
+
+        every { anyConstructed<CredentialOfferService>().handleByValueOffer(any()) } returns JsonUtils.deserialize(
+            offerJson,
+            CredentialOffer::class.java
+        )!!
+
+        val result =
+            VCIClient("test").fetchCredentialOfferIssuer(
+                mockCredentialOfferData
+            )
+
+        assertEquals("https://issuer.example.com", result.credentialIssuer)
+    }
+
+    @Test
+    fun `should fetch credential-offer from uri offer`() {
+        val offerJson = """
+            {
+              "credential_issuer": "https://issuer.example.com",
+              "credential_configuration_ids": ["UniversityDegreeCredential"]
+            }
+        """.trimIndent()
+
+        mockkConstructor(CredentialOfferService::class)
+
+        every { anyConstructed<CredentialOfferService>().handleByReferenceOffer(any()) } returns JsonUtils.deserialize(
+            offerJson,
+            CredentialOffer::class.java
+        )!!
+
+        val result =
+            VCIClient("test").fetchCredentialOfferIssuer("openid-credential-offer://?credential_offer_uri=https%3A%2F%2Fserver%2Eexample%2Ecom%2Fcredential-offer.json")
+
+        assertEquals("https://issuer.example.com", result.credentialIssuer)
+    }
+
+    @Test
+    fun `should throw OfferFetchFailedException if neither credential_offer nor credential_offer_uri present`() {
+
+        assertThrows(OfferFetchFailedException::class.java) {
+            VCIClient("test").fetchCredentialOfferIssuer("openid-credential-offer://?invalid_param=xyz")
+        }
+    }
+
+    @Test
+    fun `should return credential when pre-authorized flow succeeds`() = runBlocking {
+        mockWebServer.enqueue(mockCredentialRequestSuccessResponse)
+
+        val preAuthToken = TokenResponse("mockAccessToken", tokenType = "jwt", cNonce = "mockCNonce")
+        mockkConstructor(PreAuthTokenService::class)
+        every { anyConstructed<PreAuthTokenService>().exchangePreAuthCodeForToken(any(), any()) } returns preAuthToken
+
+        val result = VCIClient("test").requestCredentialByPreAuthFlow(
+            IssuerMetaData(
+                credentialAudience,
+                mockWebServer.url(credentialEndpoint).toString(),
+                downloadTimeout,
+                credentialType = arrayOf("VerifiableCredential"),
+                credentialFormat = CredentialFormat.LDP_VC
+            ),
+            txCode = "123456",
+            getProofJwt =  { accessToken, cNonce ->
+                assertEquals("mockAccessToken", accessToken)
+                assertEquals("mockCNonce", cNonce)
+                "header.payload.signature"
+            }
+        )
+
+        assertEquals(
+            Gson().fromJson(mockCredentialResponse, CredentialResponse::class.java),
+            result
         )
     }
 }

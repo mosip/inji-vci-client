@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
                         Constants.CREDENTIAL_ENDPOINT,
                         Constants.DOWNLOAD_TIMEOUT,
                         Constants.CREDENTIAL_TYPE,
+                        null,
                         Constants.CREDENTIAL_FORMAT
                     ),
                     proof = JWTProof(jwtValue),

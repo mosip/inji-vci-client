@@ -35,12 +35,17 @@ class LdpVcCredentialRequest(
 
     private fun generateRequestBody(): RequestBody {
         val credentialRequestBody = CredentialRequestBody(
-            credentialDefinition = CredentialDefinition(type = this.issuerMetaData.credentialType!!),
+            credentialDefinition = CredentialDefinition(type = this.issuerMetaData.credentialType!!, context = this.getCredentialRequestContext()),
             proof = proof,
             format = this.issuerMetaData.credentialFormat.value
         ).toJson()
+
         return credentialRequestBody
             .toRequestBody("application/json".toMediaTypeOrNull())
+    }
+
+    private fun getCredentialRequestContext(): Array<String> {
+       return this.issuerMetaData.context ?: arrayOf("https://www.w3.org/2018/credentials/v1")
     }
 }
 
