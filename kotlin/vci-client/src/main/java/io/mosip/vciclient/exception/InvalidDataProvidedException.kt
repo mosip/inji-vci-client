@@ -1,3 +1,4 @@
 package io.mosip.vciclient.exception
 
-class InvalidDataProvidedException(message: String) : Exception("Required details not provided $message")
+class InvalidDataProvidedException(message: String?) :
+    VCIClientException("VCI-004", "Required details not provided $message")

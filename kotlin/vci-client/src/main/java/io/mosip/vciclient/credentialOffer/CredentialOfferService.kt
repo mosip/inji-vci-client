@@ -4,13 +4,45 @@ import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.URI
 import java.net.URLDecoder
 
-class CredentialOfferService {
+internal class CredentialOfferService {
 
-    fun handleByValueOffer(encodedOffer: String): CredentialOffer {
+    suspend fun fetchCredentialOffer(credentialOfferData: String): CredentialOffer {
+        try {
+            val normalized = credentialOfferData.replace(
+                "openid-credential-offer://?", "openid-credential-offer://dummy?"
+            )
+            val uri = URI(normalized)
+            val queryParams = uri.rawQuery?.split("&")?.associate {
+                    val (key, value) = it.split("=")
+                    key to URLDecoder.decode(value, "UTF-8")
+                } ?: throw OfferFetchFailedException("No query parameters in the URI")
+
+            return when {
+                queryParams.containsKey("credential_offer") -> {
+                    val offer = queryParams["credential_offer"]!!
+                    handleByValueOffer(offer)
+                }
+
+                queryParams.containsKey("credential_offer_uri") -> {
+                    val uriOffer = queryParams["credential_offer_uri"]!!
+                    handleByReferenceOffer(uriOffer)
+                }
+
+                else -> throw OfferFetchFailedException(
+                    "Invalid credential offer URL: must contain 'credential_offer' or 'credential_offer_uri'"
+                )
+            }
+        } catch (e: Exception) {
+            throw OfferFetchFailedException("Credential offer URL not valid $e.message")
+        }
+    }
+
+    internal fun handleByValueOffer(encodedOffer: String): CredentialOffer {
         val decodedOffer = URLDecoder.decode(encodedOffer, "UTF-8")
         val credentialOffer = (JsonUtils.deserialize(decodedOffer, CredentialOffer::class.java)
             ?: throw OfferFetchFailedException("Invalid credential offer JSON"))
@@ -18,20 +50,24 @@ class CredentialOfferService {
         return credentialOffer
     }
 
-    fun handleByReferenceOffer(url: String): CredentialOffer {
-        val response = NetworkManager.sendRequest(
-            url = url,
-            method = HttpMethod.GET,
-            headers = mapOf("Accept" to "application/json")
-        )
-        val body = response.body
+    internal suspend fun handleByReferenceOffer(url: String): CredentialOffer {
+        val responseBody = withContext(Dispatchers.IO) {
+            val response = NetworkManager.sendRequest(
+                url = url, method = HttpMethod.GET, headers = mapOf("Accept" to "application/json")
+            )
 
-        if ( body.isBlank()) {
-            throw OfferFetchFailedException("Failed to fetch credential offer from $url")
+            if (response.body.isBlank()) {
+                throw OfferFetchFailedException("Empty response from $url")
+            }
+
+            response.body
         }
 
-        val credentialOffer = (JsonUtils.deserialize(body, CredentialOffer::class.java)
-            ?: throw OfferFetchFailedException("Invalid credential offer JSON"))
+        val credentialOffer = withContext(Dispatchers.Default) {
+            JsonUtils.deserialize(responseBody, CredentialOffer::class.java)
+                ?: throw OfferFetchFailedException("Invalid credential offer JSON")
+        }
+
         CredentialOfferValidator.validate(credentialOffer)
         return credentialOffer
     }

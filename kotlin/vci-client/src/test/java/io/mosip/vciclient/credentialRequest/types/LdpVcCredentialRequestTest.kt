@@ -3,7 +3,7 @@ package io.mosip.vciclient.credentialRequest.types
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.credentialRequest.util.ValidatorResult
 import io.mosip.vciclient.proof.jwt.JWTProof
-import io.mosip.vciclient.dto.IssuerMetaData
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import okhttp3.Request
 import okhttp3.internal.http2.Header
 import okhttp3.internal.toHeaderList
@@ -20,11 +20,11 @@ class LdpVcCredentialRequestTest {
 
         val ldpVcRequest: Request = LdpVcCredentialRequest(
             "accessToken",
-            IssuerMetaData(
+            IssuerMetadata(
                 "/credentialAudience",
                 credentialEndpoint,
-                30000,
-                credentialType = arrayOf("VerifiableCredential"),
+
+                credentialType = listOf("VerifiableCredential"),
                 credentialFormat = CredentialFormat.LDP_VC
             ), JWTProof("headerEncoded.payloadEncoded.signature")
         ).constructRequest()
@@ -46,11 +46,11 @@ class LdpVcCredentialRequestTest {
 
         val ldpVcRequest: LdpVcCredentialRequest = LdpVcCredentialRequest(
             "accessToken",
-            IssuerMetaData(
+            IssuerMetadata(
                 "/credentialAudience",
                 "https://credentialendpoint/",
-                30000,
-                credentialType = arrayOf("VerifiableCredential"),
+
+                credentialType = listOf("VerifiableCredential"),
                 credentialFormat = CredentialFormat.LDP_VC
             ), JWTProof("headerEncoded.payloadEncoded.signature")
         )
@@ -66,11 +66,10 @@ class LdpVcCredentialRequestTest {
 
         val ldpVcRequest = LdpVcCredentialRequest(
             "accessToken",
-            IssuerMetaData(
+            IssuerMetadata(
                 "/credentialAudience",
                 "https://credentialendpoint/",
-                30000,
-                credentialFormat = CredentialFormat.LDP_VC
+                credentialFormat = CredentialFormat.LDP_VC,
             ), JWTProof("headerEncoded.payloadEncoded.signature")
         )
 

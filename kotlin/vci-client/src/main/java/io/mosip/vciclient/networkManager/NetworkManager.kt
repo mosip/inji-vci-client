@@ -1,5 +1,6 @@
 package io.mosip.vciclient.networkManager
 
+import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.exception.NetworkRequestFailedException
 import io.mosip.vciclient.exception.NetworkRequestTimeoutException
 import okhttp3.FormBody
@@ -26,7 +27,7 @@ object NetworkManager {
         method: HttpMethod,
         headers: Map<String, String>? = null,
         bodyParams: Map<String, String>? = null,
-        timeoutMillis: Long = 10000,
+        timeoutMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): NetworkResponse {
         try {
             val requestBuilder = Request.Builder().url(url)
@@ -62,7 +63,7 @@ object NetworkManager {
             )
 
         } catch (e: InterruptedIOException) {
-            throw NetworkRequestTimeoutException()
+            throw NetworkRequestTimeoutException("")
         } catch (e: Exception) {
             throw NetworkRequestFailedException(e.message ?: "Unknown error")
         }
@@ -71,5 +72,5 @@ object NetworkManager {
 
 data class NetworkResponse(
     val body: String,
-    val headers: Headers,
+    val headers: Headers?,
 )

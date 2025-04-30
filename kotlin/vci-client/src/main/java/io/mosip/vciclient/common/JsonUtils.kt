@@ -29,5 +29,13 @@ class JsonUtils {
                 gsonForDeserialization.fromJson(json, clazz)
             }
         }
+
+        fun toMap(body: String): Map<String, Any> {
+            return if (body.isBlank()) emptyMap()
+            else gsonForDeserialization.fromJson(
+                body,
+                object : com.google.gson.reflect.TypeToken<Map<String, Any>>() {}.type
+            )
+        }
     }
 }

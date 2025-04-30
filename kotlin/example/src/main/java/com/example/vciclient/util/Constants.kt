@@ -15,7 +15,7 @@ class Constants {
             Uri.parse("<token-endpoint>")
         const val SCOPE = "<scope>"
         const val CREDENTIAL_AUDIENCE = "<credential-audience>"
-        val CREDENTIAL_TYPE = arrayOf("<credential-type1>", "<credential-type1>")
+        val CREDENTIAL_TYPE = listOf("<credential-type1>", "<credential-type1>")
         val CREDENTIAL_FORMAT = CredentialFormat.LDP_VC
     }
 }

@@ -1,3 +1,4 @@
 package io.mosip.vciclient.exception
 
-class OfferFetchFailedException(message: String?) : Exception("Download failed due to $message")
+class OfferFetchFailedException(message: String?) :
+    VCIClientException("VCI-008", "Download failed due to fetching credentialOffer $message")

@@ -9,14 +9,12 @@ import io.mosip.vciclient.common.Encoder
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.constants.JWTProofType
 import io.mosip.vciclient.constants.ProofType
-import io.mosip.vciclient.dto.IssuerMetaData
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.exception.InvalidAccessTokenException
 import io.mosip.vciclient.proof.Proof
 import kotlin.math.floor
 
 private const val TOKEN_EXPIRATION_PERIOD_IN_MILLISECONDS = 18000
-
-private val logTag = Util.getLogTag(JWTProof::javaClass.name)
 
 class JWTProof : Proof {
     override val proofType: String = ProofType.JWT.value
@@ -31,19 +29,19 @@ class JWTProof : Proof {
     override fun generate(
         publicKeyPem: String,
         accessToken: String,
-        issuerMetaData: IssuerMetaData,
+        issuerMetadata: IssuerMetadata,
         signer: (ByteArray) -> ByteArray,
         algorithm: JWTProofType.Algorithms,
     ): Proof {
         val header: String =
             JWTProofHeader(JWTProofType.Algorithms.RS256.name, publicKeyPem).build()
 
-        val payload: String = buildPayload(accessToken, issuerMetaData)
+        val payload: String = buildPayload(accessToken, issuerMetadata)
         this.jwt = generateJWT(header, payload, signer)
         return this
     }
 
-    private fun buildPayload(accessToken: String, issuerMetaData: IssuerMetaData): String {
+    private fun buildPayload(accessToken: String, issuerMetadata: IssuerMetadata): String {
         try {
             val decodedAccessToken: JWT = JWTParser.parse(accessToken)
             val jwtClaimsSet: JWTClaimsSet = decodedAccessToken.jwtClaimsSet
@@ -53,13 +51,12 @@ class JWTProof : Proof {
             return JWTProofPayload(
                 jwtClaimsSet.getClaim("client_id").toString(),
                 jwtClaimsSet.getClaim("c_nonce").toString(),
-                issuerMetaData.credentialAudience,
+                issuerMetadata.credentialAudience,
                 issuanceTime,
                 issuanceTime + TOKEN_EXPIRATION_PERIOD_IN_MILLISECONDS
             )
                 .build()
         } catch (exception: Exception) {
-            Log.e(logTag, "Error while parsing access token - $exception")
             throw InvalidAccessTokenException(exception.message!!)
         }
     }
