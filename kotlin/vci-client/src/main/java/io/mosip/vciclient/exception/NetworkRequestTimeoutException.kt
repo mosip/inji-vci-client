@@ -1,3 +1,4 @@
 package io.mosip.vciclient.exception
 
-class NetworkRequestTimeoutException : Exception("Download failed due to request timeout")
+class NetworkRequestTimeoutException(message: String?) :
+    VCIClientException("VCI-007", "Download failed due to request timeout - $message")

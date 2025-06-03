@@ -3,7 +3,7 @@ package io.mosip.vciclient.credentialRequest.types
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.credentialRequest.CredentialRequest
 import io.mosip.vciclient.credentialRequest.util.ValidatorResult
-import io.mosip.vciclient.dto.IssuerMetaData
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.Proof
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
@@ -12,12 +12,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 
 class MsoMdocCredentialRequest(
     override val accessToken: String,
-    override val issuerMetaData: IssuerMetaData,
+    override val issuerMetadata: IssuerMetadata,
     override val proof: Proof,
 ) : CredentialRequest {
     override fun constructRequest(): Request {
         return Request.Builder()
-            .url(this.issuerMetaData.credentialEndpoint)
+            .url(this.issuerMetadata.credentialEndpoint)
             .addHeader("Authorization", "Bearer ${this.accessToken}")
             .addHeader("Content-Type", "application/json")
             .post(generateRequestBody())
@@ -26,21 +26,18 @@ class MsoMdocCredentialRequest(
 
     override fun validateIssuerMetaData(): ValidatorResult {
         val validatorResult = ValidatorResult()
-        if (issuerMetaData.doctype.isNullOrEmpty()) {
+        if (issuerMetadata.doctype.isNullOrEmpty()) {
             validatorResult.addInvalidField("doctype")
-        }
-        if (issuerMetaData.claims.isNullOrEmpty()) {
-            validatorResult.addInvalidField("claims")
         }
         return validatorResult
     }
 
     private fun generateRequestBody(): RequestBody {
         val credentialRequestBody = MdocCredentialRequestBody(
-            claims = issuerMetaData.claims!!,
+            claims = issuerMetadata.claims,
             proof = proof,
-            format = this.issuerMetaData.credentialFormat.value,
-            doctype = issuerMetaData.doctype!!
+            format = this.issuerMetadata.credentialFormat.value,
+            doctype = issuerMetadata.doctype!!
         ).toJson()
         return credentialRequestBody
             .toRequestBody("application/json".toMediaTypeOrNull())
@@ -50,7 +47,7 @@ class MsoMdocCredentialRequest(
 private data class MdocCredentialRequestBody(
     val format: String,
     val doctype: String,
-    val claims: Map<String, Any>,
+    val claims: Map<String, Any>? = null,
     val proof: Proof,
 ) {
     fun toJson(): String {

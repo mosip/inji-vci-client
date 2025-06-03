@@ -19,9 +19,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.vciclient.ui.theme.VCIClientTheme
 import com.example.vciclient.util.Constants
 import com.example.vciclient.util.PemConverter
-import io.mosip.vciclient.VCIClient
+import io.mosip.vciclient.credentialRequest.CredentialRequestExecutor
 import io.mosip.vciclient.credentialResponse.CredentialResponse
-import io.mosip.vciclient.dto.IssuerMetaData
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.jwt.JWTProof
 import net.openid.appauth.AuthState
 import net.openid.appauth.AuthorizationException
@@ -79,13 +79,14 @@ class MainActivity : ComponentActivity() {
             try {
                 //TODO: Create JWT
                 val jwtValue = ""
-                val credentialResponse: CredentialResponse? = VCIClient("example-vci-client").requestCredential(
-                    issuerMetaData = IssuerMetaData(
+                val credentialResponse: CredentialResponse? = CredentialRequestExecutor("").requestCredential(
+                    issuerMetadata = IssuerMetadata(
                         Constants.CREDENTIAL_AUDIENCE,
                         Constants.CREDENTIAL_ENDPOINT,
-                        Constants.DOWNLOAD_TIMEOUT,
                         Constants.CREDENTIAL_TYPE,
-                        Constants.CREDENTIAL_FORMAT
+                        null,
+                        Constants.CREDENTIAL_FORMAT,
+                        authorizationServers = null
                     ),
                     proof = JWTProof(jwtValue),
                     accessToken = accessToken
@@ -176,7 +177,7 @@ private fun getKeyPairGenSpecBuilder(alias: String): KeyGenParameterSpec.Builder
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
-        text = "Hello000o $name!",
+        text = "Helloo $name!",
         modifier = modifier
     )
 }

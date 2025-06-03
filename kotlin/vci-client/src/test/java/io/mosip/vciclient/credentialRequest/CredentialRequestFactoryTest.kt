@@ -1,10 +1,9 @@
 package io.mosip.vciclient.credentialRequest
 
 import io.mosip.vciclient.constants.CredentialFormat
-import io.mosip.vciclient.dto.IssuerMetaData
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.proof.jwt.JWTProof
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -16,11 +15,10 @@ class CredentialRequestFactoryTest {
         ) {
             CredentialRequestFactory.createCredentialRequest(
                 CredentialFormat.MSO_MDOC, "access-token",
-                IssuerMetaData(
+                IssuerMetadata(
                     "/credentialAudience",
                     "https://credentialendpoint/",
-                    30000,
-                    credentialFormat = CredentialFormat.LDP_VC
+                    credentialFormat = CredentialFormat.LDP_VC,
                 ), JWTProof("headerEncoded.payloadEncoded.signature")
             )
         }
@@ -29,12 +27,12 @@ class CredentialRequestFactoryTest {
         ) {
             CredentialRequestFactory.createCredentialRequest(
                 CredentialFormat.MSO_MDOC, "access-token",
-                IssuerMetaData(
+                IssuerMetadata(
                     "/credentialAudience",
                     "https://credentialendpoint/",
-                    30000,
+                    listOf("Uni"),
+                    credentialFormat = CredentialFormat.MSO_MDOC,
                     claims = mapOf("org.iso.18013.5.1" to mapOf("given_name" to emptyMap<String, Any>())),
-                    credentialFormat = CredentialFormat.MSO_MDOC
                 ), JWTProof("headerEncoded.payloadEncoded.signature")
             )
         }

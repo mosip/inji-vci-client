@@ -11,7 +11,6 @@ import org.json.JSONObject
 private const val ALGORITHM = "alg"
 
 class JWTProofHeader(algorithm: String, publicKeyPem: String) {
-    private val logTag = Util.getLogTag(javaClass.simpleName)
 
     private val header = JSONObject(
         (mutableMapOf(
@@ -26,7 +25,6 @@ class JWTProofHeader(algorithm: String, publicKeyPem: String) {
         try {
             publicKeyJWK = JSONWebKey.build(publicKeyPem)
         } catch (exception: Exception) {
-            Log.e(logTag, "Error occurred due to Invalid public key passed ${exception.message}")
             throw InvalidPublicKeyException(exception.toString())
         }
         val jwkJson = JSONObject(publicKeyJWK.toJSON())

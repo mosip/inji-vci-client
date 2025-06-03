@@ -4,7 +4,7 @@ import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.proof.Proof
 import io.mosip.vciclient.credentialRequest.types.LdpVcCredentialRequest
 import io.mosip.vciclient.credentialRequest.types.MsoMdocCredentialRequest
-import io.mosip.vciclient.dto.IssuerMetaData
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import okhttp3.Request
 
@@ -13,7 +13,7 @@ class CredentialRequestFactory {
         fun createCredentialRequest(
             credentialFormat: CredentialFormat,
             accessToken: String,
-            issuerMetaData: IssuerMetaData,
+            issuerMetadata: IssuerMetadata,
             proof: Proof,
         ): Request {
             when (credentialFormat) {
@@ -21,7 +21,7 @@ class CredentialRequestFactory {
                     return validateAndConstructRequest(
                         LdpVcCredentialRequest(
                             accessToken,
-                            issuerMetaData,
+                            issuerMetadata,
                             proof
                         )
                     )
@@ -31,7 +31,7 @@ class CredentialRequestFactory {
                     return validateAndConstructRequest(
                         MsoMdocCredentialRequest(
                             accessToken,
-                            issuerMetaData,
+                            issuerMetadata,
                             proof
                         )
                     )
