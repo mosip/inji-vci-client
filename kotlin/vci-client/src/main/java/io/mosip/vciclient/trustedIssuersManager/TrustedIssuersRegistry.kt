@@ -3,7 +3,7 @@ package io.mosip.vciclient.trustedIssuersManager
 import android.content.Context
 import io.mosip.vciclient.common.JsonUtils
 
-class TrustedIssuerRegistry(private val context: Context) {
+class TrustedIssuerRegistry(private val context: Context?) {
 
     private val key = "trusted_issuers_vci"
 
@@ -19,7 +19,7 @@ class TrustedIssuerRegistry(private val context: Context) {
 
     private fun loadTrustedIssuers(): Set<String> {
         return try {
-            val issuerJson: String? = SecurePreferencesHelper.load(context, key)
+            val issuerJson: String? = SecurePreferencesHelper.load(context!!, key)
             if (!issuerJson.isNullOrEmpty()) {
                 JsonUtils.deserialize(issuerJson, Array<String>::class.java)?.toSet() ?: emptySet()
             } else {
@@ -32,6 +32,6 @@ class TrustedIssuerRegistry(private val context: Context) {
 
     private fun saveTrustedIssuers(issuers: Set<String>) {
         val json = JsonUtils.serialize(issuers.toList())
-        SecurePreferencesHelper.save(context, key, json)
+        SecurePreferencesHelper.save(context!!, key, json)
     }
 }
