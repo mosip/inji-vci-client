@@ -14,4 +14,3 @@ data class IssuerMetadata(
     val tokenEndpoint: String? = null,
     val scope: String = "openId"
 )
-
