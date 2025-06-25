@@ -1,6 +1,5 @@
 package io.mosip.vciclient.token
 
-import android.util.Log
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.exception.DownloadFailedException
@@ -10,6 +9,7 @@ import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.logging.Logger
 
 class TokenService {
 
@@ -59,7 +59,7 @@ class TokenService {
         val bodyParams = buildBodyParams(
             grantType, preAuthCode, txCode, authCode, clientId, redirectUri, codeVerifier
         )
-        Log.d("tokenRequest", "$bodyParams $tokenEndpoint")
+        Logger.getLogger(javaClass.simpleName).info("$bodyParams $tokenEndpoint")
 
         val response = NetworkManager.sendRequest(
             url = tokenEndpoint,
@@ -106,7 +106,9 @@ class TokenService {
                 }
             }
 
-            else -> {throw DownloadFailedException("Unknown GrantType")}
+            else -> {
+                throw DownloadFailedException("Unknown GrantType")
+            }
         }
     }
 

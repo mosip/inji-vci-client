@@ -1,6 +1,5 @@
 package io.mosip.vciclient.authorizationServer
 
-import android.util.Log
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.exception.AuthServerDiscoveryException
@@ -8,9 +7,10 @@ import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.logging.Logger
 
 class AuthServerDiscoveryService {
-
+    private val logger = Logger.getLogger(javaClass.simpleName)
     suspend fun discover(baseUrl: String): AuthServerMetadata = withContext(Dispatchers.IO) {
         val oauthUrl = "$baseUrl/.well-known/oauth-authorization-server"
         val openidUrl = "$baseUrl/.well-known/openid-configuration"
@@ -26,7 +26,7 @@ class AuthServerDiscoveryService {
                     ?.let { return@withContext it }
             }
         } catch (e: Exception) {
-            Log.w("auth", "OAuth discovery failed, trying OpenID discovery: ${e.message}")
+            logger.warning("OAuth discovery failed, trying OpenID discovery: ${e.message}")
         }
 
         try {
@@ -40,7 +40,7 @@ class AuthServerDiscoveryService {
                     ?.let { return@withContext it }
             }
         } catch (e: Exception) {
-            Log.w("auth", "OpenID discovery also failed: ${e.message}")
+            logger.warning("OpenID discovery also failed: ${e.message}")
         }
 
         throw AuthServerDiscoveryException("Failed to discover authorization server metadata at both endpoints")

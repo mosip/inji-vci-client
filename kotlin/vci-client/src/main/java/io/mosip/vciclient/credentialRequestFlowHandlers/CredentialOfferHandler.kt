@@ -11,7 +11,6 @@ import io.mosip.vciclient.credentialResponse.CredentialResponse
 import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthFlow.PreAuthFlowService
-import io.mosip.vciclient.trustedIssuersManager.TrustedIssuerRegistry
 
 class CredentialOfferHandler {
     suspend fun downloadCredentials(
@@ -23,7 +22,6 @@ class CredentialOfferHandler {
         onCheckIssuerTrust: (suspend (Map<String, Any>) -> Boolean)?,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
         traceabilityId: String? = null,
-        trustedIssuerRegistry: TrustedIssuerRegistry,
     ): CredentialResponse {
         val offer: CredentialOffer = CredentialOfferService().fetchCredentialOffer(credentialOffer)
         val issuerMetaData = IssuerMetadataService().fetch(
@@ -31,9 +29,7 @@ class CredentialOfferHandler {
         )
         ensureIssuerTrust(
             rawMetadata = issuerMetaData.raw,
-            issuer = offer.credentialIssuer,
             onCheckIssuerTrust = onCheckIssuerTrust,
-            trustedIssuerRegistry = trustedIssuerRegistry
         )
         return when {
             offer.isPreAuthorizedFlow() -> {
@@ -69,18 +65,13 @@ class CredentialOfferHandler {
 
     private suspend fun ensureIssuerTrust(
         rawMetadata: Map<String, Any>,
-        issuer: String,
         onCheckIssuerTrust: (suspend (Map<String, Any>) -> Boolean)?,
-        trustedIssuerRegistry: TrustedIssuerRegistry,
     ) {
-        if (!trustedIssuerRegistry.isTrusted(issuer)) {
-            if (onCheckIssuerTrust != null) {
-                val consented = onCheckIssuerTrust(rawMetadata)
-                if (consented) {
-                    trustedIssuerRegistry.markTrusted(issuer)
-                } else {
-                    throw OfferFetchFailedException("Issuer not trusted by user")
-                }
+
+        if (onCheckIssuerTrust != null) {
+            val consented = onCheckIssuerTrust(rawMetadata)
+            if (!consented) {
+                throw OfferFetchFailedException("Issuer not trusted by user")
             }
         }
     }
