@@ -1,10 +1,7 @@
 package io.mosip.vciclient.credentialRequestFlowHandlers
 
-import android.content.Context
-import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
@@ -19,7 +16,6 @@ import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthFlow.PreAuthFlowService
-import io.mosip.vciclient.trustedIssuersManager.TrustedIssuerRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,7 +34,6 @@ class CredentialOfferHandlerTest {
     private lateinit var getProofJwt: suspend (String, String?, Map<String, *>?, String?) -> String
     private lateinit var getAuthCode: suspend (String) -> String
     private lateinit var onCheckIssuerTrust: suspend (Map<String, Any>) -> Boolean
-    private lateinit var trustedIssuerRegistry: TrustedIssuerRegistry
 
 
     @Before
@@ -47,7 +42,6 @@ class CredentialOfferHandlerTest {
         mockkConstructor(IssuerMetadataService::class)
         mockkConstructor(PreAuthFlowService::class)
         mockkConstructor(AuthorizationCodeFlowService::class)
-        trustedIssuerRegistry=mockk()
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns mockCredentialOffer
         coEvery {
             anyConstructed<IssuerMetadataService>().fetch(
@@ -57,9 +51,6 @@ class CredentialOfferHandlerTest {
         } returns mockIssuerMetadataResult
         every { mockIssuerMetadataResult.issuerMetadata } returns mockk(relaxed = true)
         every { mockIssuerMetadataResult.raw } returns mapOf("some" to "metadata")
-        coEvery { trustedIssuerRegistry.isTrusted(any()) } returns false
-        coEvery { trustedIssuerRegistry.markTrusted(any()) } just Runs
-
         txCode = object : suspend (String?, String?, Int?) -> String {
             override suspend fun invoke(
                 p1: String?,p2:String?,p3:Int?
@@ -118,7 +109,6 @@ class CredentialOfferHandlerTest {
             proofJwt = getProofJwt,
             authCode = getAuthCode,
             onCheckIssuerTrust,
-            trustedIssuerRegistry = trustedIssuerRegistry
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -143,7 +133,6 @@ class CredentialOfferHandlerTest {
                 proofJwt = getProofJwt,
                 authCode = getAuthCode,
                 onCheckIssuerTrust = onCheckIssuerTrust,
-                trustedIssuerRegistry =trustedIssuerRegistry
             )
         }
     }
@@ -181,7 +170,6 @@ class CredentialOfferHandlerTest {
                 proofJwt = getProofJwt,
                 authCode = getAuthCode,
                 onCheckIssuerTrust=onCheckIssuerTrust,
-                trustedIssuerRegistry = trustedIssuerRegistry
             )
         }
     }
@@ -211,7 +199,6 @@ class CredentialOfferHandlerTest {
                 proofJwt = getProofJwt,
                 authCode = getAuthCode,
                 onCheckIssuerTrust = onCheckIssuerTrust,
-                trustedIssuerRegistry = trustedIssuerRegistry
             )
         }
     }

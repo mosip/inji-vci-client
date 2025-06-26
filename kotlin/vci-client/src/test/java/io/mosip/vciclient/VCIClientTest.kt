@@ -39,7 +39,7 @@ class VCIClientTest {
 
         coEvery {
             anyConstructed<CredentialOfferHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(),any(),any(),any()
+                any(), any(), any(), any(), any(), any(),any(),any()
             )
         } returns mockCredentialResponse
 
@@ -76,7 +76,7 @@ class VCIClientTest {
 
     @Test
     fun `should return credential when credential offer flow succeeds`() = runBlocking {
-        val result = VCIClient("trace-id",mockContext).requestCredentialByCredentialOffer(
+        val result = VCIClient("trace-id").requestCredentialByCredentialOffer(
             credentialOffer = "sample-offer",
             clientMetadata = ClientMetadata("mock-id", "mock-redirect-ui"),
             getTxCode = getTxCode,
@@ -89,7 +89,7 @@ class VCIClientTest {
 
     @Test
     fun `should return credential when trusted issuer flow succeeds`() = runBlocking {
-        val result = VCIClient("trace-id", context = mockContext).requestCredentialFromTrustedIssuer(
+        val result = VCIClient("trace-id").requestCredentialFromTrustedIssuer(
             issuerMetadata = mockk(),
             clientMetadata = mockk(),
             getProofJwt = getProofJwt,
@@ -103,12 +103,12 @@ class VCIClientTest {
     fun `should throw VCIClientException when credential offer flow throws`(): Unit = runBlocking {
         coEvery {
             anyConstructed<CredentialOfferHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(),any(),any(),any(),any()
+                any(), any(), any(), any(), any(),any(),any(),any()
             )
         } throws Exception("flow error")
 
         assertThrows<VCIClientException> {
-            VCIClient("trace-id",mockContext).requestCredentialByCredentialOffer(
+            VCIClient("trace-id").requestCredentialByCredentialOffer(
                 credentialOffer = "sample-offer",
                 clientMetadata = mockk(),
                 getTxCode = getTxCode,
@@ -127,7 +127,7 @@ class VCIClientTest {
         } throws Exception("flow error")
 
         assertThrows<VCIClientException> {
-            VCIClient("trace-id", mockContext).requestCredentialFromTrustedIssuer(
+            VCIClient("trace-id").requestCredentialFromTrustedIssuer(
                 issuerMetadata = mockk(),
                 clientMetadata = mockk(),
                 getProofJwt = getProofJwt,
