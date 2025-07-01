@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
     id("signing")
-
+    id("org.jetbrains.dokka") version "1.9.20"
     jacoco
     id("org.sonarqube") version "5.1.0.4872"
 }
@@ -83,12 +83,51 @@ tasks {
                 fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug"))
             )
         )
-        executionData.setFrom(files(
-            fileTree(layout.buildDirectory) { include(listOf("**/testDebug**.exec")) }
-        ))
+        executionData.setFrom(
+            fileTree(layout.buildDirectory) {
+                include("**/testDebug**.exec")
+            }
+        )
+    }
 
+    register<Jar>("jarRelease") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        dependsOn("assembleRelease")
+        from("build/intermediates/javac/release/classes") {
+            include("**/*.class")
+        }
+        from("build/tmp/kotlin-classes/release") {
+            include("**/*.class")
+        }
+        manifest {
+            attributes(
+                mapOf(
+                    "Implementation-Title" to project.name,
+                    "Implementation-Version" to "0.4.0-SNAPSHOT"
+                )
+            )
+        }
+        archiveBaseName.set("${project.name}-release")
+        archiveVersion.set("0.4.0-SNAPSHOT")
+        destinationDirectory.set(layout.buildDirectory.dir("libs"))
+    }
+
+    register<Jar>("javadocJar") {
+        dependsOn("dokkaJavadoc")
+        archiveClassifier.set("javadoc")
+        from(layout.buildDirectory.dir("dokka/javadoc"))
+    }
+
+    register<Jar>("sourcesJar") {
+        archiveClassifier.set("sources")
+        from(android.sourceSets["main"].java.srcDirs)
     }
 }
+tasks.register("generatePom") {
+    dependsOn("generatePomFileForAarPublication", "generatePomFileForJarReleasePublication")
+}
+
+
 
 tasks.build {
     finalizedBy("jacocoTestReport")
