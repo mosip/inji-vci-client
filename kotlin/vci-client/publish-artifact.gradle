@@ -100,7 +100,9 @@ publishing {
                     }
                 }
             }
-            artifact("build/outputs/aar/${archivesBaseName}-release.aar")
+            afterEvaluate {
+                artifact(tasks.named("bundleReleaseAar").get())
+            }
         }
         jarRelease(MavenPublication) {
             artifact(tasks.named("jarRelease").get())
@@ -193,4 +195,5 @@ publishing {
 signing {
     useGpgCmd()
     sign publishing.publications.aar
+    sign publishing.publications.jarRelease
 }
