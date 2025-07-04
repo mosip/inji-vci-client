@@ -29,8 +29,8 @@ It supports both **Credential Offer** and **Trusted Issuer** flows, with secure 
 Add the following dependency to your `build.gradle` to include the library from **Maven Central**:
 
 ```groovy
-implementation "io.mosip:inji-vci-client:0.2.0"
-
+implementation "io.mosip:inji-vci-client:0.4.0"
+```
 
 ##  API Overview
 
@@ -60,15 +60,15 @@ val response = VCIClient(traceabilityId).requestCredentialFromTrustedIssuer(
 
 #### 🔹 Parameters:
 
-| Param             | Type          | Description                                                                 |
-|------------------|---------------|-----------------------------------------------------------------------------|
-| `credentialOffer` | `String`      | Offer as embedded JSON or `credential_offer_uri`                           |
-| `clientMetadata`  | `ClientMetadata` | Contains client ID and redirect URI                                         |
-| `IssuerMetadata`  | `IssuerMetadata` | Contains Issuer metadata details required for credential request                                         |
-| `getTxCode`       | `suspend () -> String` | Optional callback function for TX Code (for Pre-Auth flows)                        |
-| `getProofJwt`     | `suspend (String, String?, Map<String, *>, String) -> String` | Callback function to prepare proof-jwt for credential request |
-| `getAuthCode`     | `suspend (String) -> String` | Handles authorization and returns the code (for Authorization flows)         |
-| `onCheckIssuerTrust`     | `suspend (Map<String, Any>) -> Boolean)?` | Optional parameter to implement user-trust based credential download from issuer         |
+| Param                | Type                                                          | Description                                                                      |
+|----------------------|---------------------------------------------------------------|----------------------------------------------------------------------------------|
+| `credentialOffer`    | `String`                                                      | Offer as embedded JSON or `credential_offer_uri`                                 |
+| `clientMetadata`     | `ClientMetadata`                                              | Contains client ID and redirect URI                                              |
+| `IssuerMetadata`     | `IssuerMetadata`                                              | Contains Issuer metadata details required for credential request                 |
+| `getTxCode`          | `suspend () -> String`                                        | Optional callback function for TX Code (for Pre-Auth flows)                      |
+| `getProofJwt`        | `suspend (String, String?, Map<String, *>, String) -> String` | Callback function to prepare proof-jwt for credential request                    |
+| `getAuthCode`        | `suspend (String) -> String`                                  | Handles authorization and returns the code (for Authorization flows)             |
+| `onCheckIssuerTrust` | `suspend (Map<String, Any>) -> Boolean)?`                     | Optional parameter to implement user-trust based credential download from issuer |
 ---
 
 ---
@@ -113,17 +113,17 @@ val metadata = IssuerMetadata(
 All exceptions thrown by the library are subclasses of `VCIClientException`.  
 They carry structured error codes like `VCI-001`, `VCI-002` etc., to help consumers identify and recover from failures.
 
-| Code      | Exception Type                      | Description                                  |
-|-----------|-------------------------------------|----------------------------------------------|
-| VCI-001   | `AuthServerDiscoveryException`           | Failed to discover authorization server              |
-| VCI-002   | `DownloadFailedException`    | Failed to download Credential issuer              |
-| VCI-003   | `InvalidAccessTokenException`       | Access token is invalid                   |
-| VCI-004   | `InvalidDataProvidedException`         | Required details not provided      |
-| VCI-005   | `InvalidPublicKeyException`      | Invalid public key passed metadata              |
-| VCI-006   | `NetworkRequestFailedException`         | Network request failed |
-| VCI-007   | `NetworkRequestTimeoutException`         | Network request timed-out |
-| VCI-008   | `OfferFetchFailedException`         |  Failed  to fetch credentialOffer |
-| VCI-009   | `IssuerMetadataFetchException`         | Failed to fetch issuerMetadata|
+| Code    | Exception Type                   | Description                             |
+|---------|----------------------------------|-----------------------------------------|
+| VCI-001 | `AuthServerDiscoveryException`   | Failed to discover authorization server |
+| VCI-002 | `DownloadFailedException`        | Failed to download Credential issuer    |
+| VCI-003 | `InvalidAccessTokenException`    | Access token is invalid                 |
+| VCI-004 | `InvalidDataProvidedException`   | Required details not provided           |
+| VCI-005 | `InvalidPublicKeyException`      | Invalid public key passed metadata      |
+| VCI-006 | `NetworkRequestFailedException`  | Network request failed                  |
+| VCI-007 | `NetworkRequestTimeoutException` | Network request timed-out               |
+| VCI-008 | `OfferFetchFailedException`      | Failed  to fetch credentialOffer        |
+| VCI-009 | `IssuerMetadataFetchException`   | Failed to fetch issuerMetadata          |
 
 
 ---
