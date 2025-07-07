@@ -2,15 +2,21 @@ package io.mosip.vciclient
 
 import android.content.Context
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
 import io.mosip.vciclient.clientMetadata.ClientMetadata
+import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.credentialRequestFlowHandlers.CredentialOfferHandler
 import io.mosip.vciclient.credentialRequestFlowHandlers.TrustedIssuerHandler
 import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.VCIClientException
+import io.mosip.vciclient.proof.Proof
 import kotlinx.coroutines.runBlocking
+import net.bytebuddy.matcher.ElementMatchers.any
+import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -135,4 +141,45 @@ class VCIClientTest {
             )
         }
     }
+
+    @Test
+    fun `should return credential when requestCredential succeeds`() {
+        // Arrange
+        val mockIssuerMetaData = mockk<IssuerMetaData> {
+            every { credentialAudience } returns "audience"
+            every { credentialEndpoint } returns "https://example.com"
+            every { credentialType } returns arrayOf("test-type")
+            every { credentialFormat } returns CredentialFormat.LDP_VC
+            every { doctype } returns "test-doctype"
+            every { claims } returns emptyMap()
+            every { downloadTimeoutInMilliSeconds } returns 30000
+        }
+
+        val mockProof = mockk<Proof>(relaxed = true)
+
+        mockkConstructor(OkHttpClient.Builder::class)
+        val mockClient = mockk<OkHttpClient>(relaxed = true)
+        val mockCall = mockk<okhttp3.Call>(relaxed = true)
+        val mockResponseBody = mockk<okhttp3.ResponseBody>(relaxed = true)
+        val mockResponse = mockk<okhttp3.Response>()
+
+        every { anyConstructed<OkHttpClient.Builder>().callTimeout(any<Long>(), any()) } returns OkHttpClient.Builder()
+        every { anyConstructed<OkHttpClient.Builder>().build() } returns mockClient
+        every { mockClient.newCall(any()) } returns mockCall
+        every { mockCall.execute() } returns mockResponse
+        every { mockResponse.code } returns 200
+        every { mockResponse.body } returns mockResponseBody
+        every { mockResponseBody.byteStream() } returns """
+        {"credential":"test"}
+    """.trimIndent().byteInputStream()
+
+        val result = VCIClient("trace-id").requestCredential(
+            issuerMetadata = mockIssuerMetaData,
+            proof = mockProof,
+            accessToken = "dummy-access-token"
+        )
+
+        assertEquals("test", result?.credential?.asString)
+    }
+
 }
