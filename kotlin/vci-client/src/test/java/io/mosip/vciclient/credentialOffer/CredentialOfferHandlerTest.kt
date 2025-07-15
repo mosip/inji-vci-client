@@ -1,5 +1,7 @@
 package io.mosip.vciclient.credentialOffer
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonPrimitive
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -17,6 +19,8 @@ import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthFlow.PreAuthFlowService
+import io.mosip.vciclient.token.TokenRequest
+import io.mosip.vciclient.token.TokenResponse
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -32,9 +36,10 @@ class CredentialOfferHandlerTest {
     private val mockClientMetadata = mockk<ClientMetadata>()
 
     private lateinit var txCode: suspend (String?, String?, Int?) -> String
-    private lateinit var getProofJwt: suspend (String, String?, Map<String, *>?, String?) -> String
+    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
     private lateinit var getAuthCode: suspend (String) -> String
-    private lateinit var onCheckIssuerTrust: suspend (Map<String, Any>) -> Boolean
+    private lateinit var getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
+    private lateinit var onCheckIssuerTrust: suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean
 
 
     @Before
@@ -63,16 +68,12 @@ class CredentialOfferHandlerTest {
             ): String = "mock-auth-code"
         }
 
-        getProofJwt = object : suspend (String, String?, Map<String, *>?, String?) -> String {
-            override suspend fun invoke(
-                accessToken: String,
-                cNonce: String?,
-                issuerMetadata: Map<String, *>?,
-                credentialCOnfigurationId: String?,
-            ): String = "mock.jwt.proof"
+        getProofJwt = object : suspend (String, String?, List<String>) -> String {
+            override suspend fun invoke(p1: String, p2: String?, p3: List<String>): String = "mock.jwt.proof"
         }
         onCheckIssuerTrust = mockk()
-        coEvery { onCheckIssuerTrust.invoke(any()) } returns true
+        getTokenResponse = {  _ -> TokenResponse("accessToken", "accessToken") }
+        coEvery { onCheckIssuerTrust.invoke(any(), any()) } returns true
     }
 
     @After
@@ -106,10 +107,11 @@ class CredentialOfferHandlerTest {
         val result = CredentialOfferHandler().downloadCredentials(
             credentialOffer = "some-offer",
             clientMetadata = mockClientMetadata,
-            txCode = txCode,
-            proofJwt = getProofJwt,
-            authCode = getAuthCode,
-            onCheckIssuerTrust,
+            getTxCode = txCode,
+            authorizeUser = getAuthCode,
+            getTokenResponse = getTokenResponse,
+            getProofJwt = getProofJwt,
+            onCheckIssuerTrust=onCheckIssuerTrust,
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -130,10 +132,11 @@ class CredentialOfferHandlerTest {
             CredentialOfferHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
-                txCode = txCode,
-                proofJwt = getProofJwt,
-                authCode = getAuthCode,
-                onCheckIssuerTrust = onCheckIssuerTrust,
+                getTxCode = txCode,
+                authorizeUser = getAuthCode,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                onCheckIssuerTrust=onCheckIssuerTrust,
             )
         }
     }
@@ -158,7 +161,7 @@ class CredentialOfferHandlerTest {
                 any(),
                 any()
             )
-        } returns null
+        } returns CredentialResponse(JsonPrimitive("credential"), "SampleCredential", "https://issuer.example.com/issuer")
 
         mockkConstructor(CredentialOfferService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
@@ -167,9 +170,10 @@ class CredentialOfferHandlerTest {
             CredentialOfferHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
-                txCode = txCode,
-                proofJwt = getProofJwt,
-                authCode = getAuthCode,
+                getTxCode = txCode,
+                authorizeUser = getAuthCode,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
                 onCheckIssuerTrust=onCheckIssuerTrust,
             )
         }
@@ -186,7 +190,7 @@ class CredentialOfferHandlerTest {
             )
         )
 
-        coEvery { onCheckIssuerTrust.invoke(any()) } returns false
+        coEvery { onCheckIssuerTrust.invoke(any(), any()) } returns false
 
         coEvery {
             anyConstructed<CredentialOfferService>().fetchCredentialOffer(any())
@@ -196,10 +200,11 @@ class CredentialOfferHandlerTest {
             CredentialOfferHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
-                txCode = txCode,
-                proofJwt = getProofJwt,
-                authCode = getAuthCode,
-                onCheckIssuerTrust = onCheckIssuerTrust,
+                getTxCode = txCode,
+                authorizeUser = getAuthCode,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                onCheckIssuerTrust=onCheckIssuerTrust,
             )
         }
     }

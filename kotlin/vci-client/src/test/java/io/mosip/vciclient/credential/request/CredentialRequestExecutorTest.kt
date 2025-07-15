@@ -52,9 +52,9 @@ class CredentialRequestExecutorTest {
         mockWebServer.enqueue(
             MockResponse().setBody(json).setResponseCode(200).addHeader("Content-Type", "application/json")
         )
-
         val response = CredentialRequestExecutor("test").requestCredential(
             issuerMetadata = resolvedMeta,
+            credentialConfigurationId = "SampleCredential",
             proof = mockProof,
             accessToken = accessToken
         )
@@ -68,7 +68,7 @@ class CredentialRequestExecutorTest {
         mockWebServer.enqueue(MockResponse().setBody("").setResponseCode(200))
 
         val result = CredentialRequestExecutor("test").requestCredential(
-            resolvedMeta, mockProof, accessToken
+            resolvedMeta,"SampleCredential", mockProof, accessToken
         )
 
         assertNull(result)
@@ -82,7 +82,7 @@ class CredentialRequestExecutorTest {
 
         val ex = assertThrows<DownloadFailedException> {
             CredentialRequestExecutor("test").requestCredential(
-                resolvedMeta, mockProof, accessToken
+                resolvedMeta,"SampleCredential", mockProof, accessToken
             )
         }
 
@@ -97,7 +97,7 @@ class CredentialRequestExecutorTest {
 
         val ex = assertThrows<NetworkRequestTimeoutException> {
             CredentialRequestExecutor("test").requestCredential(
-                resolvedMeta, mockProof, accessToken, downloadTimeoutInMillis = 500
+                resolvedMeta,"SampleCredential", mockProof, accessToken, downloadTimeoutInMillis = 500
             )
         }
 
@@ -111,7 +111,7 @@ class CredentialRequestExecutorTest {
 
         val ex = assertThrows<NetworkRequestFailedException> {
             CredentialRequestExecutor().requestCredential(
-                resolvedMeta, mockProof, accessToken
+                resolvedMeta, "SampleCredential",mockProof, accessToken
             )
         }
 

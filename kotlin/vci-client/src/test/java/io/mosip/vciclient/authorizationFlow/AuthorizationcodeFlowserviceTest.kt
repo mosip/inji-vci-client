@@ -20,6 +20,7 @@ import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
 import io.mosip.vciclient.proof.jwt.JWTProof
+import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
 import kotlinx.coroutines.runBlocking
@@ -30,7 +31,7 @@ import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
 class AuthorizationCodeFlowServiceTest {
-
+    private val downloadTimeout: Long = 5000L
     private val mockCredentialResponse = mockk<CredentialResponse>()
     private val resolvedMeta = mockk<IssuerMetadata>(relaxed = true) {
         every { scope } returns "openid"
@@ -42,7 +43,9 @@ class AuthorizationCodeFlowServiceTest {
     private val pkceSession = PKCESession("verifier", "challenge", "state", "nonce")
 
     private lateinit var getAuthCode: suspend (String) -> String
-    private lateinit var getProofJwt: suspend (String, String?, Map<String, *>?, String?) -> String
+    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
+    private lateinit var getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
+
 
     @Before
     fun setup() {
@@ -80,7 +83,7 @@ class AuthorizationCodeFlowServiceTest {
         } returns "https://auth.example.com/authorize"
 
         coEvery {
-            anyConstructed<TokenService>().getAccessToken(any(), any(), any(), any(), any(),any())
+            anyConstructed<TokenService>().getAccessToken(any(), any(), any(), any(), any(), any())
         } returns TokenResponse("mockAccessToken", "jwt", expiresIn = 3600, cNonce = "mockCNonce")
 
         every {
@@ -88,11 +91,17 @@ class AuthorizationCodeFlowServiceTest {
         } returns "mock.jwt.proof"
 
         every {
-            anyConstructed<CredentialRequestExecutor>().requestCredential(any(), any(), any(),any())
+            anyConstructed<CredentialRequestExecutor>().requestCredential(
+                any(),
+                any(),
+                any(),
+                any()
+            )
         } returns mockCredentialResponse
 
         getAuthCode = { _ -> "mockAuthCode" }
-        getProofJwt = { _, _, _, _ -> "mock.jwt.proof" }
+        getProofJwt = { _, _, _ -> "mock.jwt.proof" }
+        getTokenResponse = {  _ -> TokenResponse("accessToken", "accessToken") }
     }
 
     @After
@@ -101,13 +110,14 @@ class AuthorizationCodeFlowServiceTest {
     @Test
     fun `should return credential when flow is successful`() = runBlocking {
         val result = AuthorizationCodeFlowService().requestCredentials(
-            IssuerMetadataResult(resolvedMeta, issuerMetadata),
-            clientMetadata,
-            credentialOffer,
-            getAuthCode,
-            getProofJwt,
-            credentialConfigurationId,
-            traceabilityId = ""
+            issuerMetadataResult = IssuerMetadataResult(resolvedMeta, issuerMetadata),
+            clientMetadata = clientMetadata,
+            getTokenResponse = getTokenResponse,
+            authorizeUser = getAuthCode,
+            getProofJwt = getProofJwt,
+            credentialConfigurationId = credentialConfigurationId,
+            credentialOffer = credentialOffer,
+            downloadTimeOutInMillis = downloadTimeout
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -115,22 +125,26 @@ class AuthorizationCodeFlowServiceTest {
 
 
     @Test
-    fun `should throw when token service fails`() = runBlocking {
-        coEvery {
-            anyConstructed<TokenService>().getAccessToken(any(), any(), any(), any(), any(),any())
-        } throws Exception("Token service failure")
+    fun `should throw when token service fails`() {
+        runBlocking {
+            coEvery {
+                anyConstructed<TokenService>().getAccessToken(any(), any(), any(), any(), any(), any())
+            } throws Exception("Token service failure")
 
-        val ex = assertThrows<DownloadFailedException> {
-            AuthorizationCodeFlowService().requestCredentials(
-                IssuerMetadataResult(resolvedMeta, issuerMetadata),
-                clientMetadata,
-                credentialOffer,
-                getAuthCode,
-                getProofJwt,
-                credentialConfigurationId
-            )
+            val ex = assertThrows<DownloadFailedException> {
+                AuthorizationCodeFlowService().requestCredentials(
+                    issuerMetadataResult = IssuerMetadataResult(issuerMetadata = resolvedMeta, raw = issuerMetadata),
+                    clientMetadata = clientMetadata,
+                    getTokenResponse = getTokenResponse,
+                    authorizeUser = getAuthCode,
+                    getProofJwt = getProofJwt,
+                    credentialConfigurationId = credentialConfigurationId,
+                    credentialOffer = credentialOffer,
+                    downloadTimeOutInMillis = downloadTimeout
+                )
+            }
+
+            assert(ex.message.contains("Download failed by authorization code flow"))
         }
-
-        assert(ex.message.contains("Download failed by authorization code flow"))
     }
 }

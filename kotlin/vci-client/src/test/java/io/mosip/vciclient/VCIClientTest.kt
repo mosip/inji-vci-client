@@ -13,6 +13,8 @@ import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.proof.Proof
+import io.mosip.vciclient.token.TokenRequest
+import io.mosip.vciclient.token.TokenResponse
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -26,12 +28,9 @@ class VCIClientTest {
     private val mockCredentialResponse = mockk<CredentialResponse>()
 
     private lateinit var getTxCode: suspend (String?,String?,Int?) -> String
-    private lateinit var getProofJwt: suspend (
-        credentialIssuer: String,
-        cNonce: String?,
-        proofSigningAlgosSupported: List<String>
-    ) -> String
-    private lateinit var getAuthCode: suspend (authorizationEndpoint: String) -> String
+    private lateinit var authorizeUserCallback: suspend (authorizationEndpoint: String) -> String
+    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
+    private lateinit var getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
     val  mockContext = mockk<Context>(relaxed = true)
     @Before
     fun setup() {
@@ -56,7 +55,7 @@ class VCIClientTest {
              override suspend fun invoke(p1:String?,p2:String?,p3:Int?): String = "mockTxCode"
         }
 
-        getProofJwt = object : suspend (String, String?, List<String) -> String {
+        getProofJwt = object : suspend (String, String?, List<String>) -> String {
             override suspend fun invoke(
                 credentialIssuer: String,
                 cNonce: String?,
@@ -65,10 +64,11 @@ class VCIClientTest {
         }
 
 
-        getAuthCode = object : suspend (String) -> String {
+        authorizeUserCallback = object : suspend (String) -> String {
             override suspend fun invoke(authEndpoint: String): String = "mockAuthCode"
         }
 
+        getTokenResponse = {  _ -> TokenResponse("accessToken", "accessToken") }
     }
 
     @After
@@ -82,7 +82,7 @@ class VCIClientTest {
             credentialOffer = "sample-offer",
             clientMetadata = mockk(),
             getTxCode = getTxCode,
-            authorizeUser = getAuthCode,
+            authorizeUser = authorizeUserCallback,
             getTokenResponse = mockk(relaxed = true),
             getProofJwt = getProofJwt,
             onCheckIssuerTrust = mockk(relaxed = true),
@@ -95,10 +95,12 @@ class VCIClientTest {
     @Test
     fun `should return credential when trusted issuer flow succeeds`() = runBlocking {
         val result = VCIClient("trace-id").requestCredentialFromTrustedIssuer(
-            issuerMetadata = mockk(),
+            credentialIssuerUri = "https://example.com/issuer",
+            credentialConfigurationId = "SampleCredential",
             clientMetadata = mockk(),
+            authorizeUser = authorizeUserCallback,
+            getTokenResponse = mockk(relaxed = true),
             getProofJwt = getProofJwt,
-            getAuthCode = getAuthCode
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -117,8 +119,9 @@ class VCIClientTest {
                 credentialOffer = "sample-offer",
                 clientMetadata = mockk(),
                 getTxCode = getTxCode,
+                authorizeUser = authorizeUserCallback,
+                getTokenResponse = getTokenResponse,
                 getProofJwt = getProofJwt,
-                getAuthCode = getAuthCode
             )
         }
     }
@@ -133,11 +136,12 @@ class VCIClientTest {
 
         assertThrows<VCIClientException> {
             VCIClient("trace-id").requestCredentialFromTrustedIssuer(
-
-                issuerMetadata = mockk(),
+                credentialIssuerUri = "https://example.com/issuer",
+                credentialConfigurationId = "SampleCredential",
                 clientMetadata = mockk(),
+                authorizeUser = authorizeUserCallback,
+                getTokenResponse = mockk(relaxed = true),
                 getProofJwt = getProofJwt,
-                getAuthCode = getAuthCode
             )
         }
     }
