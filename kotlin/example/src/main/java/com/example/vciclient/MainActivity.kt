@@ -19,8 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.vciclient.ui.theme.VCIClientTheme
 import com.example.vciclient.util.Constants
 import com.example.vciclient.util.PemConverter
-import io.mosip.vciclient.credentialRequest.CredentialRequestExecutor
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.request.CredentialRequestExecutor
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.jwt.JWTProof
 import net.openid.appauth.AuthState

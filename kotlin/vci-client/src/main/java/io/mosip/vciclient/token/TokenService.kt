@@ -1,52 +1,46 @@
 package io.mosip.vciclient.token
 
-import io.mosip.vciclient.common.JsonUtils
-import io.mosip.vciclient.constants.Constants
-import io.mosip.vciclient.exception.DownloadFailedException
-import io.mosip.vciclient.exception.InvalidAccessTokenException
-import io.mosip.vciclient.grant.GrantType
-import io.mosip.vciclient.networkManager.HttpMethod
-import io.mosip.vciclient.networkManager.NetworkManager
+import io.mosip.vciclient.constants.GrantType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.logging.Logger
 
 class TokenService {
 
     suspend fun getAccessToken(
+        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
         tokenEndpoint: String,
-        timeoutMillis: Long? = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
         preAuthCode: String,
         txCode: String? = null,
     ): TokenResponse = fetchAccessToken(
         grantType = GrantType.PRE_AUTHORIZED,
+        getTokenResponse = getTokenResponse,
         tokenEndpoint = tokenEndpoint,
-        timeoutMillis = timeoutMillis!!,
         preAuthCode = preAuthCode,
         txCode = txCode
     )
 
     suspend fun getAccessToken(
+        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
         tokenEndpoint: String,
-        timeoutMillis: Long? = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
         authCode: String,
         clientId: String? = null,
         redirectUri: String? = null,
         codeVerifier: String? = null,
     ): TokenResponse = fetchAccessToken(
         grantType = GrantType.AUTHORIZATION_CODE,
+        getTokenResponse = getTokenResponse,
         tokenEndpoint = tokenEndpoint,
-        timeoutMillis = timeoutMillis!!,
         authCode = authCode,
         clientId = clientId,
         redirectUri = redirectUri,
         codeVerifier = codeVerifier
     )
 
+    //TODO: timeoutMillis is not used in the function
     private suspend fun fetchAccessToken(
         grantType: GrantType,
+        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
         tokenEndpoint: String,
-        timeoutMillis: Long,
         preAuthCode: String? = null,
         txCode: String? = null,
         authCode: String? = null,
@@ -54,76 +48,16 @@ class TokenService {
         redirectUri: String? = null,
         codeVerifier: String? = null,
     ): TokenResponse = withContext(Dispatchers.IO) {
-
-        val headers = mapOf("Content-Type" to "application/x-www-form-urlencoded")
-        val bodyParams = buildBodyParams(
-            grantType, preAuthCode, txCode, authCode, clientId, redirectUri, codeVerifier
+        val tokenRequest = TokenRequest(
+            grantType = grantType,
+            tokenEndpoint = tokenEndpoint,
+            authCode = authCode,
+            preAuthorizedCode = preAuthCode,
+            txCode = txCode,
+            clientId = clientId,
+            redirectUri = redirectUri,
+            codeVerifier = codeVerifier
         )
-        Logger.getLogger(javaClass.simpleName).info("$bodyParams $tokenEndpoint")
-
-        val response = NetworkManager.sendRequest(
-            url = tokenEndpoint,
-            method = HttpMethod.POST,
-            headers = headers,
-            bodyParams = bodyParams,
-            timeoutMillis = timeoutMillis
-        )
-
-        parseTokenResponse(response.body)
-    }
-
-    private fun buildBodyParams(
-        grantType: GrantType,
-        preAuthCode: String?,
-        txCode: String?,
-        authCode: String?,
-        clientId: String?,
-        redirectUri: String?,
-        codeVerifier: String?,
-    ): Map<String, String> {
-        return when (grantType) {
-            GrantType.PRE_AUTHORIZED -> {
-                if (preAuthCode.isNullOrBlank()) {
-                    throw DownloadFailedException("Pre-authorized code is missing.")
-                }
-                buildMap {
-                    put("grant_type", grantType.value)
-                    put("pre-authorized_code", preAuthCode)
-                    txCode?.let { put("tx_code", it) }
-                }
-            }
-
-            GrantType.AUTHORIZATION_CODE -> {
-                if (authCode.isNullOrBlank()) {
-                    throw DownloadFailedException("Authorization code is missing.")
-                }
-                buildMap {
-                    put("grant_type", grantType.value)
-                    put("code", authCode)
-                    clientId?.let { put("client_id", it) }
-                    redirectUri?.let { put("redirect_uri", it) }
-                    codeVerifier?.let { put("code_verifier", it) }
-                }
-            }
-
-            else -> {
-                throw DownloadFailedException("Unknown GrantType")
-            }
-        }
-    }
-
-    private fun parseTokenResponse(responseBody: String): TokenResponse {
-        if (responseBody.isBlank()) {
-            throw DownloadFailedException("Token response body is empty")
-        }
-
-        val tokenResponse = JsonUtils.deserialize(responseBody, TokenResponse::class.java)
-            ?: throw InvalidAccessTokenException("Failed to parse token response")
-
-        if (tokenResponse.accessToken.isNullOrBlank()) {
-            throw InvalidAccessTokenException("Access token missing in token response")
-        }
-
-        return tokenResponse
+        getTokenResponse(tokenRequest)
     }
 }

@@ -1,8 +1,10 @@
-package io.mosip.vciclient.credentialRequest.types
+package io.mosip.vciclient.credential.request.types
 
+import android.util.Log
+import com.google.gson.annotations.SerializedName
 import io.mosip.vciclient.common.JsonUtils
-import io.mosip.vciclient.credentialRequest.CredentialRequest
-import io.mosip.vciclient.credentialRequest.util.ValidatorResult
+import io.mosip.vciclient.credential.request.CredentialRequest
+import io.mosip.vciclient.credential.request.util.ValidatorResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.Proof
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -10,7 +12,7 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 
-class MsoMdocCredentialRequest(
+class LdpVcCredentialRequest(
     override val accessToken: String,
     override val issuerMetadata: IssuerMetadata,
     override val proof: Proof,
@@ -26,31 +28,39 @@ class MsoMdocCredentialRequest(
 
     override fun validateIssuerMetaData(): ValidatorResult {
         val validatorResult = ValidatorResult()
-        if (issuerMetadata.doctype.isNullOrEmpty()) {
-            validatorResult.addInvalidField("doctype")
+        if(issuerMetadata.credentialType.isNullOrEmpty()){
+            validatorResult.addInvalidField("credentialType")
         }
         return validatorResult
     }
 
     private fun generateRequestBody(): RequestBody {
-        val credentialRequestBody = MdocCredentialRequestBody(
-            claims = issuerMetadata.claims,
+        val credentialRequestBody = CredentialRequestBody(
+            credentialDefinition = CredentialDefinition(type = this.issuerMetadata.credentialType!!, context = this.getCredentialRequestContext()),
             proof = proof,
-            format = this.issuerMetadata.credentialFormat.value,
-            doctype = issuerMetadata.doctype!!
+            format = this.issuerMetadata.credentialFormat.value
         ).toJson()
         return credentialRequestBody
             .toRequestBody("application/json".toMediaTypeOrNull())
     }
+
+    private fun getCredentialRequestContext(): List<String> {
+       return this.issuerMetadata.context ?: listOf("https://www.w3.org/2018/credentials/v1")
+    }
 }
 
-private data class MdocCredentialRequestBody(
+private data class CredentialRequestBody(
     val format: String,
-    val doctype: String,
-    val claims: Map<String, Any>? = null,
+    val credentialDefinition: CredentialDefinition,
     val proof: Proof,
 ) {
     fun toJson(): String {
         return JsonUtils.serialize(this)
     }
 }
+
+private data class CredentialDefinition(
+    @SerializedName("@context")
+    val context: List<String>,
+    val type: List<String>,
+)

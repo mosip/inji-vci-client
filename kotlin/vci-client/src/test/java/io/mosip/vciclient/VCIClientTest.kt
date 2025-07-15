@@ -6,16 +6,14 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
-import io.mosip.vciclient.clientMetadata.ClientMetadata
 import io.mosip.vciclient.constants.CredentialFormat
-import io.mosip.vciclient.credentialRequestFlowHandlers.CredentialOfferHandler
-import io.mosip.vciclient.credentialRequestFlowHandlers.TrustedIssuerHandler
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
+import io.mosip.vciclient.trustedIssuer.TrustedIssuerHandler
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.proof.Proof
 import kotlinx.coroutines.runBlocking
-import net.bytebuddy.matcher.ElementMatchers.any
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -29,10 +27,9 @@ class VCIClientTest {
 
     private lateinit var getTxCode: suspend (String?,String?,Int?) -> String
     private lateinit var getProofJwt: suspend (
-        accessToken: String,
+        credentialIssuer: String,
         cNonce: String?,
-        issuerMetadata: Map<String, *>?,
-        credentialConfigurationId: String?,
+        proofSigningAlgosSupported: List<String>
     ) -> String
     private lateinit var getAuthCode: suspend (authorizationEndpoint: String) -> String
     val  mockContext = mockk<Context>(relaxed = true)
@@ -59,12 +56,11 @@ class VCIClientTest {
              override suspend fun invoke(p1:String?,p2:String?,p3:Int?): String = "mockTxCode"
         }
 
-        getProofJwt = object : suspend (String, String?, Map<String, *>?, String?) -> String {
+        getProofJwt = object : suspend (String, String?, List<String) -> String {
             override suspend fun invoke(
-                accessToken: String,
+                credentialIssuer: String,
                 cNonce: String?,
-                issuerMetadata: Map<String, *>?,
-                credentialConfigurationId: String?,
+                proofSigningAlgosSupported: List<String>
             ): String = "mock.jwt.proof"
         }
 
@@ -84,10 +80,13 @@ class VCIClientTest {
     fun `should return credential when credential offer flow succeeds`() = runBlocking {
         val result = VCIClient("trace-id").requestCredentialByCredentialOffer(
             credentialOffer = "sample-offer",
-            clientMetadata = ClientMetadata("mock-id", "mock-redirect-ui"),
+            clientMetadata = mockk(),
             getTxCode = getTxCode,
+            authorizeUser = getAuthCode,
+            getTokenResponse = mockk(relaxed = true),
             getProofJwt = getProofJwt,
-            getAuthCode = getAuthCode
+            onCheckIssuerTrust = mockk(relaxed = true),
+            downloadTimeoutInMillis = 10000
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -134,6 +133,7 @@ class VCIClientTest {
 
         assertThrows<VCIClientException> {
             VCIClient("trace-id").requestCredentialFromTrustedIssuer(
+
                 issuerMetadata = mockk(),
                 clientMetadata = mockk(),
                 getProofJwt = getProofJwt,

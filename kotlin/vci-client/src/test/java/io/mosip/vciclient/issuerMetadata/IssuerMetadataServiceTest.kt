@@ -34,11 +34,11 @@ class IssuerMetadataServiceTest {
     fun `should parse ldp_vc metadata successfully`() = runBlocking {
         mockJsonResponse(LDP_VC_JSON)
 
-        val result = IssuerMetadataService().fetch(issuerUrl, "UniversityDegreeCredential")
+        val result = IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "UniversityDegreeCredential")
         val resolved = result.issuerMetadata
 
         assertEquals(CredentialFormat.LDP_VC, resolved.credentialFormat)
-        assertEquals("https://mock.issuer", resolved.credentialAudience)
+        assertEquals("https://mock.issuer", resolved.credentialIssuer)
         assertEquals(listOf("VerifiableCredential"), resolved.credentialType)
         assertEquals("openid degree", resolved.scope)
         assertTrue(resolved.authorizationServers!!.contains("https://auth"))
@@ -49,7 +49,7 @@ class IssuerMetadataServiceTest {
     fun `should parse mso_mdoc metadata successfully`() = runBlocking {
         mockJsonResponse(MSO_MDOC_JSON)
 
-        val result = IssuerMetadataService().fetch(issuerUrl, "DrivingLicense")
+        val result = IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "DrivingLicense")
         val resolved = result.issuerMetadata
 
         assertEquals(CredentialFormat.MSO_MDOC, resolved.credentialFormat)
@@ -62,7 +62,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse("")
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "Invalid")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "Invalid")
         }
         assertTrue(ex.message.contains("response is empty"))
     }
@@ -72,7 +72,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse("""{ "credential_issuer": "https://mock.issuer" }""")
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "MissingConfig")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "MissingConfig")
         }
         assertTrue(ex.message.contains("credential_configurations_supported"))
     }
@@ -82,7 +82,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse(LDP_VC_JSON) // only contains "UniversityDegreeCredential"
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "NonExistentCredential")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "NonExistentCredential")
         }
         assertTrue(ex.message.contains("Credential configuration not found"))
     }
@@ -92,7 +92,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse(INVALID_FORMAT_JSON)
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "TestCredential")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "TestCredential")
         }
         assertTrue(ex.message.contains("Unsupported or missing credential format"))
     }

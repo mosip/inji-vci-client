@@ -5,13 +5,14 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
-import io.mosip.vciclient.authorizationFlow.AuthorizationCodeFlowService
-import io.mosip.vciclient.clientMetadata.ClientMetadata
+import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
+import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
 import io.mosip.vciclient.credentialOffer.CredentialOfferService
 import io.mosip.vciclient.credentialOffer.PreAuthorizedCodeGrant
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.response.CredentialResponse
+import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
 import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
@@ -44,7 +45,7 @@ class CredentialOfferHandlerTest {
         mockkConstructor(AuthorizationCodeFlowService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns mockCredentialOffer
         coEvery {
-            anyConstructed<IssuerMetadataService>().fetch(
+            anyConstructed<IssuerMetadataService>().fetchIssuerMetadataResult(
                 any(),
                 any()
             )

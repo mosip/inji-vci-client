@@ -1,6 +1,6 @@
-package io.mosip.vciclient.credentialRequest
+package io.mosip.vciclient.credential.request
 
-import io.mosip.vciclient.credentialRequest.util.ValidatorResult
+import io.mosip.vciclient.credential.request.util.ValidatorResult
 import io.mosip.vciclient.proof.Proof
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import okhttp3.Request

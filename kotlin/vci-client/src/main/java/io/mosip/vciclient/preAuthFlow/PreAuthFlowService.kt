@@ -1,54 +1,81 @@
 package io.mosip.vciclient.preAuthFlow
 
+import extractProofSigningAlgorithms
 import io.mosip.vciclient.authorizationServer.AuthServerResolver
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credentialOffer.CredentialOffer
-import io.mosip.vciclient.credentialRequest.CredentialRequestExecutor
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.request.CredentialRequestExecutor
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.token.TokenService
+import io.mosip.vciclient.token.TokenRequest
+import io.mosip.vciclient.token.TokenResponse
 
-
-class PreAuthFlowService {
+class PreAuthFlowService{
     suspend fun requestCredentials(
         issuerMetadataResult: IssuerMetadataResult,
         offer: CredentialOffer,
-        getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)?,
-        getProofJwt: suspend (accessToken: String, cNonce: String?, issuerMetadata: Map<String, *>, credentialConfigurationId: String) -> String,
+        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
+        getProofJwt: suspend (
+            credentialIssuer: String,
+            cNonce: String?,
+            proofSigningAlgosSupported: List<String>
+        ) -> String,
         credentialConfigurationId: String,
-        downloadTimeoutInMilliSeconds: Long? = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
-        traceabilityId: String? = null,
-    ): CredentialResponse? {
-        val authServerMetadata =
-            AuthServerResolver().resolveForPreAuth(issuerMetadataResult.issuerMetadata, offer)
+        getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)? = null,
+        downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
+        traceabilityId: String? = null
+    ): CredentialResponse {
+        val authServerMetadata = AuthServerResolver().resolveForPreAuth(
+            issuerMetadata = issuerMetadataResult.issuerMetadata,
+            credentialOffer = offer
+        )
+
         val tokenEndpoint = authServerMetadata.tokenEndpoint
-        val txCode = if (offer.grants?.preAuthorizedGrant?.txCode !== null) {
-            val txCode = offer.grants.preAuthorizedGrant.txCode
-            getTxCode?.invoke(txCode.inputMode, txCode.description, txCode.length)
-                ?: throw DownloadFailedException("tx_code required but no provider was given.")
+            ?: throw DownloadFailedException("Token endpoint is missing in AuthServer metadata.")
+
+        val txCode: String? = if (offer.grants?.preAuthorizedGrant?.txCode != null) {
+            val txCodeInfo = offer.grants.preAuthorizedGrant.txCode
+            getTxCode?.invoke(txCodeInfo.inputMode, txCodeInfo.description, txCodeInfo.length)
         } else null
-        val token = offer.grants?.preAuthorizedGrant?.let {
-            TokenService().getAccessToken(
-                tokenEndpoint = tokenEndpoint!!,
-                preAuthCode = it.preAuthorizedCode, txCode = txCode
-            )
-        } ?: throw InvalidDataProvidedException("Token response missing")
-        val proof = JWTProof(
-            getProofJwt(
-                token.accessToken,
-                token.cNonce,
-                issuerMetadataResult.raw,
-                credentialConfigurationId
-            )
+
+        if (offer.grants?.preAuthorizedGrant?.txCode != null && txCode == null) {
+            throw DownloadFailedException("tx_code required but no provider was given.")
+        }
+
+        val grant = offer.grants?.preAuthorizedGrant
+            ?: throw InvalidDataProvidedException("Missing pre-authorized grant details.")
+
+        val token = TokenService().getAccessToken(
+            getTokenResponse = getTokenResponse,
+            tokenEndpoint = tokenEndpoint,
+            preAuthCode = grant.preAuthorizedCode,
+            txCode = txCode
         )
-        return CredentialRequestExecutor(traceabilityId = traceabilityId).requestCredential(
-            issuerMetadataResult.issuerMetadata,
-            proof,
-            token.accessToken,
-            downloadTimeoutInMilliSeconds,
+
+        val proofSigningAlgosSupported = extractProofSigningAlgorithms(
+            issuerMetadataResult.raw as Map<String, Any>,
+            credentialConfigurationId
         )
+
+        val jwt = getProofJwt(
+            issuerMetadataResult.issuerMetadata.credentialIssuer,
+            token.cNonce,
+            proofSigningAlgosSupported
+        )
+
+        val proof = JWTProof(jwt)
+
+        return CredentialRequestExecutor(traceabilityId).requestCredential(
+            issuerMetadata = issuerMetadataResult.issuerMetadata,
+            credentialConfigurationId = credentialConfigurationId,
+            proof = proof,
+            accessToken = token.accessToken,
+            downloadTimeoutInMillis = downloadTimeoutInMillis
+        ) ?: throw DownloadFailedException("Credential request failed.")
+
     }
 }

@@ -10,8 +10,8 @@ import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
 import io.mosip.vciclient.credentialOffer.PreAuthorizedCodeGrant
 import io.mosip.vciclient.credentialOffer.TxCode
-import io.mosip.vciclient.credentialRequest.CredentialRequestExecutor
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.request.CredentialRequestExecutor
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata

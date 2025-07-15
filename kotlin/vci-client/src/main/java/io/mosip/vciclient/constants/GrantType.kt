@@ -1,4 +1,4 @@
-package io.mosip.vciclient.grant
+package io.mosip.vciclient.constants
 
 enum class GrantType(val value: String) {
     PRE_AUTHORIZED("urn:ietf:params:oauth:grant-type:pre-authorized_code"),

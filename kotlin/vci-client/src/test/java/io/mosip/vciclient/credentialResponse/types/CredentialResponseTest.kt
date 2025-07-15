@@ -1,7 +1,7 @@
 package io.mosip.vciclient.credentialResponse.types
 
 import com.google.gson.Gson
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.response.CredentialResponse
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

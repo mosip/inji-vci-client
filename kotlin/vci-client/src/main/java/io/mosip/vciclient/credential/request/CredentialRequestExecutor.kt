@@ -1,8 +1,8 @@
-package io.mosip.vciclient.credentialRequest;
+package io.mosip.vciclient.credential.request;
 
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.common.Util
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidAccessTokenException
 import io.mosip.vciclient.exception.InvalidPublicKeyException
@@ -17,7 +17,7 @@ import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
-class CredentialRequestExecutor(val traceabilityId: String? = null) {
+class CredentialRequestExecutor(traceabilityId: String? = null) {
 
     private val logTag = Util.getLogTag(javaClass.simpleName, traceabilityId)
     private val logger = Logger.getLogger(logTag)
@@ -30,14 +30,15 @@ class CredentialRequestExecutor(val traceabilityId: String? = null) {
     )
     fun requestCredential(
         issuerMetadata: IssuerMetadata,
+        credentialConfigurationId: String,
         proof: Proof,
         accessToken: String,
-        downloadTimeoutInMilliSeconds: Long? = 10000,
+        downloadTimeoutInMillis: Long? = 10000,
     ): CredentialResponse? {
 
         try {
             val client = OkHttpClient.Builder().callTimeout(
-                downloadTimeoutInMilliSeconds!!, TimeUnit.MILLISECONDS
+                downloadTimeoutInMillis!!, TimeUnit.MILLISECONDS
             ).build()
 
             val request = CredentialRequestFactory.createCredentialRequest(
@@ -60,8 +61,10 @@ class CredentialRequestExecutor(val traceabilityId: String? = null) {
             logger.info("credential downloaded successfully!")
 
             if (responseBody != "") {
-                return JsonUtils.deserialize(responseBody, CredentialResponse::class.java)
-
+                val credentialResponse =  JsonUtils.deserialize(responseBody, CredentialResponse::class.java)
+                credentialResponse?.credentialConfigurationId = credentialConfigurationId
+                credentialResponse?.credentialIssuer = issuerMetadata.credentialIssuer
+                return credentialResponse
             }
 
             logger.warning(
@@ -70,7 +73,7 @@ class CredentialRequestExecutor(val traceabilityId: String? = null) {
             return null
         } catch (exception: InterruptedIOException) {
             logger.severe(
-                "Network request for ${issuerMetadata.credentialEndpoint} took more than expected time(${downloadTimeoutInMilliSeconds!! / 1000}s). Exception - $exception"
+                "Network request for ${issuerMetadata.credentialEndpoint} took more than expected time(${downloadTimeoutInMillis!! / 1000}s). Exception - $exception"
             )
             throw NetworkRequestTimeoutException("")
         } catch (exception: IOException) {

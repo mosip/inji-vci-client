@@ -1,9 +1,8 @@
 package io.mosip.vciclient.authorizationServer
 
-import android.util.Log
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.exception.AuthServerDiscoveryException
-import io.mosip.vciclient.grant.GrantType
+import io.mosip.vciclient.constants.GrantType
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -18,7 +17,7 @@ class AuthServerResolver {
             offerGrantAuthServer,
             issuerMetadata,
             expectedGrantType = GrantType.PRE_AUTHORIZED.value,
-            credentialIssuer = issuerMetadata.credentialAudience
+            credentialIssuer = issuerMetadata.credentialIssuer
         )
     }
 
@@ -32,7 +31,7 @@ class AuthServerResolver {
             offerGrantAuthServer,
             issuerMetadata,
             expectedGrantType = GrantType.AUTHORIZATION_CODE.value,
-            credentialIssuer = issuerMetadata.credentialAudience
+            credentialIssuer = issuerMetadata.credentialIssuer
         )
     }
 
@@ -41,7 +40,7 @@ class AuthServerResolver {
             null,
             issuerMetadata,
             GrantType.AUTHORIZATION_CODE.value,
-            issuerMetadata.credentialAudience
+            issuerMetadata.credentialIssuer
         )
     }
 

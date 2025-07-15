@@ -1,4 +1,4 @@
-package io.mosip.vciclient.credentialRequest.util
+package io.mosip.vciclient.credential.request.util
 
 class ValidatorResult(var isValid: Boolean = true) {
     val invalidFields: MutableList<String> = ArrayList()

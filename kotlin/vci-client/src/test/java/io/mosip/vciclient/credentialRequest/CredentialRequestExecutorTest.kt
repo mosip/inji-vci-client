@@ -1,6 +1,6 @@
 package io.mosip.vciclient.credentialRequest
 
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.NetworkRequestFailedException
 import io.mosip.vciclient.exception.NetworkRequestTimeoutException
@@ -8,6 +8,7 @@ import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.Proof
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mockk.mockk
+import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -32,7 +33,7 @@ class CredentialRequestExecutorTest {
         mockWebServer.start()
 
         resolvedMeta = IssuerMetadata(
-            credentialAudience = "https://audience",
+            credentialIssuer = "https://audience",
             credentialEndpoint = mockWebServer.url("/credential").toString(),
             credentialFormat = CredentialFormat.LDP_VC,
             credentialType = listOf("VerifiableCredential"),
@@ -97,7 +98,7 @@ class CredentialRequestExecutorTest {
 
         val ex = assertThrows<NetworkRequestTimeoutException> {
             CredentialRequestExecutor("test").requestCredential(
-                resolvedMeta, mockProof, accessToken, downloadTimeoutInMilliSeconds = 500
+                resolvedMeta, mockProof, accessToken, downloadTimeoutInMillis = 500
             )
         }
 

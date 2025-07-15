@@ -46,7 +46,7 @@ class AuthServerResolverTest {
     @Test
     fun `should resolve single auth server from metadata`() = runBlocking {
         every { resolvedMeta.authorizationServers } returns listOf("https://auth.single.com")
-        every { resolvedMeta.credentialAudience } returns credentialIssuer
+        every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
         coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://auth.single.com") } returns metadataWithAuth
 
@@ -57,7 +57,7 @@ class AuthServerResolverTest {
     @Test
     fun `should resolve auth server from offer's preAuth grant`() = runBlocking {
         every { resolvedMeta.authorizationServers } returns listOf("https://ignored.com","https://preauth.com")
-        every { resolvedMeta.credentialAudience } returns credentialIssuer
+        every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
         every {
             offer.grants
@@ -75,7 +75,7 @@ class AuthServerResolverTest {
     @Test
     fun `should fallback to credential-issuer when no auth server list is present`() = runBlocking {
         every { resolvedMeta.authorizationServers } returns null
-        every { resolvedMeta.credentialAudience } returns credentialIssuer
+        every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
         coEvery { anyConstructed<AuthServerDiscoveryService>().discover(credentialIssuer) } returns metadataWithIssuer
 
@@ -89,7 +89,7 @@ class AuthServerResolverTest {
             "https://fail.com",
             "https://auth.single.com"
         )
-        every { resolvedMeta.credentialAudience } returns credentialIssuer
+        every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
         coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://fail.com") } throws RuntimeException(
             "fail"
@@ -106,7 +106,7 @@ class AuthServerResolverTest {
             "https://fail1.com",
             "https://fail2.com"
         )
-        every { resolvedMeta.credentialAudience } returns credentialIssuer
+        every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
         coEvery { anyConstructed<AuthServerDiscoveryService>().discover(any()) } throws RuntimeException(
             "fail"
@@ -122,7 +122,7 @@ class AuthServerResolverTest {
     @Test
     fun `should throw if authorization endpoint is missing`() = runBlocking {
         every { resolvedMeta.authorizationServers } returns listOf("https://empty.com")
-        every { resolvedMeta.credentialAudience } returns credentialIssuer
+        every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
         val badMetadata = AuthServerMetadata(issuer = "https://empty.com", authorizationEndpoint = null)
         coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://empty.com") } returns badMetadata

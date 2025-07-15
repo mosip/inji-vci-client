@@ -1,9 +1,9 @@
-package io.mosip.vciclient.credentialRequest
+package io.mosip.vciclient.credential.request
 
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.proof.Proof
-import io.mosip.vciclient.credentialRequest.types.LdpVcCredentialRequest
-import io.mosip.vciclient.credentialRequest.types.MsoMdocCredentialRequest
+import io.mosip.vciclient.credential.request.types.LdpVcCredentialRequest
+import io.mosip.vciclient.credential.request.types.MsoMdocCredentialRequest
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import okhttp3.Request

@@ -1,6 +1,5 @@
 package io.mosip.vciclient.proof.jwt
 
-import android.util.Log
 import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
@@ -51,7 +50,7 @@ class JWTProof : Proof {
             return JWTProofPayload(
                 jwtClaimsSet.getClaim("client_id").toString(),
                 jwtClaimsSet.getClaim("c_nonce").toString(),
-                issuerMetadata.credentialAudience,
+                issuerMetadata.credentialIssuer,
                 issuanceTime,
                 issuanceTime + TOKEN_EXPIRATION_PERIOD_IN_MILLISECONDS
             )

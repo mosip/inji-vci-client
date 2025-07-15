@@ -4,6 +4,7 @@ import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.proof.jwt.JWTProof
+import io.mosip.vciclient.credential.request.CredentialRequestFactory
 import org.junit.Assert.assertThrows
 import org.junit.Test
 

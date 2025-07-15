@@ -6,12 +6,13 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationServer.AuthServerMetadata
 import io.mosip.vciclient.authorizationServer.AuthServerResolver
-import io.mosip.vciclient.clientMetadata.ClientMetadata
+import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.credentialOffer.CredentialOffer
-import io.mosip.vciclient.credentialRequest.CredentialRequestExecutor
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.request.CredentialRequestExecutor
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder

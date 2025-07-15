@@ -1,4 +1,4 @@
-package io.mosip.vciclient.clientMetadata
+package io.mosip.vciclient.authorizationCodeFlow.clientMetadata
 
 data class ClientMetadata(
     val clientId: String,
