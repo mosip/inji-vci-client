@@ -1,4 +1,4 @@
-package io.mosip.vciclient.credentialResponse.types
+package io.mosip.vciclient.credential.response.types
 
 import com.google.gson.Gson
 import io.mosip.vciclient.credential.response.CredentialResponse

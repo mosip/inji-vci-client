@@ -1,4 +1,4 @@
-package io.mosip.vciclient.credentialRequestFlowHandlers
+package io.mosip.vciclient.credentialOffer
 
 import io.mockk.coEvery
 import io.mockk.every

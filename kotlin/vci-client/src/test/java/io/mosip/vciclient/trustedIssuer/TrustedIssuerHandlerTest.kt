@@ -1,4 +1,4 @@
-package io.mosip.vciclient.credentialRequestFlowHandlers
+package io.mosip.vciclient.trustedIssuer
 
 import io.mockk.coEvery
 import io.mockk.every
@@ -17,7 +17,6 @@ import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
-import io.mosip.vciclient.trustedIssuer.TrustedIssuerHandler
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals

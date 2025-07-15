@@ -1,10 +1,9 @@
-package io.mosip.vciclient.credentialRequest.types
+package io.mosip.vciclient.credential.request.types
 
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.credential.request.util.ValidatorResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.jwt.JWTProof
-import io.mosip.vciclient.credential.request.types.MsoMdocCredentialRequest
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.internal.http2.Header

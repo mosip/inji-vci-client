@@ -1,4 +1,4 @@
-package io.mosip.vciclient.credentialRequest
+package io.mosip.vciclient.credential.request
 
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
@@ -8,7 +8,6 @@ import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.Proof
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mockk.mockk
-import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -34,7 +33,7 @@ class CredentialRequestExecutorTest {
 
         resolvedMeta = IssuerMetadata(
             credentialIssuer = "https://audience",
-            credentialEndpoint = mockWebServer.url("/credential").toString(),
+            credentialEndpoint = mockWebServer.url("/io/mosip/vciclient/credential").toString(),
             credentialFormat = CredentialFormat.LDP_VC,
             credentialType = listOf("VerifiableCredential"),
             context = listOf("https://www.w3.org/2018/credentials/v1"),
