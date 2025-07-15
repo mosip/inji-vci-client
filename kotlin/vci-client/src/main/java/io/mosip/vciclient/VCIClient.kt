@@ -27,7 +27,7 @@ import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
-class VCIClient(private val traceabilityId: String?) {
+class VCIClient(traceabilityId: String) {
 
     private val logTag = Util.getLogTag(javaClass.simpleName, traceabilityId)
     private val logger = Logger.getLogger(logTag)
