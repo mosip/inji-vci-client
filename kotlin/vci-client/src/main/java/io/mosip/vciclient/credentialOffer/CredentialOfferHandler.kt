@@ -5,6 +5,8 @@ import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
+import io.mosip.vciclient.exception.DownloadFailedException
+import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
 import io.mosip.vciclient.token.TokenRequest
@@ -27,6 +29,9 @@ class CredentialOfferHandler {
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {
         val offer =  CredentialOfferService().fetchCredentialOffer(credentialOffer)
+        if (offer.credentialConfigurationIds.size > 1){
+            throw DownloadFailedException("Batch Credential Request is not supported yet.")
+        }
         val credentialConfigId = offer.credentialConfigurationIds.firstOrNull() ?: ""
         val issuerMetadataResponse = IssuerMetadataService().fetchIssuerMetadataResult(
             credentialIssuer = offer.credentialIssuer,

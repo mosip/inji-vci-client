@@ -11,6 +11,7 @@ import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
+import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
@@ -24,8 +25,11 @@ import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
 class CredentialOfferHandlerTest {
-
-    private val mockCredentialResponse = CredentialResponse(JsonPrimitive("dummy-credential"), "SampleCredential", "https://issuer.example.com/issuer")
+    private val mockCredentialResponse = CredentialResponse(
+        JsonPrimitive("dummy-credential"),
+        "SampleCredential",
+        "https://issuer.example.com/issuer"
+    )
     private val mockCredentialOffer = mockk<CredentialOffer>()
     private val mockIssuerMetadataResult = mockk<IssuerMetadataResult>()
     private val mockClientMetadata = mockk<ClientMetadata>()
@@ -54,7 +58,7 @@ class CredentialOfferHandlerTest {
         every { mockIssuerMetadataResult.raw } returns mapOf("some" to "metadata")
         txCode = object : suspend (String?, String?, Int?) -> String {
             override suspend fun invoke(
-                p1: String?,p2:String?,p3:Int?
+                p1: String?, p2: String?, p3: Int?
             ): String = "mock-auth-code"
         }
         authorizeUser = object : suspend (String) -> String {
@@ -64,10 +68,11 @@ class CredentialOfferHandlerTest {
         }
 
         getProofJwt = object : suspend (String, String?, List<String>) -> String {
-            override suspend fun invoke(p1: String, p2: String?, p3: List<String>): String = "mock.jwt.proof"
+            override suspend fun invoke(p1: String, p2: String?, p3: List<String>): String =
+                "mock.jwt.proof"
         }
         onCheckIssuerTrust = mockk()
-        getTokenResponse = {  _ -> TokenResponse("accessToken", "accessToken") }
+        getTokenResponse = { _ -> TokenResponse("accessToken", "accessToken") }
         coEvery { onCheckIssuerTrust.invoke(any(), any()) } returns true
     }
 
@@ -106,7 +111,7 @@ class CredentialOfferHandlerTest {
             authorizeUser = authorizeUser,
             getTokenResponse = getTokenResponse,
             getProofJwt = getProofJwt,
-            onCheckIssuerTrust=onCheckIssuerTrust,
+            onCheckIssuerTrust = onCheckIssuerTrust,
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -131,7 +136,7 @@ class CredentialOfferHandlerTest {
                 authorizeUser = authorizeUser,
                 getTokenResponse = getTokenResponse,
                 getProofJwt = getProofJwt,
-                onCheckIssuerTrust=onCheckIssuerTrust,
+                onCheckIssuerTrust = onCheckIssuerTrust,
             )
         }
     }
@@ -156,7 +161,11 @@ class CredentialOfferHandlerTest {
                 any(),
                 any()
             )
-        } returns CredentialResponse(JsonNull.INSTANCE, "SampleCredential", "https://issuer.example.com/issuer")
+        } returns CredentialResponse(
+            JsonNull.INSTANCE,
+            "SampleCredential",
+            "https://issuer.example.com/issuer"
+        )
 
         mockkConstructor(CredentialOfferService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
@@ -169,40 +178,70 @@ class CredentialOfferHandlerTest {
                 authorizeUser = authorizeUser,
                 getTokenResponse = getTokenResponse,
                 getProofJwt = getProofJwt,
-                onCheckIssuerTrust=onCheckIssuerTrust,
+                onCheckIssuerTrust = onCheckIssuerTrust,
             )
         }
     }
 
     @Test
-    fun `should throw if user does not give trust consent for untrusted issuer`(): Unit = runBlocking {
-        val offer = CredentialOffer(
-            credentialIssuer = "https://issuer.example.com",
-            credentialConfigurationIds = listOf("UniversityDegreeCredential"),
-            grants = CredentialOfferGrants(
-                preAuthorizedGrant = PreAuthCodeGrant("abc123", null),
-                authorizationCodeGrant = null
+    fun `should throw if user does not give trust consent for untrusted issuer`(): Unit =
+        runBlocking {
+            val offer = CredentialOffer(
+                credentialIssuer = "https://issuer.example.com",
+                credentialConfigurationIds = listOf("UniversityDegreeCredential"),
+                grants = CredentialOfferGrants(
+                    preAuthorizedGrant = PreAuthCodeGrant("abc123", null),
+                    authorizationCodeGrant = null
+                )
             )
-        )
 
-        coEvery { onCheckIssuerTrust.invoke(any(), any()) } returns false
+            coEvery { onCheckIssuerTrust.invoke(any(), any()) } returns false
 
-        coEvery {
-            anyConstructed<CredentialOfferService>().fetchCredentialOffer(any())
-        } returns offer
+            coEvery {
+                anyConstructed<CredentialOfferService>().fetchCredentialOffer(any())
+            } returns offer
 
-        assertThrows<CredentialOfferFetchFailedException> {
-            CredentialOfferHandler().downloadCredentials(
-                credentialOffer = "some-offer",
-                clientMetadata = mockClientMetadata,
-                getTxCode = txCode,
-                authorizeUser = authorizeUser,
-                getTokenResponse = getTokenResponse,
-                getProofJwt = getProofJwt,
-                onCheckIssuerTrust=onCheckIssuerTrust,
-            )
+            assertThrows<CredentialOfferFetchFailedException> {
+                CredentialOfferHandler().downloadCredentials(
+                    credentialOffer = "some-offer",
+                    clientMetadata = mockClientMetadata,
+                    getTxCode = txCode,
+                    authorizeUser = authorizeUser,
+                    getTokenResponse = getTokenResponse,
+                    getProofJwt = getProofJwt,
+                    onCheckIssuerTrust = onCheckIssuerTrust,
+                )
+            }
         }
-    }
 
+    @Test
+    fun `should throw batch credential not supported exception when the provided credential offer contains more than one credentialConfigurationIds`() =
+        runBlocking {
+            val offer = CredentialOffer(
+                credentialIssuer = "https://issuer.example.com",
+                credentialConfigurationIds = listOf(
+                    "UniversityDegreeCredential",
+                    "CollegeTranscriptCredential"
+                ),
+                grants = CredentialOfferGrants(
+                    preAuthorizedGrant = PreAuthCodeGrant("abc123", null),
+                    authorizationCodeGrant = null
+                )
+            )
+            coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
 
+            val downloadFailedException = assertThrows<DownloadFailedException> {
+                CredentialOfferHandler().downloadCredentials(
+                    credentialOffer = "some-offer",
+                    clientMetadata = mockClientMetadata,
+                    getTxCode = txCode,
+                    authorizeUser = authorizeUser,
+                    getTokenResponse = getTokenResponse,
+                    getProofJwt = getProofJwt,
+                    onCheckIssuerTrust = onCheckIssuerTrust,
+                )
+            }
+
+            assertEquals("Failed to download Credential: Batch Credential Request is not supported yet.", downloadFailedException.message)
+        }
 }
