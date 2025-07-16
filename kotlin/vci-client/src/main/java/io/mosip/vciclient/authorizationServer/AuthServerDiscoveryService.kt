@@ -14,6 +14,12 @@ private const val OPENID_WELL_KNOWN_URI_SUFFIX = "/.well-known/openid-configurat
 
 class AuthServerDiscoveryService {
     private val logger = Logger.getLogger(javaClass.simpleName)
+
+    /**
+     * Discovers the authorization server metadata by querying the well-known endpoints.
+     * Some authorization servers will choose to support "openid-configuration" well-known suffix while some will choose to go with default "oauth-authorization-server" suffix.
+     * reference - https://datatracker.ietf.org/doc/html/rfc8414#section-3
+     */
     suspend fun discover(baseUrl: String): AuthServerMetadata = withContext(Dispatchers.IO) {
         val oauthUrl = "$baseUrl$OAUTH_WELL_KNOWN_URI_SUFFIX"
         val openidUrl = "$baseUrl$OPENID_WELL_KNOWN_URI_SUFFIX"
