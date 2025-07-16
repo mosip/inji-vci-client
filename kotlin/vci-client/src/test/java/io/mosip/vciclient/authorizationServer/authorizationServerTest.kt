@@ -44,7 +44,7 @@ class AuthServerDiscoveryServiceTest {
         } returns io.mosip.vciclient.networkManager.NetworkResponse(mockResponseBody, null)
 
         every {
-            io.mosip.vciclient.common.JsonUtils.deserialize(
+            JsonUtils.deserialize(
                 mockResponseBody, AuthServerMetadata::class.java
             )
         } returns expected
@@ -68,7 +68,7 @@ class AuthServerDiscoveryServiceTest {
         } returns io.mosip.vciclient.networkManager.NetworkResponse(mockResponseBody, null)
 
         every {
-            io.mosip.vciclient.common.JsonUtils.deserialize(
+            JsonUtils.deserialize(
                 mockResponseBody, AuthServerMetadata::class.java
             )
         } returns expected

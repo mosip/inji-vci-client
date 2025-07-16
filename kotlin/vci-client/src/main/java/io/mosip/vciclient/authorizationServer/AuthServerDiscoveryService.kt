@@ -9,11 +9,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.logging.Logger
 
+private const val OAUTH_WELL_KNOWN_URI_SUFFIX = "/.well-known/oauth-authorization-server"
+private const val OPENID_WELL_KNOWN_URI_SUFFIX = "/.well-known/openid-configuration"
+
 class AuthServerDiscoveryService {
     private val logger = Logger.getLogger(javaClass.simpleName)
     suspend fun discover(baseUrl: String): AuthServerMetadata = withContext(Dispatchers.IO) {
-        val oauthUrl = "$baseUrl/.well-known/oauth-authorization-server"
-        val openidUrl = "$baseUrl/.well-known/openid-configuration"
+        val oauthUrl = "$baseUrl$OAUTH_WELL_KNOWN_URI_SUFFIX"
+        val openidUrl = "$baseUrl$OPENID_WELL_KNOWN_URI_SUFFIX"
 
         try {
             val oauthResponse = NetworkManager.sendRequest(
