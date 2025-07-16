@@ -29,7 +29,7 @@ class CredentialOfferHandler {
         val offer =  CredentialOfferService().fetchCredentialOffer(credentialOffer)
         val credentialConfigId = offer.credentialConfigurationIds.firstOrNull() ?: ""
         val issuerMetadataResponse = IssuerMetadataService().fetchIssuerMetadataResult(
-            issuerUri = offer.credentialIssuer,
+            credentialIssuer = offer.credentialIssuer,
             credentialConfigurationId = credentialConfigId
         )
 

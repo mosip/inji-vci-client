@@ -117,7 +117,7 @@ class VCIClientTest {
         } returns mockCredentialResponse
 
         val result = VCIClient("trace-id").requestCredentialFromTrustedIssuer(
-            credentialIssuerUri = "https://example.com/issuer",
+            credentialIssuer = "https://example.com/issuer",
             credentialConfigurationId = "config-id",
             clientMetadata = mockk(),
             authorizeUser = getAuthCode,
@@ -160,7 +160,7 @@ class VCIClientTest {
 
         assertThrows<VCIClientException> {
             VCIClient("trace-id").requestCredentialFromTrustedIssuer(
-                credentialIssuerUri = "https://example.com/issuer",
+                credentialIssuer = "https://example.com/issuer",
                 credentialConfigurationId = "config-id",
                 clientMetadata = mockk(),
                 authorizeUser = getAuthCode,

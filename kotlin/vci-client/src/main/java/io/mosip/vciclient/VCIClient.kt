@@ -32,9 +32,10 @@ class VCIClient(traceabilityId: String) {
     private val logTag = Util.getLogTag(javaClass.simpleName, traceabilityId)
     private val logger = Logger.getLogger(logTag)
 
-    fun getIssuerMetadata(credentialIssuerUri: String): Map<String, Any> {
+    //TODO: Add tests for this
+    fun getIssuerMetadata(credentialIssuer: String): Map<String, Any> {
         try {
-            return IssuerMetadataService().fetchAndParseIssuerMetadata(credentialIssuerUri)
+            return IssuerMetadataService().fetchAndParseIssuerMetadata(credentialIssuer)
         } catch (exception: VCIClientException) {
             logger.severe(
                 "Fetching issuer metadata failed due to ${exception.message}"
@@ -84,7 +85,7 @@ class VCIClient(traceabilityId: String) {
 
 
     suspend fun requestCredentialFromTrustedIssuer(
-        credentialIssuerUri: String,
+        credentialIssuer: String,
         credentialConfigurationId: String,
         clientMetadata: ClientMetadata,
         authorizeUser: suspend (authorizationUrl: String) -> String,
@@ -98,8 +99,8 @@ class VCIClient(traceabilityId: String) {
     ): CredentialResponse {
         try {
             val issuerMetadata = IssuerMetadataService().fetchIssuerMetadataResult(
-                issuerUri = credentialIssuerUri,
-                credentialConfigurationId = credentialConfigurationId
+                credentialIssuer,
+                credentialConfigurationId
             ).issuerMetadata
 
             return TrustedIssuerFlowHandler().downloadCredentials(

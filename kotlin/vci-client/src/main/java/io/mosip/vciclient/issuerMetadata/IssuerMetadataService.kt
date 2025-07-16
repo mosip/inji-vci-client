@@ -8,21 +8,23 @@ import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private const val CREDENTIAL_ISSUER_WELL_KNOWN_URI_SUFFIX = "/.well-known/openid-credential-issuer"
+
 @Suppress("UNCHECKED_CAST")
 class IssuerMetadataService {
     private val timeoutMillis: Long = 10000
     private var cachedIssuerMetadataResult: IssuerMetadataResult? = null
 
     suspend fun fetchIssuerMetadataResult(
-        issuerUri: String,
+        credentialIssuer: String,
         credentialConfigurationId: String
     ): IssuerMetadataResult = withContext(Dispatchers.IO) {
         // Check cache first
-        cachedIssuerMetadataResult?.takeIf { it.issuerUri == issuerUri }?.let {
+        cachedIssuerMetadataResult?.takeIf { it.credentialIssuer == credentialIssuer }?.let {
             return@withContext it
         }
 
-        val raw = fetchAndParseIssuerMetadata(issuerUri)
+        val raw = fetchAndParseIssuerMetadata(credentialIssuer)
         val resolved = resolveMetadata(
             credentialConfigurationId = credentialConfigurationId,
             rawIssuerMetadata = raw
@@ -31,15 +33,15 @@ class IssuerMetadataService {
         val result = IssuerMetadataResult(
             issuerMetadata = resolved,
             raw = raw,
-            issuerUri = issuerUri
+            credentialIssuer = credentialIssuer
         )
         // Update cache
         cachedIssuerMetadataResult = result
         return@withContext result
     }
 
-    fun fetchAndParseIssuerMetadata(credentialIssuerUri: String): Map<String, Any> {
-        val wellKnownUrl = "$credentialIssuerUri/.well-known/openid-credential-issuer"
+    fun fetchAndParseIssuerMetadata(credentialIssuer: String): Map<String, Any> {
+        val wellKnownUrl = "$credentialIssuer$CREDENTIAL_ISSUER_WELL_KNOWN_URI_SUFFIX"
 
         try {
             val response = NetworkManager.sendRequest(
