@@ -14,6 +14,7 @@ It supports both **Credential Offer** and **Trusted Issuer** flows, with secure 
         - Trusted Issuer Flow.
 - Authorization server discovery for both flows
 - PKCE-compliant OAuth 2.0 Authorization Code flow (RFC 7636)
+  - PKCE session is managed internally by the library
 - Automatic CNonce + Proof JWT handling
 - Well-defined **exception handling** with `VCI-XXX` error codes
 - Support for multiple formats:

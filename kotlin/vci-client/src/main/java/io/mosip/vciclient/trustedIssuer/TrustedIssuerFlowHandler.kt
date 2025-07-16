@@ -28,11 +28,11 @@ class TrustedIssuerFlowHandler {
                 issuerMetadata = issuerMetadata,
                 raw = emptyMap()
             ),
-            clientMetadata = clientMetadata,
-            getTokenResponse = getTokenResponse,
-            authorizeUser = authorizeUser,
-            getProofJwt = getProofJwt,
             credentialConfigurationId = credentialConfigurationId,
+            clientMetadata = clientMetadata,
+            authorizeUser = authorizeUser,
+            getTokenResponse = getTokenResponse,
+            getProofJwt = getProofJwt,
             downloadTimeOutInMillis = downloadTimeoutInMillis,
         )
     }

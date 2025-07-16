@@ -18,7 +18,7 @@ import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
 
-class AuthorizationCodeFlowService(
+internal class AuthorizationCodeFlowService(
     private val authServerResolver: AuthServerResolver = AuthServerResolver(),
     private val tokenService: TokenService = TokenService(),
     private val credentialExecutor: CredentialRequestExecutor = CredentialRequestExecutor(),
@@ -27,15 +27,11 @@ class AuthorizationCodeFlowService(
 
     suspend fun requestCredentials(
         issuerMetadataResult: IssuerMetadataResult,
-        clientMetadata: ClientMetadata,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        authorizeUser: suspend (authorizationEndpoint: String) -> String,
-        getProofJwt: suspend (
-            credentialIssuer: String,
-            cNonce: String?,
-            proofSigningAlgosSupported: List<String>
-        ) -> String,
         credentialConfigurationId: String,
+        clientMetadata: ClientMetadata,
+        authorizeUser: suspend (authorizationEndpoint: String) -> String,
+        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
+        getProofJwt: suspend (credentialIssuer: String, cNonce: String?, proofSigningAlgosSupported: List<String>) -> String,
         credentialOffer: CredentialOffer? = null,
         downloadTimeOutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {

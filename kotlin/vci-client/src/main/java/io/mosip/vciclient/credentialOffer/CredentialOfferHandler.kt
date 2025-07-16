@@ -56,11 +56,11 @@ class CredentialOfferHandler {
             offer.isAuthorizationCodeFlow() -> {
                 AuthorizationCodeFlowService().requestCredentials(
                     issuerMetadataResult = issuerMetadataResponse,
-                    clientMetadata = clientMetadata,
-                    getTokenResponse = getTokenResponse,
-                    authorizeUser = authorizeUser,
-                    getProofJwt = getProofJwt,
                     credentialConfigurationId = offer.credentialConfigurationIds.first(),
+                    clientMetadata = clientMetadata,
+                    authorizeUser = authorizeUser,
+                    getTokenResponse = getTokenResponse,
+                    getProofJwt = getProofJwt,
                     credentialOffer = offer,
                     downloadTimeOutInMillis = downloadTimeoutInMillis
                 )

@@ -117,11 +117,11 @@ class AuthorizationCodeFlowServiceTest {
     fun `should return credential when flow is successful`() = runBlocking {
         val result = AuthorizationCodeFlowService().requestCredentials(
             issuerMetadataResult = IssuerMetadataResult(resolvedMeta, issuerMetadata),
-            clientMetadata = clientMetadata,
-            getTokenResponse = getTokenResponse,
-            authorizeUser = authorizeUser,
-            getProofJwt = getProofJwt,
             credentialConfigurationId = credentialConfigurationId,
+            clientMetadata = clientMetadata,
+            authorizeUser = authorizeUser,
+            getTokenResponse = getTokenResponse,
+            getProofJwt = getProofJwt,
             credentialOffer = credentialOffer,
             downloadTimeOutInMillis = downloadTimeout
         )
@@ -150,11 +150,11 @@ class AuthorizationCodeFlowServiceTest {
                         issuerMetadata = resolvedMeta,
                         raw = issuerMetadata
                     ),
-                    clientMetadata = clientMetadata,
-                    getTokenResponse = getTokenResponse,
-                    authorizeUser = authorizeUser,
-                    getProofJwt = getProofJwt,
                     credentialConfigurationId = credentialConfigurationId,
+                    clientMetadata = clientMetadata,
+                    authorizeUser = authorizeUser,
+                    getTokenResponse = getTokenResponse,
+                    getProofJwt = getProofJwt,
                     credentialOffer = credentialOffer,
                     downloadTimeOutInMillis = downloadTimeout
                 )
