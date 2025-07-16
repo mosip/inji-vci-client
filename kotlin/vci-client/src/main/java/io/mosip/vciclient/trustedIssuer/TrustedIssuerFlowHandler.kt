@@ -1,4 +1,4 @@
-package io.mosip.vciclient.trustedIssuerFlow
+package io.mosip.vciclient.trustedIssuer
 
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata

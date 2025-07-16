@@ -6,7 +6,7 @@ import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.request.CredentialRequestFactory
 import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
-import io.mosip.vciclient.trustedIssuerFlow.TrustedIssuerFlowHandler
+import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.DownloadFailedException

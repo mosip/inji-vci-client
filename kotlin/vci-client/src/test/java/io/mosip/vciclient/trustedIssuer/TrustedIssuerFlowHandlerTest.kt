@@ -1,4 +1,4 @@
-package io.mosip.vciclient.trustedIssuerFlow
+package io.mosip.vciclient.trustedIssuer
 
 import io.mockk.coEvery
 import io.mockk.every
