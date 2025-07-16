@@ -23,6 +23,7 @@ import io.mosip.vciclient.token.TokenService
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
@@ -153,11 +154,16 @@ class PreAuthFlowServiceTest {
                 )
             }
 
-            assert(exception.message.contains("tx_code required"))
+            assertEquals("Failed to download Credential: tx_code required but no provider was given.", exception.message)
         }
 
     @Test
-    fun `should throw error when token is missing`() = runBlocking {
+    fun `should throw error when token endpoint is missing`() = runBlocking {
+        coEvery {
+            anyConstructed<AuthServerResolver>().resolveForPreAuth(any(), any())
+        } returns mockk {
+            every { tokenEndpoint } returns null
+        }
         val offer = CredentialOffer(
             credentialIssuer = "https://mock.issuer",
             credentialConfigurationIds = listOf(credentialConfigurationId),
@@ -166,7 +172,7 @@ class PreAuthFlowServiceTest {
             )
         )
 
-        val exception = assertThrows<InvalidDataProvidedException> {
+        val exception = assertThrows<DownloadFailedException> {
             PreAuthFlowService().requestCredentials(
                 issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData,issuerMetadata),
                 offer = offer,
@@ -178,6 +184,33 @@ class PreAuthFlowServiceTest {
             )
         }
 
-        assert(exception.message?.contains("Missing pre-authorized grant details") == true)
+        assertEquals("Failed to download Credential: Token endpoint is missing in AuthServer metadata.",exception.message)
+    }
+
+    @Test
+    fun `should throw error when pre-authorized grant details are missing`() {
+        val offer = CredentialOffer(
+            credentialIssuer = "https://mock.issuer",
+            credentialConfigurationIds = listOf(credentialConfigurationId),
+            grants = CredentialOfferGrants(
+                preAuthorizedGrant = null
+            )
+        )
+
+        val exception = assertThrows<InvalidDataProvidedException> {
+            runBlocking {
+                PreAuthFlowService().requestCredentials(
+                    issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
+                    offer = offer,
+                    getTokenResponse = mockk(relaxed = true),
+                    getTxCode = getTxCode,
+                    getProofJwt = getProofJwt,
+                    credentialConfigurationId = credentialConfigurationId,
+                    downloadTimeoutInMillis = 10000L
+                )
+            }
+        }
+
+        assertEquals("Required details not provided Missing pre-authorized grant details.", exception.message)
     }
 }
