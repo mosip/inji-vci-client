@@ -23,24 +23,15 @@ class AuthServerResolver {
 
     suspend fun resolveForAuthCode(
         issuerMetadata: IssuerMetadata,
-        credentialOffer: CredentialOffer,
+        credentialOffer: CredentialOffer? = null,
     ): AuthServerMetadata {
         val offerGrantAuthServer =
-            credentialOffer.grants?.authorizationCodeGrant?.authorizationServer
+            credentialOffer?.grants?.authorizationCodeGrant?.authorizationServer
         return resolveAuthServer(
             offerGrantAuthServer,
             issuerMetadata,
             expectedGrantType = GrantType.AUTHORIZATION_CODE.value,
             credentialIssuer = issuerMetadata.credentialIssuer
-        )
-    }
-
-    suspend fun resolveForAuthCode(issuerMetadata: IssuerMetadata): AuthServerMetadata {
-        return resolveAuthServer(
-            null,
-            issuerMetadata,
-            GrantType.AUTHORIZATION_CODE.value,
-            issuerMetadata.credentialIssuer
         )
     }
 

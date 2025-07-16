@@ -160,7 +160,7 @@ class AuthorizationCodeFlowServiceTest {
                 )
             }
 
-            assertEquals("Download failed via authorization code flow: Token service failure", downloadFailureException.message)
+            assertEquals("Failed to download Credential: Download failed via authorization code flow: Token service failure", downloadFailureException.message)
         }
     }
 }

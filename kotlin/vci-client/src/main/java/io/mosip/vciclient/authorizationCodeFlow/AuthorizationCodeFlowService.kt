@@ -42,11 +42,10 @@ class AuthorizationCodeFlowService(
         try {
             val pkceSession = pkceSessionManager.createSession()
 
-            val authServerMetadata = if (credentialOffer != null) {
-                authServerResolver.resolveForAuthCode(issuerMetadataResult.issuerMetadata, credentialOffer)
-            } else {
-                authServerResolver.resolveForAuthCode(issuerMetadataResult.issuerMetadata)
-            }
+            val authServerMetadata = authServerResolver.resolveForAuthCode(
+                issuerMetadataResult.issuerMetadata,
+                credentialOffer
+            )
 
             val token = performAuthorizationAndGetToken(
                 authServerMetadata = authServerMetadata,
