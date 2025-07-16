@@ -32,7 +32,7 @@ class VCIClient(traceabilityId: String) {
     private val logTag = Util.getLogTag(javaClass.simpleName, traceabilityId)
     private val logger = Logger.getLogger(logTag)
 
-    fun getIssuerMetadata(credentialIssuerUri: String) : Map<String, Any> {
+    fun getIssuerMetadata(credentialIssuerUri: String): Map<String, Any> {
         try {
             return IssuerMetadataService().fetchAndParseIssuerMetadata(credentialIssuerUri)
         } catch (exception: VCIClientException) {
@@ -65,14 +65,14 @@ class VCIClient(traceabilityId: String) {
     ): CredentialResponse {
         try {
             return CredentialOfferHandler().downloadCredentials(
-                credentialOffer = credentialOffer,
-                clientMetadata = clientMetadata,
-                getTxCode = getTxCode,
-                authorizeUser = authorizeUser,
-                getTokenResponse = getTokenResponse,
-                getProofJwt = getProofJwt,
-                onCheckIssuerTrust = onCheckIssuerTrust,
-                downloadTimeoutInMillis = downloadTimeoutInMillis,
+                credentialOffer,
+                clientMetadata,
+                getTxCode,
+                authorizeUser,
+                getTokenResponse,
+                getProofJwt,
+                onCheckIssuerTrust,
+                downloadTimeoutInMillis
             )
         } catch (e: VCIClientException) {
             throw e
@@ -103,13 +103,13 @@ class VCIClient(traceabilityId: String) {
             ).issuerMetadata
 
             return TrustedIssuerFlowHandler().downloadCredentials(
-                issuerMetadata = issuerMetadata,
-                credentialConfigurationId = credentialConfigurationId,
-                clientMetadata = clientMetadata,
-                getTokenResponse = getTokenResponse,
-                authorizeUser = authorizeUser,
-                getProofJwt = getProofJwt,
-                downloadTimeoutInMillis = downloadTimeoutInMillis,
+                issuerMetadata,
+                credentialConfigurationId,
+                clientMetadata,
+                getTokenResponse,
+                authorizeUser,
+                getProofJwt,
+                downloadTimeoutInMillis,
             )
         } catch (e: VCIClientException) {
             logger.severe("Downloading credential failed due to ${e.message}")
