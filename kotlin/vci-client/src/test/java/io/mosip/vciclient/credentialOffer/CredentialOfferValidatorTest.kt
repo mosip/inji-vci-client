@@ -10,7 +10,7 @@ class CredentialOfferValidatorTest {
         credentialIssuer = "https://issuer.example.com",
         credentialConfigurationIds = listOf("UniversityDegreeCredential"),
         grants = CredentialOfferGrants(
-            preAuthorizedGrant = PreAuthorizedCodeGrant("abc123", TxCode("Enter code", 6)),
+            preAuthorizedGrant = PreAuthCodeGrant("abc123", TxCode("Enter code", 6)),
             authorizationCodeGrant = null
         )
     )
@@ -75,7 +75,7 @@ class CredentialOfferValidatorTest {
     fun `should throw when pre-authorized_code is blank`() {
         val offer = validOffer.copy(
             grants = CredentialOfferGrants(
-                preAuthorizedGrant = PreAuthorizedCodeGrant("", null),
+                preAuthorizedGrant = PreAuthCodeGrant("", null),
                 authorizationCodeGrant = null
             )
         )
@@ -89,7 +89,7 @@ class CredentialOfferValidatorTest {
     fun `should throw when txCode length is zero`() {
         val offer = validOffer.copy(
             grants = CredentialOfferGrants(
-                preAuthorizedGrant = PreAuthorizedCodeGrant("abc123", TxCode("Enter code", 0)),
+                preAuthorizedGrant = PreAuthCodeGrant("abc123", TxCode("Enter code", 0)),
                 authorizationCodeGrant = null
             )
         )

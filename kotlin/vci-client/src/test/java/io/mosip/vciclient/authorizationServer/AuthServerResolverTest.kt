@@ -7,7 +7,7 @@ import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
-import io.mosip.vciclient.credentialOffer.PreAuthorizedCodeGrant
+import io.mosip.vciclient.credentialOffer.PreAuthCodeGrant
 import io.mosip.vciclient.exception.AuthServerDiscoveryException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import kotlinx.coroutines.runBlocking
@@ -62,7 +62,7 @@ class AuthServerResolverTest {
         every {
             offer.grants
         } returns CredentialOfferGrants(
-            preAuthorizedGrant = PreAuthorizedCodeGrant("abc", null, "https://preauth.com"),
+            preAuthorizedGrant = PreAuthCodeGrant("abc", null, "https://preauth.com"),
             authorizationCodeGrant = null
         )
 

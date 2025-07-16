@@ -39,7 +39,7 @@ class TokenServiceTest {
             getTokenResponse(match { request ->
                 request.grantType == GrantType.PRE_AUTHORIZED &&
                         request.tokenEndpoint == tokenEndpoint &&
-                        request.preAuthorizedCode == "pre-auth-code" &&
+                        request.preAuthCode == "pre-auth-code" &&
                         request.txCode == "tx-code" &&
                         request.authCode == null &&
                         request.clientId == null &&
@@ -75,7 +75,7 @@ class TokenServiceTest {
                         request.clientId == "client-id" &&
                         request.redirectUri == "redirect-uri" &&
                         request.codeVerifier == "code-verifier" &&
-                        request.preAuthorizedCode == null &&
+                        request.preAuthCode == null &&
                         request.txCode == null
             })
         }

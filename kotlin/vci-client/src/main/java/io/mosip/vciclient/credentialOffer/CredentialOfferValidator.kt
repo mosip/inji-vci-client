@@ -36,7 +36,7 @@ object CredentialOfferValidator {
         }
 
         grants.preAuthorizedGrant?.let {
-            if (it.preAuthorizedCode.isBlank()) {
+            if (it.preAuthCode.isBlank()) {
                 throw CredentialOfferFetchFailedException("pre-authorized_code must not be blank")
             }
             it.txCode?.let { tx ->

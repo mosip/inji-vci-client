@@ -6,7 +6,7 @@ data class TokenRequest(
     val grantType: GrantType,
     val tokenEndpoint: String,
     val authCode: String?,
-    val preAuthorizedCode: String?,
+    val preAuthCode: String?,
     val txCode: String?,
     val clientId: String?,
     val redirectUri: String?,

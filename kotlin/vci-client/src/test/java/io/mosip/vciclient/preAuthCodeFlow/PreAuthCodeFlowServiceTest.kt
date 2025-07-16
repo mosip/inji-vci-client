@@ -10,7 +10,7 @@ import io.mosip.vciclient.authorizationServer.AuthServerResolver
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
-import io.mosip.vciclient.credentialOffer.PreAuthorizedCodeGrant
+import io.mosip.vciclient.credentialOffer.PreAuthCodeGrant
 import io.mosip.vciclient.credentialOffer.TxCode
 import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
@@ -106,8 +106,8 @@ class PreAuthCodeFlowServiceTest {
             credentialIssuer = "https://mock.issuer",
             credentialConfigurationIds = listOf(credentialConfigurationId),
             grants = CredentialOfferGrants(
-                preAuthorizedGrant = PreAuthorizedCodeGrant(
-                    preAuthorizedCode = "abc123",
+                preAuthorizedGrant = PreAuthCodeGrant(
+                    preAuthCode = "abc123",
                     txCode = TxCode(inputMode = "text")
                 )
             )
@@ -134,8 +134,8 @@ class PreAuthCodeFlowServiceTest {
                 credentialIssuer = "https://mock.issuer",
                 credentialConfigurationIds = listOf(credentialConfigurationId),
                 grants = CredentialOfferGrants(
-                    preAuthorizedGrant = PreAuthorizedCodeGrant(
-                        preAuthorizedCode = "abc123",
+                    preAuthorizedGrant = PreAuthCodeGrant(
+                        preAuthCode = "abc123",
                         txCode = TxCode(inputMode = "text")
                     )
                 )

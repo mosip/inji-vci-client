@@ -80,7 +80,7 @@ class CredentialOfferHandlerTest {
             credentialIssuer = "https://issuer.example.com",
             credentialConfigurationIds = listOf("UniversityDegreeCredential"),
             grants = CredentialOfferGrants(
-                preAuthorizedGrant = PreAuthorizedCodeGrant("abc123", null),
+                preAuthorizedGrant = PreAuthCodeGrant("abc123", null),
                 authorizationCodeGrant = null
             )
         )
@@ -142,7 +142,7 @@ class CredentialOfferHandlerTest {
             credentialIssuer = "https://issuer.example.com",
             credentialConfigurationIds = listOf("UniversityDegreeCredential"),
             grants = CredentialOfferGrants(
-                preAuthorizedGrant = PreAuthorizedCodeGrant("abc123", null),
+                preAuthorizedGrant = PreAuthCodeGrant("abc123", null),
                 authorizationCodeGrant = null
             )
         )
@@ -180,7 +180,7 @@ class CredentialOfferHandlerTest {
             credentialIssuer = "https://issuer.example.com",
             credentialConfigurationIds = listOf("UniversityDegreeCredential"),
             grants = CredentialOfferGrants(
-                preAuthorizedGrant = PreAuthorizedCodeGrant("abc123", null),
+                preAuthorizedGrant = PreAuthCodeGrant("abc123", null),
                 authorizationCodeGrant = null
             )
         )

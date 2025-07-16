@@ -50,7 +50,7 @@ class PreAuthCodeFlowService {
         val token = TokenService().getAccessToken(
             getTokenResponse = getTokenResponse,
             tokenEndpoint = tokenEndpoint,
-            preAuthCode = grant.preAuthorizedCode,
+            preAuthCode = grant.preAuthCode,
             txCode = txCode
         )
 

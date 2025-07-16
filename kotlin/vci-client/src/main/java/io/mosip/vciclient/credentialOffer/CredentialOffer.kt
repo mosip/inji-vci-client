@@ -15,15 +15,15 @@ data class CredentialOffer(
 
 data class CredentialOfferGrants(
     @SerializedName("urn:ietf:params:oauth:grant-type:pre-authorized_code")
-    val preAuthorizedGrant: PreAuthorizedCodeGrant? = null,
+    val preAuthorizedGrant: PreAuthCodeGrant? = null,
 
     @SerializedName("authorization_code")
     val authorizationCodeGrant: AuthorizationCodeGrant? = null
 )
 
-data class PreAuthorizedCodeGrant(
-    @SerializedName("pre-authorized_code")
-    val preAuthorizedCode: String,
+data class PreAuthCodeGrant(
+    @SerializedName("pre-auth_code")
+    val preAuthCode: String,
 
     @SerializedName("tx_code")
     val txCode: TxCode? = null,
