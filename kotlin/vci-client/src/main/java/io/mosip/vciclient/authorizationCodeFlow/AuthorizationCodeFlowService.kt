@@ -90,7 +90,7 @@ internal class AuthorizationCodeFlowService(
             baseUrl = authorizationEndpoint,
             clientId = clientMetadata.clientId,
             redirectUri = clientMetadata.redirectUri,
-            scope = issuerMetadata.scope ?: "",
+            scope = issuerMetadata.scope,
             state = pkceSession.state,
             codeChallenge = pkceSession.codeChallenge,
             nonce = pkceSession.nonce

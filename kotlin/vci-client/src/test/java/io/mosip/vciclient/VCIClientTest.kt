@@ -10,6 +10,7 @@ import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
 import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
+import io.mosip.vciclient.exception.IssuerMetadataFetchException
 import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
@@ -27,7 +28,7 @@ class VCIClientTest {
 
     private val mockCredentialResponse = mockk<CredentialResponse>()
 
-    private lateinit var getTxCode: suspend (String?,String?,Int?) -> String
+    private lateinit var getTxCode: suspend (String?, String?, Int?) -> String
     private lateinit var getProofJwt: suspend (
         credentialIssuer: String,
         cNonce: String?,
@@ -41,21 +42,22 @@ class VCIClientTest {
 
         mockkConstructor(CredentialOfferHandler::class)
         mockkConstructor(TrustedIssuerFlowHandler::class)
+        mockkConstructor(IssuerMetadataService::class)
 
         coEvery {
             anyConstructed<CredentialOfferHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(),any(),any()
+                any(), any(), any(), any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
 
         coEvery {
             anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(),any(),any()
+                any(), any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
 
-        getTxCode = object : suspend (String?,String?,Int?) -> String {
-             override suspend fun invoke(p1:String?,p2:String?,p3:Int?): String = "mockTxCode"
+        getTxCode = object : suspend (String?, String?, Int?) -> String {
+            override suspend fun invoke(p1: String?, p2: String?, p3: Int?): String = "mockTxCode"
         }
 
         getProofJwt = object : suspend (String, String?, List<String>) -> String {
@@ -79,6 +81,51 @@ class VCIClientTest {
     }
 
     @Test
+    fun `should return issuerMetadata result on getIssuerMetadata`() {
+        val mockIssuerMetadata = emptyMap<String, String>()
+        coEvery {
+            anyConstructed<IssuerMetadataService>()
+                .fetchAndParseIssuerMetadata(any())
+        } returns mockIssuerMetadata
+
+        val issuerMetadataResult: Map<String, Any> = VCIClient("trace-id").getIssuerMetadata(
+            credentialIssuer = "https://example.com/issuer"
+        )
+
+        assertEquals(mockIssuerMetadata, issuerMetadataResult)
+    }
+
+    @Test
+    fun `should throw VCIClient unknown exception on getIssuerMetadata when unexpected error occurred`() {
+        coEvery {
+            anyConstructed<IssuerMetadataService>()
+                .fetchAndParseIssuerMetadata(any())
+        } throws RuntimeException("Unexpected error")
+
+        val vciClientException = assertThrows<VCIClientException> {
+            VCIClient("trace-id").getIssuerMetadata(
+                credentialIssuer = "https://example.com/issuer"
+            )
+        }
+        assertEquals("Unknown Exception - Unexpected error", vciClientException.message)
+    }
+
+    @Test
+    fun `should throw VCIClient exception on getIssuerMetadata when any VCIClient exception occurred`() {
+        coEvery {
+            anyConstructed<IssuerMetadataService>()
+                .fetchAndParseIssuerMetadata(any())
+        } throws IssuerMetadataFetchException("Failed to fetch metadata")
+
+        val vciClientException = assertThrows<IssuerMetadataFetchException> {
+            VCIClient("trace-id").getIssuerMetadata(
+                credentialIssuer = "https://example.com/issuer"
+            )
+        }
+        assertEquals("Failed to fetch issuerMetadata - Failed to fetch metadata", vciClientException.message)
+    }
+
+    @Test
     fun `should return credential when credential offer flow succeeds`() = runBlocking {
         val result = VCIClient("trace-id").requestCredentialByCredentialOffer(
             credentialOffer = "sample-offer",
@@ -96,9 +143,6 @@ class VCIClientTest {
 
     @Test
     fun `should return credential when trusted issuer flow succeeds`() = runBlocking {
-
-        mockkConstructor(IssuerMetadataService::class)
-
         // Create a mock IssuerMetadata result
         val mockIssuerMetadata = mockk<IssuerMetadata>(relaxed = true)
         val mockMetadataResult = mockk<IssuerMetadataResult> {
@@ -132,7 +176,7 @@ class VCIClientTest {
     fun `should throw VCIClientException when credential offer flow throws`(): Unit = runBlocking {
         coEvery {
             anyConstructed<CredentialOfferHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(),any(),any(),any()
+                any(), any(), any(), any(), any(), any(), any(), any()
             )
         } throws Exception("flow error")
 
@@ -154,7 +198,7 @@ class VCIClientTest {
     fun `should throw VCIClientException when trusted issuer flow throws`(): Unit = runBlocking {
         coEvery {
             anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(),any(),any()
+                any(), any(), any(), any(), any(), any()
             )
         } throws Exception("flow error")
 
@@ -192,7 +236,12 @@ class VCIClientTest {
         val mockResponseBody = mockk<okhttp3.ResponseBody>(relaxed = true)
         val mockResponse = mockk<okhttp3.Response>()
 
-        every { anyConstructed<OkHttpClient.Builder>().callTimeout(any<Long>(), any()) } returns OkHttpClient.Builder()
+        every {
+            anyConstructed<OkHttpClient.Builder>().callTimeout(
+                any<Long>(),
+                any()
+            )
+        } returns OkHttpClient.Builder()
         every { anyConstructed<OkHttpClient.Builder>().build() } returns mockClient
         every { mockClient.newCall(any()) } returns mockCall
         every { mockCall.execute() } returns mockResponse
