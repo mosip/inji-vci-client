@@ -1,6 +1,6 @@
 package io.mosip.vciclient.credentialOffer
 
-import io.mosip.vciclient.exception.OfferFetchFailedException
+import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import io.mockk.*
@@ -60,7 +60,7 @@ class CredentialOfferServiceTest {
 
     @Test
     fun `should throw when URI has no parameters`() = runBlocking {
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferService().fetchCredentialOffer("openid-credential-offer://?")
         }
         assert(ex.message.contains("URL not valid"))
@@ -68,7 +68,7 @@ class CredentialOfferServiceTest {
 
     @Test
     fun `should throw when URI lacks required keys`() = runBlocking {
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferService().fetchCredentialOffer("openid-credential-offer://?foo=bar")
         }
         assert(ex.message.contains("must contain"))
@@ -80,7 +80,7 @@ class CredentialOfferServiceTest {
             JsonUtils.deserialize(any(), CredentialOffer::class.java)
         } returns null
 
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferService().handleByValueOffer(encodedOffer)
         }
         assert(ex.message.contains("Invalid credential offer JSON"))
@@ -92,7 +92,7 @@ class CredentialOfferServiceTest {
             NetworkManager.sendRequest(uriOfferUrl, HttpMethod.GET, any(), any())
         } returns io.mosip.vciclient.networkManager.NetworkResponse("",null)
 
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferService().handleByReferenceOffer(uriOfferUrl)
         }
         assert(ex.message.contains("Empty response"))
@@ -111,7 +111,7 @@ class CredentialOfferServiceTest {
     fun `should throw when url decoding fails`() = runBlocking {
         val malformed = "openid-credential-offer://?credential_offer=%"
 
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferService().fetchCredentialOffer(malformed)
         }
         assert(ex.message.isNotBlank())

@@ -4,7 +4,7 @@ import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.response.CredentialResponse
-import io.mosip.vciclient.exception.OfferFetchFailedException
+import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
 import io.mosip.vciclient.token.TokenRequest
@@ -67,11 +67,11 @@ class CredentialOfferHandler {
             }
 
             else -> {
-                throw OfferFetchFailedException("Credential offer does not contain a supported grant type")
+                throw CredentialOfferFetchFailedException("Credential offer does not contain a supported grant type")
             }
         }
         if(credentialResponse.credential.isJsonNull){
-            throw OfferFetchFailedException("No credential response found")
+            throw CredentialOfferFetchFailedException("No credential response found")
         }
         return credentialResponse
     }
@@ -84,7 +84,7 @@ class CredentialOfferHandler {
         if (onCheckIssuerTrust != null) {
             val consented = onCheckIssuerTrust(credentialIssuer, issuerDisplay)
             if (!consented) {
-                throw OfferFetchFailedException("Issuer not trusted by user")
+                throw CredentialOfferFetchFailedException("Issuer not trusted by user")
             }
         }
     }

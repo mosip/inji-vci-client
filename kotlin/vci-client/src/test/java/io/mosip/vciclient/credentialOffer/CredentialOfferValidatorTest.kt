@@ -1,6 +1,6 @@
 package io.mosip.vciclient.credentialOffer
 
-import io.mosip.vciclient.exception.OfferFetchFailedException
+import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -23,7 +23,7 @@ class CredentialOfferValidatorTest {
     @Test
     fun `should throw when credential_issuer is blank`() {
         val offer = validOffer.copy(credentialIssuer = "")
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferValidator.validate(offer)
         }
         assert(ex.message.contains("credential_issuer must not be blank"))
@@ -32,7 +32,7 @@ class CredentialOfferValidatorTest {
     @Test
     fun `should throw when credential_issuer is not https`() {
         val offer = validOffer.copy(credentialIssuer = "http://issuer.example.com")
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferValidator.validate(offer)
         }
         assert(ex.message.contains("credential_issuer must use HTTPS"))
@@ -41,7 +41,7 @@ class CredentialOfferValidatorTest {
     @Test
     fun `should throw when credential_configuration_ids is empty`() {
         val offer = validOffer.copy(credentialConfigurationIds = emptyList())
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferValidator.validate(offer)
         }
         assert(ex.message.contains("credential_configuration_ids must not be empty"))
@@ -50,7 +50,7 @@ class CredentialOfferValidatorTest {
     @Test
     fun `should throw when credential_configuration_ids contains blank`() {
         val offer = validOffer.copy(credentialConfigurationIds = listOf(" "))
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferValidator.validate(offer)
         }
         assert(ex.message.contains("credential_configuration_ids must not contain blank values"))
@@ -65,7 +65,7 @@ class CredentialOfferValidatorTest {
     @Test
     fun `should throw when grants has no supported types`() {
         val offer = validOffer.copy(grants = CredentialOfferGrants(null, null))
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferValidator.validate(offer)
         }
         assert(ex.message.contains("grants must contain at least one supported grant type"))
@@ -79,7 +79,7 @@ class CredentialOfferValidatorTest {
                 authorizationCodeGrant = null
             )
         )
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferValidator.validate(offer)
         }
         assert(ex.message.contains("pre-authorized_code must not be blank"))
@@ -93,7 +93,7 @@ class CredentialOfferValidatorTest {
                 authorizationCodeGrant = null
             )
         )
-        val ex = assertThrows<OfferFetchFailedException> {
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferValidator.validate(offer)
         }
         assert(ex.message.contains("tx_code.length must be greater than 0"))

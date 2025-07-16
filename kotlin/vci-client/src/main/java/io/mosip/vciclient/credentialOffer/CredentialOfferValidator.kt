@@ -1,6 +1,6 @@
 package io.mosip.vciclient.credentialOffer
 
-import io.mosip.vciclient.exception.OfferFetchFailedException
+import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 
 object CredentialOfferValidator {
 
@@ -12,19 +12,19 @@ object CredentialOfferValidator {
 
     private fun validateCredentialIssuer(issuer: String) {
         if (issuer.isBlank()) {
-            throw OfferFetchFailedException("credential_issuer must not be blank")
+            throw CredentialOfferFetchFailedException("credential_issuer must not be blank")
         }
         if (!issuer.startsWith("https://")) {
-            throw OfferFetchFailedException("credential_issuer must use HTTPS scheme")
+            throw CredentialOfferFetchFailedException("credential_issuer must use HTTPS scheme")
         }
     }
 
     private fun validateCredentialConfigurationIds(configIds: List<String>) {
         if (configIds.isEmpty()) {
-            throw OfferFetchFailedException("credential_configuration_ids must not be empty")
+            throw CredentialOfferFetchFailedException("credential_configuration_ids must not be empty")
         }
         if (configIds.any { it.isBlank() }) {
-            throw OfferFetchFailedException("credential_configuration_ids must not contain blank values")
+            throw CredentialOfferFetchFailedException("credential_configuration_ids must not contain blank values")
         }
     }
 
@@ -32,16 +32,16 @@ object CredentialOfferValidator {
         if (grants == null) return
 
         if (grants.authorizationCodeGrant == null && grants.preAuthorizedGrant == null) {
-            throw OfferFetchFailedException("grants must contain at least one supported grant type")
+            throw CredentialOfferFetchFailedException("grants must contain at least one supported grant type")
         }
 
         grants.preAuthorizedGrant?.let {
             if (it.preAuthorizedCode.isBlank()) {
-                throw OfferFetchFailedException("pre-authorized_code must not be blank")
+                throw CredentialOfferFetchFailedException("pre-authorized_code must not be blank")
             }
             it.txCode?.let { tx ->
                 if (tx.length != null && tx.length <= 0) {
-                    throw OfferFetchFailedException("tx_code.length must be greater than 0")
+                    throw CredentialOfferFetchFailedException("tx_code.length must be greater than 0")
                 }
             }
         }

@@ -10,7 +10,7 @@ import io.mockk.unmockkAll
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.credential.response.CredentialResponse
-import io.mosip.vciclient.exception.OfferFetchFailedException
+import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
@@ -123,7 +123,7 @@ class CredentialOfferHandlerTest {
         mockkConstructor(CredentialOfferService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
 
-        assertThrows<OfferFetchFailedException> {
+        assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
@@ -161,7 +161,7 @@ class CredentialOfferHandlerTest {
         mockkConstructor(CredentialOfferService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
 
-        assertThrows<OfferFetchFailedException> {
+        assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
@@ -191,7 +191,7 @@ class CredentialOfferHandlerTest {
             anyConstructed<CredentialOfferService>().fetchCredentialOffer(any())
         } returns offer
 
-        assertThrows<OfferFetchFailedException> {
+        assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
