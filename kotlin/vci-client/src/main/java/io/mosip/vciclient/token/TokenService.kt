@@ -36,7 +36,7 @@ class TokenService {
         codeVerifier = codeVerifier
     )
 
-    //TODO: timeoutMillis is not used in the function
+    //TODO: checkout this name
     private suspend fun fetchAccessToken(
         grantType: GrantType,
         getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,

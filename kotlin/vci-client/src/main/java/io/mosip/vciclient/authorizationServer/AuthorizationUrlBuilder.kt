@@ -1,7 +1,7 @@
 package io.mosip.vciclient.authorizationServer
 
 import io.mosip.vciclient.constants.CodeChallengeMethod
-import io.mosip.vciclient.constants.ResponseType
+import io.mosip.vciclient.constants.AuthorizationResponseType
 import java.net.URLEncoder
 
 object AuthorizationUrlBuilder {
@@ -10,7 +10,7 @@ object AuthorizationUrlBuilder {
         clientId: String,
         redirectUri: String,
         scope: String,
-        responseType: ResponseType = ResponseType.CODE,
+        responseType: AuthorizationResponseType = AuthorizationResponseType.CODE,
         state: String,
         codeChallenge: String,
         codeChallengeMethod: CodeChallengeMethod = CodeChallengeMethod.S256,
