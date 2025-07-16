@@ -4,8 +4,10 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
+import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mosip.vciclient.authorizationServer.AuthServerResolver
+import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
 import io.mosip.vciclient.credentialOffer.PreAuthorizedCodeGrant
@@ -32,14 +34,20 @@ class PreAuthFlowServiceTest {
     private val credentialConfigurationId = "UniversityDegreeCredential"
     private val issuerMetadata = mapOf("issuer" to "mock")
 
-    private lateinit var getTxCode: suspend (String?,String?,Int?) -> String
-    private lateinit var getProofJwt: suspend (String, String?, Map<String, *>, String) -> String
+    private lateinit var getTxCode: suspend (String?, String?, Int?) -> String
+    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
 
     @Before
     fun setup() {
         mockkConstructor(AuthServerResolver::class)
         mockkConstructor(TokenService::class)
         mockkConstructor(CredentialRequestExecutor::class)
+        mockkObject(Util.Companion)
+        every { Util.getLogTag(any(), any()) } returns "TestLogTag"
+
+
+        // Add mock for credentialIssuer
+        every { resolvedIssuerMetaData.credentialIssuer } returns "https://mock.issuer"
 
         coEvery {
             anyConstructed<AuthServerResolver>().resolveForPreAuth(any(), any())
@@ -49,26 +57,26 @@ class PreAuthFlowServiceTest {
 
         every {
             anyConstructed<CredentialRequestExecutor>().requestCredential(
-                any(), any(), any()
+                any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
 
-        getTxCode = object : suspend (String?,String?,Int?) -> String {
-            override suspend fun invoke(p1:String?,p2:String?,p3:Int?): String = "mockTxCode"
+        getTxCode = object : suspend (String?, String?, Int?) -> String {
+            override suspend fun invoke(p1: String?, p2: String?, p3: Int?): String = "mockTxCode"
         }
 
-        getProofJwt = object : suspend (String, String?, Map<String, *>, String) -> String {
+        getProofJwt = object : suspend (String, String?, List<String>) -> String {
             override suspend fun invoke(
-                accessToken: String,
+                acredentialIssuer: String,
                 cNonce: String?,
-                issuerMetadata: Map<String, *>,
-                credentialConfigurationId: String,
+                proofSigningAlgosSupported: List<String>
             ): String = "mock.jwt.proof"
         }
 
         mockkConstructor(io.mosip.vciclient.proof.jwt.JWTProof::class)
         every { anyConstructed<io.mosip.vciclient.proof.jwt.JWTProof>().jwt } returns "mock.jwt"
     }
+
 
     @After
     fun tearDown() {
@@ -81,8 +89,8 @@ class PreAuthFlowServiceTest {
 
         coEvery {
             anyConstructed<TokenService>().getAccessToken(
+                getTokenResponse = any(),
                 tokenEndpoint = any(),
-                timeoutMillis = any(),
                 preAuthCode = any(),
                 txCode = any()
             )
@@ -90,7 +98,8 @@ class PreAuthFlowServiceTest {
             accessToken = "mock-access-token",
             tokenType = "jwt",
             expiresIn = 3600,
-            cNonce = "mock-cNonce"
+            cNonce = "mock-cNonce",
+            cNonceExpiresIn = 3600
         )
 
         val offer = CredentialOffer(
@@ -105,11 +114,13 @@ class PreAuthFlowServiceTest {
         )
 
         val result = PreAuthFlowService().requestCredentials(
-            IssuerMetadataResult(resolvedIssuerMetaData,issuerMetadata),
-            offer,
-            getTxCode,
-            getProofJwt,
-            credentialConfigurationId
+            issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
+            offer = offer,
+            getTokenResponse = mockk(relaxed = true),
+            getTxCode = getTxCode,
+            getProofJwt = getProofJwt,
+            credentialConfigurationId = credentialConfigurationId,
+            downloadTimeoutInMillis = 10000L
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -122,7 +133,7 @@ class PreAuthFlowServiceTest {
             val offer = CredentialOffer(
                 credentialIssuer = "https://mock.issuer",
                 credentialConfigurationIds = listOf(credentialConfigurationId),
-                grants =CredentialOfferGrants(
+                grants = CredentialOfferGrants(
                     preAuthorizedGrant = PreAuthorizedCodeGrant(
                         preAuthorizedCode = "abc123",
                         txCode = TxCode(inputMode = "text")
@@ -132,11 +143,13 @@ class PreAuthFlowServiceTest {
 
             val exception = assertThrows<DownloadFailedException> {
                 PreAuthFlowService().requestCredentials(
-                    IssuerMetadataResult(resolvedIssuerMetaData,issuerMetadata),
-                    offer,
+                    issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
+                    offer = offer,
+                    getTokenResponse = mockk(relaxed = true),
                     getTxCode = null,
-                    getProofJwt,
-                    credentialConfigurationId
+                    getProofJwt = getProofJwt,
+                    credentialConfigurationId = credentialConfigurationId,
+                    downloadTimeoutInMillis = 10000L
                 )
             }
 
@@ -155,14 +168,16 @@ class PreAuthFlowServiceTest {
 
         val exception = assertThrows<InvalidDataProvidedException> {
             PreAuthFlowService().requestCredentials(
-                IssuerMetadataResult(resolvedIssuerMetaData,issuerMetadata),
-                offer,
-                getTxCode,
-                getProofJwt,
-                credentialConfigurationId
+                issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData,issuerMetadata),
+                offer = offer,
+                getTokenResponse =  mockk(relaxed = true),
+                getTxCode = getTxCode,
+                getProofJwt = getProofJwt,
+                credentialConfigurationId = credentialConfigurationId,
+                downloadTimeoutInMillis = 10000L
             )
         }
 
-        assert(exception.message.contains("Token response missing"))
+        assert(exception.message?.contains("Missing pre-authorized grant details") == true)
     }
 }

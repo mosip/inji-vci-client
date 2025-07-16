@@ -27,7 +27,6 @@ class PreAuthFlowService{
         credentialConfigurationId: String,
         getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
-        traceabilityId: String? = null
     ): CredentialResponse {
         val authServerMetadata = AuthServerResolver().resolveForPreAuth(
             issuerMetadata = issuerMetadataResult.issuerMetadata,
@@ -69,7 +68,7 @@ class PreAuthFlowService{
 
         val proof = JWTProof(jwt)
 
-        return CredentialRequestExecutor(traceabilityId).requestCredential(
+        return CredentialRequestExecutor().requestCredential(
             issuerMetadata = issuerMetadataResult.issuerMetadata,
             credentialConfigurationId = credentialConfigurationId,
             proof = proof,

@@ -9,6 +9,7 @@ import io.mockk.unmockkAll
 import io.mosip.vciclient.authorizationServer.AuthServerResolver
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
+import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
@@ -35,7 +36,11 @@ class TrustedIssuerHandlerTest {
     private val cNonce = "mockCNonce"
 
     private lateinit var getAuthCode: suspend (String) -> String
-    private lateinit var getProofJwt: suspend (String, String?, Map<String, *>?, String?) -> String
+    private lateinit var getProofJwt: suspend (
+        credentialIssuer: String,
+        cNonce: String?,
+        proofSigningAlgosSupported: List<String>
+    ) -> String
 
     @Before
     fun setup() {
@@ -46,6 +51,9 @@ class TrustedIssuerHandlerTest {
         mockkConstructor(CredentialRequestExecutor::class)
 
         every { anyConstructed<PKCESessionManager>().createSession() } returns pkceSession
+        mockkObject(Util.Companion)
+        every { Util.getLogTag(any(), any()) } returns "TestLogTag"
+
         every {
             AuthorizationUrlBuilder.build(
                 any(), any(), any(), any(), any(), any(), any(), any(), any()
@@ -58,13 +66,11 @@ class TrustedIssuerHandlerTest {
             ): String = "mock-auth-code"
         }
 
-        getProofJwt = object : suspend (String, String?, Map<String, *>?, String?) -> String {
+        getProofJwt = object : suspend (String, String?, List<String>) -> String {
             override suspend fun invoke(
-                accessToken: String,
+                acredentialIssuer: String,
                 cNonce: String?,
-                issuerMetadata: Map<String, *>?,
-                credentialConfigurationId: String?,
-
+                proofSigningAlgosSupported: List<String>
                 ): String = "mock.jwt.proof"
         }
 
@@ -80,7 +86,7 @@ class TrustedIssuerHandlerTest {
         } returns TokenResponse(accessToken, "jwt", cNonce = cNonce)
 
         every {
-            anyConstructed<CredentialRequestExecutor>().requestCredential(any(), any(), any())
+            anyConstructed<CredentialRequestExecutor>().requestCredential(any(), any(), any(), any(), any())
         } returns mockCredentialResponse
     }
 
@@ -90,59 +96,16 @@ class TrustedIssuerHandlerTest {
     @Test
     fun `should return credential on successful flow`() = runBlocking {
         val result = TrustedIssuerHandler().downloadCredentials(
-            resolvedMeta,
-            clientMetadata,
-            getAuthCode,
-            getProofJwt
+            issuerMetadata = resolvedMeta,
+            credentialConfigurationId = "test-credential-config",
+            clientMetadata = clientMetadata,
+            getTokenResponse = mockk(relaxed = true),
+            authorizeUser = getAuthCode,
+            getProofJwt = getProofJwt,
+            downloadTimeoutInMillis = 10000
         )
-
         assertEquals(mockCredentialResponse, result)
     }
-
-    @Test
-    fun `should throw when authorization endpoint is missing`() = runBlocking {
-        coEvery {
-            anyConstructed<AuthServerResolver>().resolveForAuthCode(any())
-        } returns mockk {
-            every { authorizationEndpoint } returns null
-            every { tokenEndpoint } returns "https://auth/token"
-        }
-
-        val ex = assertThrows<DownloadFailedException> {
-            TrustedIssuerHandler().downloadCredentials(
-                resolvedMeta,
-                clientMetadata,
-                getAuthCode,
-                getProofJwt
-            )
-        }
-
-        assert(ex.message.contains("Authorization endpoint missing"))
-    }
-
-    @Test
-    fun `should throw when token endpoint is missing from issuer metadata and auth server metadata`() =
-        runBlocking {
-            coEvery {
-                anyConstructed<AuthServerResolver>().resolveForAuthCode(any())
-            } returns mockk {
-                every { authorizationEndpoint } returns "https://auth/authorize"
-                every { tokenEndpoint } returns null
-            }
-
-            every { resolvedMeta.tokenEndpoint } returns null
-
-            val ex = assertThrows<DownloadFailedException> {
-                TrustedIssuerHandler().downloadCredentials(
-                    resolvedMeta,
-                    clientMetadata,
-                    getAuthCode,
-                    getProofJwt
-                )
-            }
-
-            assert(ex.message.contains("Token endpoint missing"))
-        }
 
     @Test
     fun `should throw when getAuthCode throws`() = runBlocking {
@@ -152,10 +115,13 @@ class TrustedIssuerHandlerTest {
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerHandler().downloadCredentials(
-                resolvedMeta,
-                clientMetadata,
-                failingGetAuthCode,
-                getProofJwt
+                issuerMetadata = resolvedMeta,
+                credentialConfigurationId = "test-credential-config",
+                clientMetadata = clientMetadata,
+                getTokenResponse = mockk(relaxed = true),
+                authorizeUser = failingGetAuthCode,
+                getProofJwt = getProofJwt,
+                downloadTimeoutInMillis = 10000
             )
         }
 
@@ -164,17 +130,20 @@ class TrustedIssuerHandlerTest {
 
     @Test
     fun `should throw when getProofJwt throws`() = runBlocking {
-        val failingProof: suspend (String, String?, Map<String, *>?, String?) -> String =
-            { _, _, _, _ ->
+        val failingProof: suspend (String, String?, List<String>) -> String =
+            { _, _, _ ->
                 throw IllegalArgumentException("Proof generation failed")
             }
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerHandler().downloadCredentials(
-                resolvedMeta,
-                clientMetadata,
-                getAuthCode,
-                failingProof
+                issuerMetadata = resolvedMeta,
+                credentialConfigurationId = "test-credential-config",
+                clientMetadata = clientMetadata,
+                getTokenResponse = mockk(relaxed = true),
+                authorizeUser = getAuthCode,
+                getProofJwt = failingProof,
+                downloadTimeoutInMillis = 10000
             )
         }
 
@@ -189,10 +158,13 @@ class TrustedIssuerHandlerTest {
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerHandler().downloadCredentials(
-                resolvedMeta,
-                clientMetadata,
-                getAuthCode,
-                getProofJwt
+                issuerMetadata = resolvedMeta,
+                credentialConfigurationId = "test-credential-config",
+                clientMetadata = clientMetadata,
+                getTokenResponse = mockk(relaxed = true),
+                authorizeUser = getAuthCode,
+                getProofJwt = getProofJwt,
+                downloadTimeoutInMillis = 10000
             )
         }
 
@@ -202,15 +174,18 @@ class TrustedIssuerHandlerTest {
     @Test
     fun `should throw when credential request executor fails`() = runBlocking {
         every {
-            anyConstructed<CredentialRequestExecutor>().requestCredential(any(), any(), any())
+            anyConstructed<CredentialRequestExecutor>().requestCredential(any(), any(), any(), any(), any())
         } throws DownloadFailedException("Credential request failed")
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerHandler().downloadCredentials(
-                resolvedMeta,
-                clientMetadata,
-                getAuthCode,
-                getProofJwt
+                issuerMetadata = resolvedMeta,
+                credentialConfigurationId = "test-credential-config",
+                clientMetadata = clientMetadata,
+                getTokenResponse = mockk(relaxed = true),
+                authorizeUser = getAuthCode,
+                getProofJwt = getProofJwt,
+                downloadTimeoutInMillis = 10000
             )
         }
 

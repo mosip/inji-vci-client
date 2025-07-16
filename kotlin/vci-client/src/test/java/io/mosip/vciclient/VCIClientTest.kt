@@ -12,9 +12,10 @@ import io.mosip.vciclient.trustedIssuer.TrustedIssuerHandler
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.VCIClientException
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
+import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
+import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.proof.Proof
-import io.mosip.vciclient.token.TokenRequest
-import io.mosip.vciclient.token.TokenResponse
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -28,10 +29,13 @@ class VCIClientTest {
     private val mockCredentialResponse = mockk<CredentialResponse>()
 
     private lateinit var getTxCode: suspend (String?,String?,Int?) -> String
-    private lateinit var authorizeUserCallback: suspend (authorizationEndpoint: String) -> String
-    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
-    private lateinit var getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
-    val  mockContext = mockk<Context>(relaxed = true)
+    private lateinit var getProofJwt: suspend (
+        credentialIssuer: String,
+        cNonce: String?,
+        proofSigningAlgosSupported: List<String>
+    ) -> String
+    private lateinit var getAuthCode: suspend (authorizationEndpoint: String) -> String
+
     @Before
     fun setup() {
 
@@ -64,11 +68,10 @@ class VCIClientTest {
         }
 
 
-        authorizeUserCallback = object : suspend (String) -> String {
+        getAuthCode = object : suspend (String) -> String {
             override suspend fun invoke(authEndpoint: String): String = "mockAuthCode"
         }
 
-        getTokenResponse = {  _ -> TokenResponse("accessToken", "accessToken") }
     }
 
     @After
@@ -82,7 +85,7 @@ class VCIClientTest {
             credentialOffer = "sample-offer",
             clientMetadata = mockk(),
             getTxCode = getTxCode,
-            authorizeUser = authorizeUserCallback,
+            authorizeUser = getAuthCode,
             getTokenResponse = mockk(relaxed = true),
             getProofJwt = getProofJwt,
             onCheckIssuerTrust = mockk(relaxed = true),
@@ -94,15 +97,35 @@ class VCIClientTest {
 
     @Test
     fun `should return credential when trusted issuer flow succeeds`() = runBlocking {
+
+        mockkConstructor(IssuerMetadataService::class)
+
+        // Create a mock IssuerMetadata result
+        val mockIssuerMetadata = mockk<IssuerMetadata>(relaxed = true)
+        val mockMetadataResult = mockk<IssuerMetadataResult> {
+            every { issuerMetadata } returns mockIssuerMetadata
+        }
+
+        coEvery {
+            anyConstructed<IssuerMetadataService>()
+                .fetchIssuerMetadataResult(any(), any())
+        } returns mockMetadataResult
+
+        coEvery {
+            anyConstructed<TrustedIssuerHandler>().downloadCredentials(
+                any(), any(), any(), any(), any(), any(), any()
+            )
+        } returns mockCredentialResponse
+
         val result = VCIClient("trace-id").requestCredentialFromTrustedIssuer(
             credentialIssuerUri = "https://example.com/issuer",
-            credentialConfigurationId = "SampleCredential",
+            credentialConfigurationId = "config-id",
             clientMetadata = mockk(),
-            authorizeUser = authorizeUserCallback,
+            authorizeUser = getAuthCode,
             getTokenResponse = mockk(relaxed = true),
             getProofJwt = getProofJwt,
+            downloadTimeoutInMillis = 10000
         )
-
         assertEquals(mockCredentialResponse, result)
     }
 
@@ -119,9 +142,11 @@ class VCIClientTest {
                 credentialOffer = "sample-offer",
                 clientMetadata = mockk(),
                 getTxCode = getTxCode,
-                authorizeUser = authorizeUserCallback,
-                getTokenResponse = getTokenResponse,
+                authorizeUser = getAuthCode,
+                getTokenResponse = mockk(relaxed = true),
                 getProofJwt = getProofJwt,
+                onCheckIssuerTrust = mockk(),
+                downloadTimeoutInMillis = 10000
             )
         }
     }
@@ -137,11 +162,12 @@ class VCIClientTest {
         assertThrows<VCIClientException> {
             VCIClient("trace-id").requestCredentialFromTrustedIssuer(
                 credentialIssuerUri = "https://example.com/issuer",
-                credentialConfigurationId = "SampleCredential",
+                credentialConfigurationId = "config-id",
                 clientMetadata = mockk(),
-                authorizeUser = authorizeUserCallback,
+                authorizeUser = getAuthCode,
                 getTokenResponse = mockk(relaxed = true),
                 getProofJwt = getProofJwt,
+                downloadTimeoutInMillis = 10000
             )
         }
     }
