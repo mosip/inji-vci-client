@@ -1,6 +1,7 @@
 package io.mosip.vciclient.credentialOffer
 
 import com.google.gson.JsonNull
+import com.google.gson.JsonPrimitive
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -24,7 +25,7 @@ import org.junit.jupiter.api.assertThrows
 
 class CredentialOfferHandlerTest {
 
-    private val mockCredentialResponse = mockk<CredentialResponse>()
+    private val mockCredentialResponse = CredentialResponse(JsonPrimitive("dummy-credential"), "SampleCredential", "https://issuer.example.com/issuer")
     private val mockCredentialOffer = mockk<CredentialOffer>()
     private val mockIssuerMetadataResult = mockk<IssuerMetadataResult>()
     private val mockClientMetadata = mockk<ClientMetadata>()
