@@ -12,7 +12,7 @@ import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
-import io.mosip.vciclient.preAuthFlow.PreAuthFlowService
+import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
 import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 import kotlinx.coroutines.runBlocking
@@ -40,7 +40,7 @@ class CredentialOfferHandlerTest {
     fun setup() {
         mockkConstructor(CredentialOfferService::class)
         mockkConstructor(IssuerMetadataService::class)
-        mockkConstructor(PreAuthFlowService::class)
+        mockkConstructor(PreAuthCodeFlowService::class)
         mockkConstructor(AuthorizationCodeFlowService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns mockCredentialOffer
         coEvery {
@@ -85,7 +85,7 @@ class CredentialOfferHandlerTest {
         )
 
         coEvery {
-            anyConstructed<PreAuthFlowService>().requestCredentials(
+            anyConstructed<PreAuthCodeFlowService>().requestCredentials(
                 any(),
                 any(),
                 any(),
@@ -147,7 +147,7 @@ class CredentialOfferHandlerTest {
         )
 
         coEvery {
-            anyConstructed<PreAuthFlowService>().requestCredentials(
+            anyConstructed<PreAuthCodeFlowService>().requestCredentials(
                 any(),
                 any(),
                 any(),

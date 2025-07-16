@@ -6,7 +6,7 @@ import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
-import io.mosip.vciclient.preAuthFlow.PreAuthFlowService
+import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
 import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 
@@ -42,7 +42,7 @@ class CredentialOfferHandler {
 
         val credentialResponse = when {
             offer.isPreAuthorizedFlow() -> {
-                PreAuthFlowService().requestCredentials(
+                PreAuthCodeFlowService().requestCredentials(
                     issuerMetadataResult = issuerMetadataResponse,
                     offer = offer,
                     getTokenResponse = getTokenResponse,

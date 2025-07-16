@@ -1,4 +1,4 @@
-package io.mosip.vciclient.preAuthFlow
+package io.mosip.vciclient.preAuthCodeFlow
 
 import extractProofSigningAlgorithms
 import io.mosip.vciclient.authorizationServer.AuthServerResolver
@@ -14,7 +14,7 @@ import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
 
-class PreAuthFlowService{
+class PreAuthCodeFlowService{
     suspend fun requestCredentials(
         issuerMetadataResult: IssuerMetadataResult,
         offer: CredentialOffer,

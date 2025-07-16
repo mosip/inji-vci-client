@@ -1,4 +1,4 @@
-package io.mosip.vciclient.preAuthFlow
+package io.mosip.vciclient.preAuthCodeFlow
 
 import io.mockk.coEvery
 import io.mockk.every
@@ -27,7 +27,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
-class PreAuthFlowServiceTest {
+class PreAuthCodeFlowServiceTest {
 
     private val mockCredentialResponse = mockk<CredentialResponse>()
     private val resolvedIssuerMetaData = mockk<IssuerMetadata>()
@@ -113,7 +113,7 @@ class PreAuthFlowServiceTest {
             )
         )
 
-        val result = PreAuthFlowService().requestCredentials(
+        val result = PreAuthCodeFlowService().requestCredentials(
             issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
             offer = offer,
             getTokenResponse = mockk(relaxed = true),
@@ -142,7 +142,7 @@ class PreAuthFlowServiceTest {
             )
 
             val exception = assertThrows<DownloadFailedException> {
-                PreAuthFlowService().requestCredentials(
+                PreAuthCodeFlowService().requestCredentials(
                     issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
                     offer = offer,
                     getTokenResponse = mockk(relaxed = true),
@@ -172,7 +172,7 @@ class PreAuthFlowServiceTest {
         )
 
         val exception = assertThrows<DownloadFailedException> {
-            PreAuthFlowService().requestCredentials(
+            PreAuthCodeFlowService().requestCredentials(
                 issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData,issuerMetadata),
                 offer = offer,
                 getTokenResponse =  mockk(relaxed = true),
@@ -198,7 +198,7 @@ class PreAuthFlowServiceTest {
 
         val exception = assertThrows<InvalidDataProvidedException> {
             runBlocking {
-                PreAuthFlowService().requestCredentials(
+                PreAuthCodeFlowService().requestCredentials(
                     issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
                     offer = offer,
                     getTokenResponse = mockk(relaxed = true),
