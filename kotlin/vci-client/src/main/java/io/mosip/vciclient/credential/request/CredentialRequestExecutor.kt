@@ -1,4 +1,4 @@
-package io.mosip.vciclient.credential.request;
+package io.mosip.vciclient.credential.request
 
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.common.Util
@@ -17,9 +17,9 @@ import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
-class CredentialRequestExecutor(traceabilityId: String? = null) {
+class CredentialRequestExecutor {
 
-    private val logTag = Util.getLogTag(javaClass.simpleName, traceabilityId)
+    private val logTag = Util.getLogTag(javaClass.simpleName)
     private val logger = Logger.getLogger(logTag)
 
     @Throws(
@@ -61,7 +61,8 @@ class CredentialRequestExecutor(traceabilityId: String? = null) {
             logger.info("credential downloaded successfully!")
 
             if (responseBody != "") {
-                val credentialResponse =  JsonUtils.deserialize(responseBody, CredentialResponse::class.java)
+                val credentialResponse =
+                    JsonUtils.deserialize(responseBody, CredentialResponse::class.java)
                 credentialResponse?.credentialConfigurationId = credentialConfigurationId
                 credentialResponse?.credentialIssuer = issuerMetadata.credentialIssuer
                 return credentialResponse

@@ -16,6 +16,8 @@ import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
+import io.mosip.vciclient.common.Util
+import io.mosip.vciclient.common.Util.Companion.getLogTag
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
@@ -55,6 +57,9 @@ class AuthorizationCodeFlowServiceTest {
         mockkConstructor(TokenService::class)
         mockkConstructor(CredentialRequestExecutor::class)
         mockkConstructor(JWTProof::class)
+        mockkObject(Util.Companion::class)
+
+        every { getLogTag(className = any()) } returns "VCIClientTest"
 
         every { anyConstructed<PKCESessionManager>().createSession() } returns pkceSession
 

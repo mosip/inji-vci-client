@@ -52,7 +52,7 @@ class CredentialRequestExecutorTest {
         mockWebServer.enqueue(
             MockResponse().setBody(json).setResponseCode(200).addHeader("Content-Type", "application/json")
         )
-        val response = CredentialRequestExecutor("test").requestCredential(
+        val response = CredentialRequestExecutor().requestCredential(
             issuerMetadata = resolvedMeta,
             credentialConfigurationId = "SampleCredential",
             proof = mockProof,
@@ -67,7 +67,7 @@ class CredentialRequestExecutorTest {
     fun `should return null when response body is empty`() {
         mockWebServer.enqueue(MockResponse().setBody("").setResponseCode(200))
 
-        val result = CredentialRequestExecutor("test").requestCredential(
+        val result = CredentialRequestExecutor().requestCredential(
             resolvedMeta,"SampleCredential", mockProof, accessToken
         )
 
@@ -81,7 +81,7 @@ class CredentialRequestExecutorTest {
         )
 
         val ex = assertThrows<DownloadFailedException> {
-            CredentialRequestExecutor("test").requestCredential(
+            CredentialRequestExecutor().requestCredential(
                 resolvedMeta,"SampleCredential", mockProof, accessToken
             )
         }
@@ -96,7 +96,7 @@ class CredentialRequestExecutorTest {
         )
 
         val ex = assertThrows<NetworkRequestTimeoutException> {
-            CredentialRequestExecutor("test").requestCredential(
+            CredentialRequestExecutor().requestCredential(
                 resolvedMeta,"SampleCredential", mockProof, accessToken, downloadTimeoutInMillis = 500
             )
         }
