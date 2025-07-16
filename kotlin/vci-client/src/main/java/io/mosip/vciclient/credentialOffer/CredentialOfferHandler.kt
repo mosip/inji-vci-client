@@ -40,7 +40,7 @@ class CredentialOfferHandler {
             onCheckIssuerTrust = onCheckIssuerTrust
         )
 
-        return when {
+        val credentialResponse = when {
             offer.isPreAuthorizedFlow() -> {
                 PreAuthFlowService().requestCredentials(
                     issuerMetadataResult = issuerMetadataResponse,
@@ -52,6 +52,7 @@ class CredentialOfferHandler {
                     downloadTimeoutInMillis = downloadTimeoutInMillis
                 )
             }
+
             offer.isAuthorizationCodeFlow() -> {
                 AuthorizationCodeFlowService().requestCredentials(
                     issuerMetadataResult = issuerMetadataResponse,
@@ -64,10 +65,15 @@ class CredentialOfferHandler {
                     downloadTimeOutInMillis = downloadTimeoutInMillis
                 )
             }
+
             else -> {
                 throw OfferFetchFailedException("Credential offer does not contain a supported grant type")
             }
         }
+        if(credentialResponse.credential.isJsonNull){
+            throw OfferFetchFailedException("No credential response found")
+        }
+        return credentialResponse
     }
 
     private suspend fun ensureIssuerTrust(

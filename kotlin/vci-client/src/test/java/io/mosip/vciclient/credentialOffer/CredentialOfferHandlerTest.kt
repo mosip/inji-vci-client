@@ -1,7 +1,6 @@
 package io.mosip.vciclient.credentialOffer
 
-import com.google.gson.JsonElement
-import com.google.gson.JsonPrimitive
+import com.google.gson.JsonNull
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -9,12 +8,7 @@ import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
-import io.mosip.vciclient.credentialOffer.CredentialOffer
-import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
-import io.mosip.vciclient.credentialOffer.CredentialOfferService
-import io.mosip.vciclient.credentialOffer.PreAuthorizedCodeGrant
 import io.mosip.vciclient.credential.response.CredentialResponse
-import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
 import io.mosip.vciclient.exception.OfferFetchFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
@@ -37,7 +31,7 @@ class CredentialOfferHandlerTest {
 
     private lateinit var txCode: suspend (String?, String?, Int?) -> String
     private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
-    private lateinit var getAuthCode: suspend (String) -> String
+    private lateinit var authorizeUser: suspend (String) -> String
     private lateinit var getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
     private lateinit var onCheckIssuerTrust: suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean
 
@@ -62,7 +56,7 @@ class CredentialOfferHandlerTest {
                 p1: String?,p2:String?,p3:Int?
             ): String = "mock-auth-code"
         }
-        getAuthCode = object : suspend (String) -> String {
+        authorizeUser = object : suspend (String) -> String {
             override suspend fun invoke(
                 authEndpoint: String,
             ): String = "mock-auth-code"
@@ -108,7 +102,7 @@ class CredentialOfferHandlerTest {
             credentialOffer = "some-offer",
             clientMetadata = mockClientMetadata,
             getTxCode = txCode,
-            authorizeUser = getAuthCode,
+            authorizeUser = authorizeUser,
             getTokenResponse = getTokenResponse,
             getProofJwt = getProofJwt,
             onCheckIssuerTrust=onCheckIssuerTrust,
@@ -133,7 +127,7 @@ class CredentialOfferHandlerTest {
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
                 getTxCode = txCode,
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getTokenResponse = getTokenResponse,
                 getProofJwt = getProofJwt,
                 onCheckIssuerTrust=onCheckIssuerTrust,
@@ -161,7 +155,7 @@ class CredentialOfferHandlerTest {
                 any(),
                 any()
             )
-        } returns CredentialResponse(JsonPrimitive("credential"), "SampleCredential", "https://issuer.example.com/issuer")
+        } returns CredentialResponse(JsonNull.INSTANCE, "SampleCredential", "https://issuer.example.com/issuer")
 
         mockkConstructor(CredentialOfferService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
@@ -171,7 +165,7 @@ class CredentialOfferHandlerTest {
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
                 getTxCode = txCode,
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getTokenResponse = getTokenResponse,
                 getProofJwt = getProofJwt,
                 onCheckIssuerTrust=onCheckIssuerTrust,
@@ -201,7 +195,7 @@ class CredentialOfferHandlerTest {
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
                 getTxCode = txCode,
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getTokenResponse = getTokenResponse,
                 getProofJwt = getProofJwt,
                 onCheckIssuerTrust=onCheckIssuerTrust,
