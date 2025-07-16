@@ -1,6 +1,5 @@
 package io.mosip.vciclient.authorizationCodeFlow
 
-import extractProofSigningAlgorithms
 import io.mosip.vciclient.authorizationServer.AuthServerMetadata
 import io.mosip.vciclient.authorizationServer.AuthServerResolver
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
@@ -52,14 +51,10 @@ internal class AuthorizationCodeFlowService(
                 getTokenResponse = getTokenResponse
             )
 
-            val proofSigningAlgosSupported = extractProofSigningAlgorithms(
-                issuerMetadataResult.raw as Map<String, Any>,
-                credentialConfigurationId
-            )
             val jwt = getProofJwt(
                 issuerMetadataResult.issuerMetadata.credentialIssuer,
                 token.cNonce,
-                proofSigningAlgosSupported
+                issuerMetadataResult.extractJwtProofSigningAlgorithms(credentialConfigurationId)
             )
 
             val proof = JWTProof(jwt)

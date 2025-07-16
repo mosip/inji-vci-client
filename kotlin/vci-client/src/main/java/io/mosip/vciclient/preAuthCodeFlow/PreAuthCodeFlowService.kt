@@ -1,6 +1,5 @@
 package io.mosip.vciclient.preAuthCodeFlow
 
-import extractProofSigningAlgorithms
 import io.mosip.vciclient.authorizationServer.AuthServerResolver
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.request.CredentialRequestExecutor
@@ -14,7 +13,7 @@ import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
 
-class PreAuthCodeFlowService{
+class PreAuthCodeFlowService {
     suspend fun requestCredentials(
         issuerMetadataResult: IssuerMetadataResult,
         offer: CredentialOffer,
@@ -55,15 +54,10 @@ class PreAuthCodeFlowService{
             txCode = txCode
         )
 
-        val proofSigningAlgosSupported = extractProofSigningAlgorithms(
-            issuerMetadataResult.raw as Map<String, Any>,
-            credentialConfigurationId
-        )
-
         val jwt = getProofJwt(
             issuerMetadataResult.issuerMetadata.credentialIssuer,
             token.cNonce,
-            proofSigningAlgosSupported
+            issuerMetadataResult.extractJwtProofSigningAlgorithms(credentialConfigurationId)
         )
 
         val proof = JWTProof(jwt)
