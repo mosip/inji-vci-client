@@ -1,7 +1,7 @@
 package io.mosip.vciclient.authorizationCodeFlow
 
-import io.mosip.vciclient.authorizationServer.AuthServerMetadata
-import io.mosip.vciclient.authorizationServer.AuthServerResolver
+import io.mosip.vciclient.authorizationServer.AuthorizationServerMetadata
+import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.constants.Constants
@@ -18,7 +18,7 @@ import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
 
 internal class AuthorizationCodeFlowService(
-    private val authServerResolver: AuthServerResolver = AuthServerResolver(),
+    private val authorizationServerResolver: AuthorizationServerResolver = AuthorizationServerResolver(),
     private val tokenService: TokenService = TokenService(),
     private val credentialExecutor: CredentialRequestExecutor = CredentialRequestExecutor(),
     private val pkceSessionManager: PKCESessionManager = PKCESessionManager()
@@ -37,13 +37,13 @@ internal class AuthorizationCodeFlowService(
         try {
             val pkceSession = pkceSessionManager.createSession()
 
-            val authServerMetadata = authServerResolver.resolveForAuthCode(
+            val authorizationServerMetadata = authorizationServerResolver.resolveForAuthCode(
                 issuerMetadataResult.issuerMetadata,
                 credentialOffer
             )
 
             val token = performAuthorizationAndGetToken(
-                authServerMetadata = authServerMetadata,
+                authorizationServerMetadata = authorizationServerMetadata,
                 issuerMetadata = issuerMetadataResult.issuerMetadata,
                 clientMetadata = clientMetadata,
                 authorizeUser = authorizeUser,
@@ -73,17 +73,17 @@ internal class AuthorizationCodeFlowService(
     }
 
     private suspend fun performAuthorizationAndGetToken(
-        authServerMetadata: AuthServerMetadata,
+        authorizationServerMetadata: AuthorizationServerMetadata,
         issuerMetadata: IssuerMetadata,
         clientMetadata: ClientMetadata,
         authorizeUser: suspend (authorizationEndpoint: String) -> String,
         pkceSession: PKCESessionManager.PKCESession,
         getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
     ): TokenResponse {
-        val authorizationEndpoint = authServerMetadata.authorizationEndpoint
+        val authorizationEndpoint = authorizationServerMetadata.authorizationEndpoint
             ?: throw DownloadFailedException("Missing authorization endpoint")
 
-        val tokenEndpoint = issuerMetadata.tokenEndpoint ?: authServerMetadata.tokenEndpoint
+        val tokenEndpoint = issuerMetadata.tokenEndpoint ?: authorizationServerMetadata.tokenEndpoint
         ?: throw DownloadFailedException("Missing token endpoint")
 
         val authUrl = AuthorizationUrlBuilder.build(

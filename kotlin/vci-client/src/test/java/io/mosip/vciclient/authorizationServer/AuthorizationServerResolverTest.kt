@@ -8,7 +8,7 @@ import io.mockk.unmockkAll
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
 import io.mosip.vciclient.credentialOffer.PreAuthCodeGrant
-import io.mosip.vciclient.exception.AuthServerDiscoveryException
+import io.mosip.vciclient.exception.AuthorizationServerDiscoveryException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -17,27 +17,27 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
-class AuthServerResolverTest {
+class AuthorizationServerResolverTest {
 
     private val credentialIssuer = "https://issuer.example.com"
     private val resolvedMeta = mockk<IssuerMetadata>(relaxed = true)
     private val offer = mockk<CredentialOffer>(relaxed = true)
-    private val metadataWithAuth = AuthServerMetadata(
+    private val metadataWithAuth = AuthorizationServerMetadata(
         issuer = "https://auth.single.com",
         authorizationEndpoint = "https://auth.example.com"
     )
-    private val metadataWithPreAuth = AuthServerMetadata(
+    private val metadataWithPreAuth = AuthorizationServerMetadata(
         issuer = "https://preauth.com",
         authorizationEndpoint = "https://auth.example.com"
     )
-    private val metadataWithIssuer = AuthServerMetadata(
+    private val metadataWithIssuer = AuthorizationServerMetadata(
         issuer = "https://issuer.example.com",
         authorizationEndpoint = "https://auth.example.com"
     )
 
     @Before
     fun setup() {
-        mockkConstructor(AuthServerDiscoveryService::class)
+        mockkConstructor(AuthorizationServerDiscoveryService::class)
     }
 
     @After
@@ -48,9 +48,9 @@ class AuthServerResolverTest {
         every { resolvedMeta.authorizationServers } returns listOf("https://auth.single.com")
         every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
-        coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://auth.single.com") } returns metadataWithAuth
+        coEvery { anyConstructed<AuthorizationServerDiscoveryService>().discover("https://auth.single.com") } returns metadataWithAuth
 
-        val result = AuthServerResolver().resolveForAuthCode(resolvedMeta, offer)
+        val result = AuthorizationServerResolver().resolveForAuthCode(resolvedMeta, offer)
         assertEquals("https://auth.example.com", result.authorizationEndpoint)
     }
 
@@ -66,9 +66,9 @@ class AuthServerResolverTest {
             authorizationCodeGrant = null
         )
 
-        coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://preauth.com") } returns metadataWithPreAuth
+        coEvery { anyConstructed<AuthorizationServerDiscoveryService>().discover("https://preauth.com") } returns metadataWithPreAuth
 
-        val result = AuthServerResolver().resolveForPreAuth(resolvedMeta, offer)
+        val result = AuthorizationServerResolver().resolveForPreAuth(resolvedMeta, offer)
         assertEquals("https://auth.example.com", result.authorizationEndpoint)
     }
 
@@ -77,9 +77,9 @@ class AuthServerResolverTest {
         every { resolvedMeta.authorizationServers } returns null
         every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
-        coEvery { anyConstructed<AuthServerDiscoveryService>().discover(credentialIssuer) } returns metadataWithIssuer
+        coEvery { anyConstructed<AuthorizationServerDiscoveryService>().discover(credentialIssuer) } returns metadataWithIssuer
 
-        val result = AuthServerResolver().resolveForAuthCode(resolvedMeta)
+        val result = AuthorizationServerResolver().resolveForAuthCode(resolvedMeta)
         assertEquals("https://auth.example.com", result.authorizationEndpoint)
     }
 
@@ -91,12 +91,12 @@ class AuthServerResolverTest {
         )
         every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
-        coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://fail.com") } throws RuntimeException(
+        coEvery { anyConstructed<AuthorizationServerDiscoveryService>().discover("https://fail.com") } throws RuntimeException(
             "fail"
         )
-        coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://auth.single.com") } returns metadataWithAuth
+        coEvery { anyConstructed<AuthorizationServerDiscoveryService>().discover("https://auth.single.com") } returns metadataWithAuth
 
-        val result = AuthServerResolver().resolveForAuthCode(resolvedMeta, offer)
+        val result = AuthorizationServerResolver().resolveForAuthCode(resolvedMeta, offer)
         assertEquals("https://auth.example.com", result.authorizationEndpoint)
     }
 
@@ -108,12 +108,12 @@ class AuthServerResolverTest {
         )
         every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
-        coEvery { anyConstructed<AuthServerDiscoveryService>().discover(any()) } throws RuntimeException(
+        coEvery { anyConstructed<AuthorizationServerDiscoveryService>().discover(any()) } throws RuntimeException(
             "fail"
         )
 
-        val ex = assertThrows<AuthServerDiscoveryException> {
-            AuthServerResolver().resolveForAuthCode(resolvedMeta, offer)
+        val ex = assertThrows<AuthorizationServerDiscoveryException> {
+            AuthorizationServerResolver().resolveForAuthCode(resolvedMeta, offer)
         }
 
         assert(ex.message.contains("None of the authorization servers responded"))
@@ -124,11 +124,11 @@ class AuthServerResolverTest {
         every { resolvedMeta.authorizationServers } returns listOf("https://empty.com")
         every { resolvedMeta.credentialIssuer } returns credentialIssuer
 
-        val badMetadata = AuthServerMetadata(issuer = "https://empty.com", authorizationEndpoint = null)
-        coEvery { anyConstructed<AuthServerDiscoveryService>().discover("https://empty.com") } returns badMetadata
+        val badMetadata = AuthorizationServerMetadata(issuer = "https://empty.com", authorizationEndpoint = null)
+        coEvery { anyConstructed<AuthorizationServerDiscoveryService>().discover("https://empty.com") } returns badMetadata
 
-        val ex = assertThrows<AuthServerDiscoveryException> {
-            AuthServerResolver().resolveForAuthCode(resolvedMeta, offer)
+        val ex = assertThrows<AuthorizationServerDiscoveryException> {
+            AuthorizationServerResolver().resolveForAuthCode(resolvedMeta, offer)
         }
 
         assert(ex.message.contains("Missing authorization_endpoint"))

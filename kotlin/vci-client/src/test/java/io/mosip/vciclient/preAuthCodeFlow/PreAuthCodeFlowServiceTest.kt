@@ -6,7 +6,7 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import io.mosip.vciclient.authorizationServer.AuthServerResolver
+import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
@@ -39,7 +39,7 @@ class PreAuthCodeFlowServiceTest {
 
     @Before
     fun setup() {
-        mockkConstructor(AuthServerResolver::class)
+        mockkConstructor(AuthorizationServerResolver::class)
         mockkConstructor(TokenService::class)
         mockkConstructor(CredentialRequestExecutor::class)
         mockkObject(Util.Companion)
@@ -50,7 +50,7 @@ class PreAuthCodeFlowServiceTest {
         every { resolvedIssuerMetaData.credentialIssuer } returns "https://mock.issuer"
 
         coEvery {
-            anyConstructed<AuthServerResolver>().resolveForPreAuth(any(), any())
+            anyConstructed<AuthorizationServerResolver>().resolveForPreAuth(any(), any())
         } returns mockk {
             every { tokenEndpoint } returns "https://mock.token.endpoint"
         }
@@ -159,7 +159,7 @@ class PreAuthCodeFlowServiceTest {
     @Test
     fun `should throw error when token endpoint is missing`() = runBlocking {
         coEvery {
-            anyConstructed<AuthServerResolver>().resolveForPreAuth(any(), any())
+            anyConstructed<AuthorizationServerResolver>().resolveForPreAuth(any(), any())
         } returns mockk {
             every { tokenEndpoint } returns null
         }
@@ -183,7 +183,7 @@ class PreAuthCodeFlowServiceTest {
             )
         }
 
-        assertEquals("Failed to download Credential: Token endpoint is missing in AuthServer metadata.",exception.message)
+        assertEquals("Failed to download Credential: Token endpoint is missing in Authorization Server metadata.",exception.message)
     }
 
     @Test

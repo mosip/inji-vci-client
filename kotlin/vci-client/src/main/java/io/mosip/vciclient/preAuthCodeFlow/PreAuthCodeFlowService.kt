@@ -1,6 +1,6 @@
 package io.mosip.vciclient.preAuthCodeFlow
 
-import io.mosip.vciclient.authorizationServer.AuthServerResolver
+import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
@@ -27,13 +27,13 @@ class PreAuthCodeFlowService {
         getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {
-        val authServerMetadata = AuthServerResolver().resolveForPreAuth(
+        val authorizationServerMetadata = AuthorizationServerResolver().resolveForPreAuth(
             issuerMetadata = issuerMetadataResult.issuerMetadata,
             credentialOffer = offer
         )
 
-        val tokenEndpoint = authServerMetadata.tokenEndpoint
-            ?: throw DownloadFailedException("Token endpoint is missing in AuthServer metadata.")
+        val tokenEndpoint = authorizationServerMetadata.tokenEndpoint
+            ?: throw DownloadFailedException("Token endpoint is missing in Authorization Server metadata.")
 
         val grant = offer.grants?.preAuthorizedGrant
             ?: throw InvalidDataProvidedException("Missing pre-authorized grant details.")

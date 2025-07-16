@@ -4,7 +4,7 @@ import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mosip.vciclient.common.JsonUtils
-import io.mosip.vciclient.exception.AuthServerDiscoveryException
+import io.mosip.vciclient.exception.AuthorizationServerDiscoveryException
 import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.runBlocking
@@ -15,7 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
-class AuthServerDiscoveryServiceTest {
+class AuthorizationServerDiscoveryServiceTest {
 
     private val baseUrl = "https://example.com"
     private val oauthUrl = "$baseUrl/.well-known/oauth-authorization-server"
@@ -35,7 +35,7 @@ class AuthServerDiscoveryServiceTest {
 
     @Test
     fun `should return metadata when oauth discovery succeeds`() = runBlocking {
-        val expected = AuthServerMetadata(
+        val expected = AuthorizationServerMetadata(
             issuer = "example", authorizationEndpoint = "https://example.com/auth"
         )
 
@@ -45,17 +45,17 @@ class AuthServerDiscoveryServiceTest {
 
         every {
             JsonUtils.deserialize(
-                mockResponseBody, AuthServerMetadata::class.java
+                mockResponseBody, AuthorizationServerMetadata::class.java
             )
         } returns expected
 
-        val result = AuthServerDiscoveryService().discover(baseUrl)
+        val result = AuthorizationServerDiscoveryService().discover(baseUrl)
         assertEquals(expected.authorizationEndpoint, result.authorizationEndpoint)
     }
 
     @Test
     fun `should return metadata when oauth fails and openid succeeds`() = runBlocking {
-        val expected = AuthServerMetadata(
+        val expected = AuthorizationServerMetadata(
             issuer = "example", authorizationEndpoint = "https://example.com/auth"
         )
 
@@ -69,11 +69,11 @@ class AuthServerDiscoveryServiceTest {
 
         every {
             JsonUtils.deserialize(
-                mockResponseBody, AuthServerMetadata::class.java
+                mockResponseBody, AuthorizationServerMetadata::class.java
             )
         } returns expected
 
-        val result = AuthServerDiscoveryService().discover(baseUrl)
+        val result = AuthorizationServerDiscoveryService().discover(baseUrl)
         assertEquals(expected.authorizationEndpoint, result.authorizationEndpoint)
     }
 
@@ -87,8 +87,8 @@ class AuthServerDiscoveryServiceTest {
             NetworkManager.sendRequest(openidUrl, HttpMethod.GET, any(), any(), 10000)
         } throws RuntimeException("OpenID down")
 
-        val ex = assertThrows<AuthServerDiscoveryException> {
-            AuthServerDiscoveryService().discover(baseUrl)
+        val ex = assertThrows<AuthorizationServerDiscoveryException> {
+            AuthorizationServerDiscoveryService().discover(baseUrl)
         }
 
         assertTrue(
@@ -106,8 +106,8 @@ class AuthServerDiscoveryServiceTest {
             NetworkManager.sendRequest(openidUrl, HttpMethod.GET, any(), any(), 10000)
         } returns io.mosip.vciclient.networkManager.NetworkResponse("", null)
 
-        val ex = assertThrows<AuthServerDiscoveryException> {
-            AuthServerDiscoveryService().discover(baseUrl)
+        val ex = assertThrows<AuthorizationServerDiscoveryException> {
+            AuthorizationServerDiscoveryService().discover(baseUrl)
         }
 
         assertTrue(

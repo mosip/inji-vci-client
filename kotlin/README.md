@@ -114,17 +114,17 @@ val metadata = IssuerMetadata(
 All exceptions thrown by the library are subclasses of `VCIClientException`.  
 They carry structured error codes like `VCI-001`, `VCI-002` etc., to help consumers identify and recover from failures.
 
-| Code    | Exception Type                   | Description                             |
-|---------|----------------------------------|-----------------------------------------|
-| VCI-001 | `AuthServerDiscoveryException`   | Failed to discover authorization server |
-| VCI-002 | `DownloadFailedException`        | Failed to download Credential issuer    |
-| VCI-003 | `InvalidAccessTokenException`    | Access token is invalid                 |
-| VCI-004 | `InvalidDataProvidedException`   | Required details not provided           |
-| VCI-005 | `InvalidPublicKeyException`      | Invalid public key passed metadata      |
-| VCI-006 | `NetworkRequestFailedException`  | Network request failed                  |
-| VCI-007 | `NetworkRequestTimeoutException` | Network request timed-out               |
-| VCI-008 | `OfferFetchFailedException`      | Failed  to fetch credentialOffer        |
-| VCI-009 | `IssuerMetadataFetchException`   | Failed to fetch issuerMetadata          |
+| Code    | Exception Type                          | Description                             |
+|---------|-----------------------------------------|-----------------------------------------|
+| VCI-001 | `AuthorizationServerDiscoveryException` | Failed to discover authorization server |
+| VCI-002 | `DownloadFailedException`               | Failed to download Credential issuer    |
+| VCI-003 | `InvalidAccessTokenException`           | Access token is invalid                 |
+| VCI-004 | `InvalidDataProvidedException`          | Required details not provided           |
+| VCI-005 | `InvalidPublicKeyException`             | Invalid public key passed metadata      |
+| VCI-006 | `NetworkRequestFailedException`         | Network request failed                  |
+| VCI-007 | `NetworkRequestTimeoutException`        | Network request timed-out               |
+| VCI-008 | `OfferFetchFailedException`             | Failed  to fetch credentialOffer        |
+| VCI-009 | `IssuerMetadataFetchException`          | Failed to fetch issuerMetadata          |
 
 
 ---

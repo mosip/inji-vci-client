@@ -6,7 +6,7 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import io.mosip.vciclient.authorizationServer.AuthServerResolver
+import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.common.Util
@@ -44,7 +44,7 @@ class TrustedIssuerFlowHandlerTest {
 
     @Before
     fun setup() {
-        mockkConstructor(AuthServerResolver::class)
+        mockkConstructor(AuthorizationServerResolver::class)
         mockkConstructor(PKCESessionManager::class)
         mockkObject(AuthorizationUrlBuilder)
         mockkConstructor(TokenService::class)
@@ -75,7 +75,7 @@ class TrustedIssuerFlowHandlerTest {
         }
 
         coEvery {
-            anyConstructed<AuthServerResolver>().resolveForAuthCode(any())
+            anyConstructed<AuthorizationServerResolver>().resolveForAuthCode(any())
         } returns mockk {
             every { authorizationEndpoint } returns "https://auth/authorize"
             every { tokenEndpoint } returns "https://auth/token"

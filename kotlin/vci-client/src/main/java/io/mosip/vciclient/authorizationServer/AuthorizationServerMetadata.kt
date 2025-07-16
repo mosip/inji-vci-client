@@ -2,7 +2,7 @@ package io.mosip.vciclient.authorizationServer
 
 import com.google.gson.annotations.SerializedName
 
-data class AuthServerMetadata(
+data class AuthorizationServerMetadata(
     @SerializedName("issuer")
     val issuer: String,
 

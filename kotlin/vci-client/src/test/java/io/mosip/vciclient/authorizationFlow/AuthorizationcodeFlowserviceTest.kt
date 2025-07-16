@@ -8,8 +8,8 @@ import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
-import io.mosip.vciclient.authorizationServer.AuthServerMetadata
-import io.mosip.vciclient.authorizationServer.AuthServerResolver
+import io.mosip.vciclient.authorizationServer.AuthorizationServerMetadata
+import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credential.request.CredentialRequestExecutor
@@ -55,7 +55,7 @@ class AuthorizationCodeFlowServiceTest {
 
         mockkConstructor(PKCESessionManager::class)
         mockkConstructor(CredentialRequestExecutor::class)
-        mockkConstructor(AuthServerResolver::class)
+        mockkConstructor(AuthorizationServerResolver::class)
         mockkObject(AuthorizationUrlBuilder)
         mockkConstructor(TokenService::class)
         mockkConstructor(CredentialRequestExecutor::class)
@@ -65,11 +65,11 @@ class AuthorizationCodeFlowServiceTest {
         every { anyConstructed<CredentialRequestExecutor>().requestCredential(any(), any(), any(), any(), any()) } returns mockCredentialResponse
 
         coEvery {
-            anyConstructed<AuthServerResolver>().resolveForAuthCode(
+            anyConstructed<AuthorizationServerResolver>().resolveForAuthCode(
                 any(),
                 any()
             )
-        } returns mockk<AuthServerMetadata> {
+        } returns mockk<AuthorizationServerMetadata> {
             every { authorizationEndpoint } returns "https://auth.example.com"
             every { tokenEndpoint } returns "https://token.example.com"
         }
