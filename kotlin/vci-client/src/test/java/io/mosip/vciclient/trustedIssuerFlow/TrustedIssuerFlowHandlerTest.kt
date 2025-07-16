@@ -1,4 +1,4 @@
-package io.mosip.vciclient.trustedIssuer
+package io.mosip.vciclient.trustedIssuerFlow
 
 import io.mockk.coEvery
 import io.mockk.every
@@ -25,7 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
-class TrustedIssuerHandlerTest {
+class TrustedIssuerFlowHandlerTest {
 
     private val mockCredentialResponse = mockk<CredentialResponse>()
     private val resolvedMeta = mockk<IssuerMetadata>(relaxed = true)
@@ -95,7 +95,7 @@ class TrustedIssuerHandlerTest {
 
     @Test
     fun `should return credential on successful flow`() = runBlocking {
-        val result = TrustedIssuerHandler().downloadCredentials(
+        val result = TrustedIssuerFlowHandler().downloadCredentials(
             issuerMetadata = resolvedMeta,
             credentialConfigurationId = "test-credential-config",
             clientMetadata = clientMetadata,
@@ -114,7 +114,7 @@ class TrustedIssuerHandlerTest {
         }
 
         val ex = assertThrows<DownloadFailedException> {
-            TrustedIssuerHandler().downloadCredentials(
+            TrustedIssuerFlowHandler().downloadCredentials(
                 issuerMetadata = resolvedMeta,
                 credentialConfigurationId = "test-credential-config",
                 clientMetadata = clientMetadata,
@@ -136,7 +136,7 @@ class TrustedIssuerHandlerTest {
             }
 
         val ex = assertThrows<DownloadFailedException> {
-            TrustedIssuerHandler().downloadCredentials(
+            TrustedIssuerFlowHandler().downloadCredentials(
                 issuerMetadata = resolvedMeta,
                 credentialConfigurationId = "test-credential-config",
                 clientMetadata = clientMetadata,
@@ -157,7 +157,7 @@ class TrustedIssuerHandlerTest {
         } throws DownloadFailedException("Token error")
 
         val ex = assertThrows<DownloadFailedException> {
-            TrustedIssuerHandler().downloadCredentials(
+            TrustedIssuerFlowHandler().downloadCredentials(
                 issuerMetadata = resolvedMeta,
                 credentialConfigurationId = "test-credential-config",
                 clientMetadata = clientMetadata,
@@ -178,7 +178,7 @@ class TrustedIssuerHandlerTest {
         } throws DownloadFailedException("Credential request failed")
 
         val ex = assertThrows<DownloadFailedException> {
-            TrustedIssuerHandler().downloadCredentials(
+            TrustedIssuerFlowHandler().downloadCredentials(
                 issuerMetadata = resolvedMeta,
                 credentialConfigurationId = "test-credential-config",
                 clientMetadata = clientMetadata,

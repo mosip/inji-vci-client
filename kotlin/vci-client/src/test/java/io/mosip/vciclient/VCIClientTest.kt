@@ -1,6 +1,5 @@
 package io.mosip.vciclient
 
-import android.content.Context
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -8,7 +7,7 @@ import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
-import io.mosip.vciclient.trustedIssuer.TrustedIssuerHandler
+import io.mosip.vciclient.trustedIssuerFlow.TrustedIssuerFlowHandler
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.VCIClientException
@@ -41,7 +40,7 @@ class VCIClientTest {
 
 
         mockkConstructor(CredentialOfferHandler::class)
-        mockkConstructor(TrustedIssuerHandler::class)
+        mockkConstructor(TrustedIssuerFlowHandler::class)
 
         coEvery {
             anyConstructed<CredentialOfferHandler>().downloadCredentials(
@@ -50,7 +49,7 @@ class VCIClientTest {
         } returns mockCredentialResponse
 
         coEvery {
-            anyConstructed<TrustedIssuerHandler>().downloadCredentials(
+            anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
                 any(), any(), any(), any(),any(),any()
             )
         } returns mockCredentialResponse
@@ -112,7 +111,7 @@ class VCIClientTest {
         } returns mockMetadataResult
 
         coEvery {
-            anyConstructed<TrustedIssuerHandler>().downloadCredentials(
+            anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
                 any(), any(), any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
@@ -154,7 +153,7 @@ class VCIClientTest {
     @Test
     fun `should throw VCIClientException when trusted issuer flow throws`(): Unit = runBlocking {
         coEvery {
-            anyConstructed<TrustedIssuerHandler>().downloadCredentials(
+            anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
                 any(), any(), any(), any(),any(),any()
             )
         } throws Exception("flow error")

@@ -1,4 +1,4 @@
-package io.mosip.vciclient.trustedIssuer
+package io.mosip.vciclient.trustedIssuerFlow
 
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
@@ -9,7 +9,7 @@ import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 
-class TrustedIssuerHandler {
+class TrustedIssuerFlowHandler {
     suspend fun downloadCredentials(
         issuerMetadata: IssuerMetadata,
         credentialConfigurationId: String,
