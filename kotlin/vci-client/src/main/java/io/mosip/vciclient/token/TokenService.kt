@@ -5,13 +5,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class TokenService {
-
     suspend fun getAccessToken(
         getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
         tokenEndpoint: String,
         preAuthCode: String,
         txCode: String? = null,
-    ): TokenResponse = fetchAccessToken(
+    ): TokenResponse = obtainAccessToken(
         grantType = GrantType.PRE_AUTHORIZED,
         getTokenResponse = getTokenResponse,
         tokenEndpoint = tokenEndpoint,
@@ -26,7 +25,7 @@ class TokenService {
         clientId: String? = null,
         redirectUri: String? = null,
         codeVerifier: String? = null,
-    ): TokenResponse = fetchAccessToken(
+    ): TokenResponse = obtainAccessToken(
         grantType = GrantType.AUTHORIZATION_CODE,
         getTokenResponse = getTokenResponse,
         tokenEndpoint = tokenEndpoint,
@@ -36,8 +35,7 @@ class TokenService {
         codeVerifier = codeVerifier
     )
 
-    //TODO: checkout this name
-    private suspend fun fetchAccessToken(
+    private suspend fun obtainAccessToken(
         grantType: GrantType,
         getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
         tokenEndpoint: String,
@@ -47,17 +45,21 @@ class TokenService {
         clientId: String? = null,
         redirectUri: String? = null,
         codeVerifier: String? = null,
-    ): TokenResponse = withContext(Dispatchers.IO) {
+    ): TokenResponse {
         val tokenRequest = TokenRequest(
-            grantType = grantType,
-            tokenEndpoint = tokenEndpoint,
-            authCode = authCode,
-            preAuthorizedCode = preAuthCode,
-            txCode = txCode,
-            clientId = clientId,
-            redirectUri = redirectUri,
-            codeVerifier = codeVerifier
+            grantType,
+            tokenEndpoint,
+            authCode,
+            preAuthCode,
+            txCode,
+            clientId,
+            redirectUri,
+            codeVerifier
         )
-        getTokenResponse(tokenRequest)
+        return withContext(Dispatchers.IO) {
+            getTokenResponse(
+                tokenRequest
+            )
+        }
     }
 }
