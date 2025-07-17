@@ -43,7 +43,7 @@ class TrustedIssuerFlowHandlerTest {
     private lateinit var getProofJwt: suspend (
         credentialIssuer: String,
         cNonce: String?,
-        proofSigningAlgosSupported: List<String>
+        proofSigningAlgorithmsSupported: List<String>
     ) -> String
 
     @Before
@@ -79,7 +79,7 @@ class TrustedIssuerFlowHandlerTest {
             override suspend fun invoke(
                 acredentialIssuer: String,
                 cNonce: String?,
-                proofSigningAlgosSupported: List<String>
+                proofSigningAlgorithmsSupported: List<String>
                 ): String = "mock.jwt.proof"
         }
 

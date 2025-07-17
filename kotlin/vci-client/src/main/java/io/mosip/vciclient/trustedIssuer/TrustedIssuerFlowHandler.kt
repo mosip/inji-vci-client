@@ -22,7 +22,7 @@ class TrustedIssuerFlowHandler {
         getProofJwt: suspend (
             credentialIssuer: String,
             cNonce: String?,
-            proofSigningAlgosSupported: List<String>
+            proofSigningAlgorithmsSupported: List<String>
         ) -> String,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {

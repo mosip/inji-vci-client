@@ -30,7 +30,7 @@ internal class AuthorizationCodeFlowService(
         clientMetadata: ClientMetadata,
         authorizeUser: suspend (authorizationEndpoint: String) -> String,
         getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        getProofJwt: suspend (credentialIssuer: String, cNonce: String?, proofSigningAlgosSupported: List<String>) -> String,
+        getProofJwt: suspend (credentialIssuer: String, cNonce: String?, proofSigningAlgorithmsSupported: List<String>) -> String,
         credentialOffer: CredentialOffer? = null,
         downloadTimeOutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {

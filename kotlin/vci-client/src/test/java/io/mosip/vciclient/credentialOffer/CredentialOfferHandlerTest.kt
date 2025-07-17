@@ -242,6 +242,6 @@ class CredentialOfferHandlerTest {
                 )
             }
 
-            assertEquals("Failed to download Credential: Batch Credential Request is not supported yet.", downloadFailedException.message)
+            assertEquals("Failed to download Credential: Batch credential request is not supported.", downloadFailedException.message)
         }
 }

@@ -11,6 +11,7 @@ import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
 import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 
+//TODO: TODO rename to CredentialOfferFlowHandler
 class CredentialOfferHandler {
 
     suspend fun downloadCredentials(
@@ -22,14 +23,14 @@ class CredentialOfferHandler {
         getProofJwt: suspend (
             credentialIssuer: String,
             cNonce: String?,
-            proofSigningAlgosSupported: List<String>
+            proofSigningAlgorithmsSupported: List<String>
         ) -> String,
         onCheckIssuerTrust: (suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean)? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {
         val offer =  CredentialOfferService().fetchCredentialOffer(credentialOffer)
         if (offer.credentialConfigurationIds.size > 1){
-            throw DownloadFailedException("Batch Credential Request is not supported yet.")
+            throw DownloadFailedException("Batch credential request is not supported.")
         }
         val credentialConfigId = offer.credentialConfigurationIds.firstOrNull() ?: ""
         val issuerMetadataResponse = IssuerMetadataService().fetchIssuerMetadataResult(
@@ -45,6 +46,7 @@ class CredentialOfferHandler {
         )
 
         val credentialResponse = when {
+            //TODO: issuerMetadataResult -> IssuerMetadata, and send proofSigningAlgorithmsSupported
             offer.isPreAuthorizedFlow() -> {
                 PreAuthCodeFlowService().requestCredentials(
                     issuerMetadataResult = issuerMetadataResponse,

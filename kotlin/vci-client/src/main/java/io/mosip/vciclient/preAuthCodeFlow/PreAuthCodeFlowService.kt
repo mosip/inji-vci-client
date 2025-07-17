@@ -21,7 +21,7 @@ class PreAuthCodeFlowService {
         getProofJwt: suspend (
             credentialIssuer: String,
             cNonce: String?,
-            proofSigningAlgosSupported: List<String>
+            proofSigningAlgorithmsSupported: List<String>
         ) -> String,
         credentialConfigurationId: String,
         getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)? = null,

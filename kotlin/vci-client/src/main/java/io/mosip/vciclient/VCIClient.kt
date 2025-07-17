@@ -58,7 +58,7 @@ class VCIClient(traceabilityId: String) {
         getProofJwt: suspend (
             credentialIssuer: String,
             cNonce: String?,
-            proofSigningAlgosSupported: List<String>
+            proofSigningAlgorithmsSupported: List<String>
         ) -> String,
         onCheckIssuerTrust: (suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean)? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
@@ -92,7 +92,7 @@ class VCIClient(traceabilityId: String) {
         getProofJwt: suspend (
             credentialIssuer: String,
             cNonce: String?,
-            proofSigningAlgosSupported: List<String>
+            proofSigningAlgorithmsSupported: List<String>
         ) -> String,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
     ): CredentialResponse {

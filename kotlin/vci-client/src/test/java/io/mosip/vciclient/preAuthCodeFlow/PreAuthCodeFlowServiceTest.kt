@@ -69,7 +69,7 @@ class PreAuthCodeFlowServiceTest {
             override suspend fun invoke(
                 acredentialIssuer: String,
                 cNonce: String?,
-                proofSigningAlgosSupported: List<String>
+                proofSigningAlgorithmsSupported: List<String>
             ): String = "mock.jwt.proof"
         }
 

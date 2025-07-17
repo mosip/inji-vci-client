@@ -32,7 +32,7 @@ class VCIClientTest {
     private lateinit var getProofJwt: suspend (
         credentialIssuer: String,
         cNonce: String?,
-        proofSigningAlgosSupported: List<String>
+        proofSigningAlgorithmsSupported: List<String>
     ) -> String
     private lateinit var getAuthCode: suspend (authorizationEndpoint: String) -> String
 
@@ -64,7 +64,7 @@ class VCIClientTest {
             override suspend fun invoke(
                 credentialIssuer: String,
                 cNonce: String?,
-                proofSigningAlgosSupported: List<String>
+                proofSigningAlgorithmsSupported: List<String>
             ): String = "mock.jwt.proof"
         }
 
