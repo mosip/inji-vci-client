@@ -11,7 +11,6 @@ import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
 import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 
-//TODO: TODO rename to CredentialOfferFlowHandler
 class CredentialOfferFlowHandler {
 
     suspend fun downloadCredentials(
