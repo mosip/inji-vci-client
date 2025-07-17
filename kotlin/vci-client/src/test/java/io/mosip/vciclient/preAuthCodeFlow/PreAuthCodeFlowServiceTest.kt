@@ -114,13 +114,14 @@ class PreAuthCodeFlowServiceTest {
         )
 
         val result = PreAuthCodeFlowService().requestCredentials(
-            issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
-            offer = offer,
+            issuerMetadata = resolvedIssuerMetaData,
+            jwtProofSigningAlgorithms = listOf("ES256"),
             getTokenResponse = mockk(relaxed = true),
-            getTxCode = getTxCode,
             getProofJwt = getProofJwt,
             credentialConfigurationId = credentialConfigurationId,
-            downloadTimeoutInMillis = 10000L
+            getTxCode = getTxCode,
+            downloadTimeoutInMillis = 10000L,
+            offer = offer
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -143,13 +144,14 @@ class PreAuthCodeFlowServiceTest {
 
             val exception = assertThrows<DownloadFailedException> {
                 PreAuthCodeFlowService().requestCredentials(
-                    issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
-                    offer = offer,
+                    issuerMetadata = resolvedIssuerMetaData,
+                    jwtProofSigningAlgorithms = listOf("ES256"),
                     getTokenResponse = mockk(relaxed = true),
-                    getTxCode = null,
                     getProofJwt = getProofJwt,
                     credentialConfigurationId = credentialConfigurationId,
-                    downloadTimeoutInMillis = 10000L
+                    getTxCode = null,
+                    downloadTimeoutInMillis = 10000L,
+                    offer = offer
                 )
             }
 
@@ -173,13 +175,14 @@ class PreAuthCodeFlowServiceTest {
 
         val exception = assertThrows<DownloadFailedException> {
             PreAuthCodeFlowService().requestCredentials(
-                issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData,issuerMetadata),
-                offer = offer,
+                issuerMetadata = resolvedIssuerMetaData,
+                jwtProofSigningAlgorithms = listOf("ES256"),
                 getTokenResponse =  mockk(relaxed = true),
-                getTxCode = getTxCode,
                 getProofJwt = getProofJwt,
                 credentialConfigurationId = credentialConfigurationId,
-                downloadTimeoutInMillis = 10000L
+                getTxCode = getTxCode,
+                downloadTimeoutInMillis = 10000L,
+                offer = offer
             )
         }
 
@@ -199,13 +202,14 @@ class PreAuthCodeFlowServiceTest {
         val exception = assertThrows<InvalidDataProvidedException> {
             runBlocking {
                 PreAuthCodeFlowService().requestCredentials(
-                    issuerMetadataResult = IssuerMetadataResult(resolvedIssuerMetaData, issuerMetadata),
-                    offer = offer,
+                    issuerMetadata = resolvedIssuerMetaData,
+                    jwtProofSigningAlgorithms = listOf("ES256"),
                     getTokenResponse = mockk(relaxed = true),
-                    getTxCode = getTxCode,
                     getProofJwt = getProofJwt,
                     credentialConfigurationId = credentialConfigurationId,
-                    downloadTimeoutInMillis = 10000L
+                    getTxCode = getTxCode,
+                    downloadTimeoutInMillis = 10000L,
+                    offer = offer
                 )
             }
         }

@@ -10,7 +10,6 @@ import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
-import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.token.TokenRequest
@@ -25,7 +24,7 @@ internal class AuthorizationCodeFlowService(
 ) {
 
     suspend fun requestCredentials(
-        issuerMetadataResult: IssuerMetadataResult,
+        issuerMetadata: IssuerMetadata,
         credentialConfigurationId: String,
         clientMetadata: ClientMetadata,
         authorizeUser: suspend (authorizationEndpoint: String) -> String,
@@ -33,18 +32,19 @@ internal class AuthorizationCodeFlowService(
         getProofJwt: suspend (credentialIssuer: String, cNonce: String?, proofSigningAlgorithmsSupported: List<String>) -> String,
         credentialOffer: CredentialOffer? = null,
         downloadTimeOutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
+        jwtProofAlgorithmsSupported: List<String>,
     ): CredentialResponse {
         try {
             val pkceSession = pkceSessionManager.createSession()
 
             val authorizationServerMetadata = authorizationServerResolver.resolveForAuthCode(
-                issuerMetadataResult.issuerMetadata,
+                issuerMetadata,
                 credentialOffer
             )
 
             val token = performAuthorizationAndGetToken(
                 authorizationServerMetadata = authorizationServerMetadata,
-                issuerMetadata = issuerMetadataResult.issuerMetadata,
+                issuerMetadata = issuerMetadata,
                 clientMetadata = clientMetadata,
                 authorizeUser = authorizeUser,
                 pkceSession = pkceSession,
@@ -52,15 +52,15 @@ internal class AuthorizationCodeFlowService(
             )
 
             val jwt = getProofJwt(
-                issuerMetadataResult.issuerMetadata.credentialIssuer,
+                issuerMetadata.credentialIssuer,
                 token.cNonce,
-                issuerMetadataResult.extractJwtProofSigningAlgorithms(credentialConfigurationId)
+                jwtProofAlgorithmsSupported
             )
 
             val proof = JWTProof(jwt)
 
             return credentialExecutor.requestCredential(
-                issuerMetadata = issuerMetadataResult.issuerMetadata,
+                issuerMetadata = issuerMetadata,
                 credentialConfigurationId = credentialConfigurationId,
                 proof = proof,
                 accessToken = token.accessToken,

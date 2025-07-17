@@ -7,7 +7,7 @@ import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidDataProvidedException
-import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
+import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
@@ -15,20 +15,17 @@ import io.mosip.vciclient.token.TokenService
 
 class PreAuthCodeFlowService {
     suspend fun requestCredentials(
-        issuerMetadataResult: IssuerMetadataResult,
-        offer: CredentialOffer,
+        issuerMetadata: IssuerMetadata,
+        jwtProofSigningAlgorithms: List<String>,
         getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        getProofJwt: suspend (
-            credentialIssuer: String,
-            cNonce: String?,
-            proofSigningAlgorithmsSupported: List<String>
-        ) -> String,
+        getProofJwt: suspend (credentialIssuer: String, cNonce: String?, proofSigningAlgorithmsSupported: List<String>) -> String,
         credentialConfigurationId: String,
         getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
+        offer: CredentialOffer,
     ): CredentialResponse {
         val authorizationServerMetadata = AuthorizationServerResolver().resolveForPreAuth(
-            issuerMetadata = issuerMetadataResult.issuerMetadata,
+            issuerMetadata = issuerMetadata,
             credentialOffer = offer
         )
 
@@ -55,19 +52,19 @@ class PreAuthCodeFlowService {
         )
 
         val jwt = getProofJwt(
-            issuerMetadataResult.issuerMetadata.credentialIssuer,
+            issuerMetadata.credentialIssuer,
             token.cNonce,
-            issuerMetadataResult.extractJwtProofSigningAlgorithms(credentialConfigurationId)
+            jwtProofSigningAlgorithms
         )
 
         val proof = JWTProof(jwt)
 
         return CredentialRequestExecutor().requestCredential(
-            issuerMetadata = issuerMetadataResult.issuerMetadata,
-            credentialConfigurationId = credentialConfigurationId,
-            proof = proof,
+            issuerMetadata,
+            credentialConfigurationId,
+            proof,
             accessToken = token.accessToken,
-            downloadTimeoutInMillis = downloadTimeoutInMillis
+            downloadTimeoutInMillis
         ) ?: throw DownloadFailedException("Credential request failed.")
 
     }

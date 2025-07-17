@@ -34,7 +34,7 @@ import org.junit.jupiter.api.assertThrows
 class AuthorizationCodeFlowServiceTest {
     private val downloadTimeout: Long = 5000L
     private val mockCredentialResponse = mockk<CredentialResponse>()
-    private val resolvedMeta = mockk<IssuerMetadata>(relaxed = true) {
+    private val resolvedIssuerMetadata = mockk<IssuerMetadata>(relaxed = true) {
         every { scope } returns "openid"
     }
     private val clientMetadata = ClientMetadata("client-id", "app://callback")
@@ -116,14 +116,15 @@ class AuthorizationCodeFlowServiceTest {
     @Test
     fun `should return credential when flow is successful`() = runBlocking {
         val result = AuthorizationCodeFlowService().requestCredentials(
-            issuerMetadataResult = IssuerMetadataResult(resolvedMeta, issuerMetadata),
+            issuerMetadata = resolvedIssuerMetadata,
             credentialConfigurationId = credentialConfigurationId,
             clientMetadata = clientMetadata,
             authorizeUser = authorizeUser,
             getTokenResponse = getTokenResponse,
             getProofJwt = getProofJwt,
             credentialOffer = credentialOffer,
-            downloadTimeOutInMillis = downloadTimeout
+            downloadTimeOutInMillis = downloadTimeout,
+            jwtProofAlgorithmsSupported = listOf("ES256")
         )
 
         assertEquals(mockCredentialResponse, result)
@@ -146,17 +147,15 @@ class AuthorizationCodeFlowServiceTest {
 
             val downloadFailureException = assertThrows<DownloadFailedException> {
                 AuthorizationCodeFlowService().requestCredentials(
-                    issuerMetadataResult = IssuerMetadataResult(
-                        issuerMetadata = resolvedMeta,
-                        raw = issuerMetadata
-                    ),
+                    issuerMetadata = resolvedIssuerMetadata,
                     credentialConfigurationId = credentialConfigurationId,
                     clientMetadata = clientMetadata,
                     authorizeUser = authorizeUser,
                     getTokenResponse = getTokenResponse,
                     getProofJwt = getProofJwt,
                     credentialOffer = credentialOffer,
-                    downloadTimeOutInMillis = downloadTimeout
+                    downloadTimeOutInMillis = downloadTimeout,
+                    jwtProofAlgorithmsSupported = listOf("ES256")
                 )
             }
 

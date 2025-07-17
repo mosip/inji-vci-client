@@ -56,6 +56,7 @@ class CredentialOfferFlowHandlerTest {
         } returns mockIssuerMetadataResult
         every { mockIssuerMetadataResult.issuerMetadata } returns mockk(relaxed = true)
         every { mockIssuerMetadataResult.raw } returns mapOf("some" to "metadata")
+        every { mockIssuerMetadataResult.extractJwtProofSigningAlgorithms(any()) } returns listOf("ES256")
         txCode = object : suspend (String?, String?, Int?) -> String {
             override suspend fun invoke(
                 p1: String?, p2: String?, p3: Int?
@@ -93,11 +94,12 @@ class CredentialOfferFlowHandlerTest {
         coEvery {
             anyConstructed<PreAuthCodeFlowService>().requestCredentials(
                 any(),
+                listOf("ES256"),
                 any(),
                 any(),
                 any(),
                 any(),
-                any()
+                offer = any()
             )
         } returns mockCredentialResponse
 
@@ -159,7 +161,8 @@ class CredentialOfferFlowHandlerTest {
                 any(),
                 any(),
                 any(),
-                any()
+                any(),
+                offer = any()
             )
         } returns CredentialResponse(
             JsonNull.INSTANCE,

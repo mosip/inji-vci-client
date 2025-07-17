@@ -27,17 +27,18 @@ class CredentialOfferFlowHandler {
         onCheckIssuerTrust: (suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean)? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {
-        val offer =  CredentialOfferService().fetchCredentialOffer(credentialOffer)
-        if (offer.credentialConfigurationIds.size > 1){
+        val offer = CredentialOfferService().fetchCredentialOffer(credentialOffer)
+        if (offer.credentialConfigurationIds.size > 1) {
             throw DownloadFailedException("Batch credential request is not supported.")
         }
-        val credentialConfigId = offer.credentialConfigurationIds.firstOrNull() ?: ""
-        val issuerMetadataResponse = IssuerMetadataService().fetchIssuerMetadataResult(
-            credentialIssuer = offer.credentialIssuer,
-            credentialConfigurationId = credentialConfigId
+        val credentialConfigurationId = offer.credentialConfigurationIds.firstOrNull() ?: ""
+        val issuerMetadataResult = IssuerMetadataService().fetchIssuerMetadataResult(
+            offer.credentialIssuer,
+            credentialConfigurationId
         )
 
-        val issuerDisplay = issuerMetadataResponse.raw["display"] as? List<Map<String, Any>> ?: listOf(emptyMap())
+        val issuerDisplay =
+            issuerMetadataResult.raw["display"] as? List<Map<String, Any>> ?: listOf(emptyMap())
         ensureIssuerTrust(
             credentialIssuer = offer.credentialIssuer,
             issuerDisplay = issuerDisplay,
@@ -45,29 +46,34 @@ class CredentialOfferFlowHandler {
         )
 
         val credentialResponse = when {
-            //TODO: issuerMetadataResult -> IssuerMetadata, and send proofSigningAlgorithmsSupported
             offer.isPreAuthorizedFlow() -> {
                 PreAuthCodeFlowService().requestCredentials(
-                    issuerMetadataResult = issuerMetadataResponse,
-                    offer = offer,
+                    issuerMetadata = issuerMetadataResult.issuerMetadata,
+                    jwtProofSigningAlgorithms = issuerMetadataResult.extractJwtProofSigningAlgorithms(
+                        credentialConfigurationId
+                    ),
                     getTokenResponse = getTokenResponse,
                     getProofJwt = getProofJwt,
-                    credentialConfigurationId = credentialConfigId,
+                    credentialConfigurationId = credentialConfigurationId,
                     getTxCode = getTxCode,
-                    downloadTimeoutInMillis = downloadTimeoutInMillis
+                    downloadTimeoutInMillis = downloadTimeoutInMillis,
+                    offer = offer
                 )
             }
 
             offer.isAuthorizationCodeFlow() -> {
                 AuthorizationCodeFlowService().requestCredentials(
-                    issuerMetadataResult = issuerMetadataResponse,
+                    issuerMetadata = issuerMetadataResult.issuerMetadata,
                     credentialConfigurationId = offer.credentialConfigurationIds.first(),
                     clientMetadata = clientMetadata,
                     authorizeUser = authorizeUser,
                     getTokenResponse = getTokenResponse,
                     getProofJwt = getProofJwt,
                     credentialOffer = offer,
-                    downloadTimeOutInMillis = downloadTimeoutInMillis
+                    downloadTimeOutInMillis = downloadTimeoutInMillis,
+                    jwtProofAlgorithmsSupported = issuerMetadataResult.extractJwtProofSigningAlgorithms(
+                        credentialConfigurationId
+                    )
                 )
             }
 
@@ -75,7 +81,7 @@ class CredentialOfferFlowHandler {
                 throw CredentialOfferFetchFailedException("Credential offer does not contain a supported grant type")
             }
         }
-        if(credentialResponse.credential.isJsonNull){
+        if (credentialResponse.credential.isJsonNull) {
             throw CredentialOfferFetchFailedException("No credential response found")
         }
         return credentialResponse

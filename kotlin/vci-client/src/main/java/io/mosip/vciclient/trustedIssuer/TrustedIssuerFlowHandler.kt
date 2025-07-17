@@ -29,13 +29,14 @@ class TrustedIssuerFlowHandler {
         val issuerMetadataResult: IssuerMetadataResult = issuerMetadataService.fetchIssuerMetadataResult(credentialIssuer, credentialConfigurationId)
 
         return authorizationCodeFlowService.requestCredentials(
-            issuerMetadataResult = issuerMetadataResult,
+            issuerMetadata = issuerMetadataResult.issuerMetadata,
             credentialConfigurationId = credentialConfigurationId,
             clientMetadata = clientMetadata,
             authorizeUser = authorizeUser,
             getTokenResponse = getTokenResponse,
             getProofJwt = getProofJwt,
             downloadTimeOutInMillis = downloadTimeoutInMillis,
+            jwtProofAlgorithmsSupported = listOf("ES256"),
         )
     }
 }
