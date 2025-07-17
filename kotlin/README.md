@@ -35,7 +35,40 @@ implementation "io.mosip:inji-vci-client:0.4.0"
 
 ##  API Overview
 
-### 1. Request Credential using Credential Offer
+### 1. Obtain Issuer Metadata
+
+Retrieve the issuer metadata from the credential issuer's well-known endpoint.
+
+#### Parameters:
+
+| Name             | Type   | Required | Default Value | Description                  |
+|------------------|--------|----------|---------------|------------------------------|
+| credentialIssuer | String | Yes      | N/A           | URI of the Credential Issuer |
+
+#### Returns
+
+`IssuerMetadata` object containing details like `credential_endpoint`, `credential_issuer`, and other IssuerMetadata information, which can be used by the consumer to display Issuer information.
+
+> Note: This method does not parse the metadata, it simply returns the raw Network response of well-known endpoint as a `Map<String, Any>`.
+
+###### Sample returned response
+
+```Kotlin
+val issuerMetadata = mapOf(
+    "credential_issuer" to "https://example.com/issuer",
+    "credential_endpoint" to "https://example.com/issuer/credential",
+)
+```
+
+#### Example Usage
+
+```kotlin
+val issuerMetadata : Map<String, Any> = VCIClient(traceabilityId).getIssuerMetadata(
+    credentialIssuer = "https://example.com/issuer"
+)
+```
+
+### 2. Request Credential using Credential Offer
 
 ```kotlin
 val response = VCIClient(traceabilityId).requestCredentialByCredentialOffer(
