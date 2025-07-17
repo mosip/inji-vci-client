@@ -15,8 +15,12 @@ import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
-import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
+import io.mosip.vciclient.types.AuthorizeUserCallback
+import io.mosip.vciclient.types.CheckIssuerTrustCallback
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.types.TxCodeCallback
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -34,11 +38,11 @@ class CredentialOfferFlowHandlerTest {
     private val mockIssuerMetadataResult = mockk<IssuerMetadataResult>()
     private val mockClientMetadata = mockk<ClientMetadata>()
 
-    private lateinit var txCode: suspend (String?, String?, Int?) -> String
-    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
-    private lateinit var authorizeUser: suspend (String) -> String
-    private lateinit var getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
-    private lateinit var onCheckIssuerTrust: suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean
+    private lateinit var txCode: TxCodeCallback
+    private lateinit var getProofJwt: ProofJwtCallback
+    private lateinit var authorizeUser: AuthorizeUserCallback
+    private lateinit var getTokenResponse: TokenResponseCallback
+    private lateinit var onCheckIssuerTrust: CheckIssuerTrustCallback
 
 
     @Before
@@ -57,18 +61,18 @@ class CredentialOfferFlowHandlerTest {
         every { mockIssuerMetadataResult.issuerMetadata } returns mockk(relaxed = true)
         every { mockIssuerMetadataResult.raw } returns mapOf("some" to "metadata")
         every { mockIssuerMetadataResult.extractJwtProofSigningAlgorithms(any()) } returns listOf("ES256")
-        txCode = object : suspend (String?, String?, Int?) -> String {
+        txCode = object : TxCodeCallback {
             override suspend fun invoke(
                 p1: String?, p2: String?, p3: Int?
             ): String = "mock-auth-code"
         }
-        authorizeUser = object : suspend (String) -> String {
+        authorizeUser = object : AuthorizeUserCallback {
             override suspend fun invoke(
                 authEndpoint: String,
             ): String = "mock-auth-code"
         }
 
-        getProofJwt = object : suspend (String, String?, List<String>) -> String {
+        getProofJwt = object : ProofJwtCallback {
             override suspend fun invoke(p1: String, p2: String?, p3: List<String>): String =
                 "mock.jwt.proof"
         }

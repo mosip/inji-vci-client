@@ -1,20 +1,22 @@
 package io.mosip.vciclient.authorizationCodeFlow
 
+import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.authorizationServer.AuthorizationServerMetadata
 import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
-import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.constants.Constants
-import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
+import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.proof.jwt.JWTProof
-import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
+import io.mosip.vciclient.types.AuthorizeUserCallback
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TokenResponseCallback
 
 internal class AuthorizationCodeFlowService(
     private val authorizationServerResolver: AuthorizationServerResolver = AuthorizationServerResolver(),
@@ -27,9 +29,9 @@ internal class AuthorizationCodeFlowService(
         issuerMetadata: IssuerMetadata,
         credentialConfigurationId: String,
         clientMetadata: ClientMetadata,
-        authorizeUser: suspend (authorizationEndpoint: String) -> String,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        getProofJwt: suspend (credentialIssuer: String, cNonce: String?, proofSigningAlgorithmsSupported: List<String>) -> String,
+        authorizeUser: AuthorizeUserCallback,
+        getTokenResponse: TokenResponseCallback,
+        getProofJwt: ProofJwtCallback,
         credentialOffer: CredentialOffer? = null,
         downloadTimeOutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
         jwtProofAlgorithmsSupported: List<String>,
@@ -76,9 +78,9 @@ internal class AuthorizationCodeFlowService(
         authorizationServerMetadata: AuthorizationServerMetadata,
         issuerMetadata: IssuerMetadata,
         clientMetadata: ClientMetadata,
-        authorizeUser: suspend (authorizationEndpoint: String) -> String,
+        authorizeUser: AuthorizeUserCallback,
         pkceSession: PKCESessionManager.PKCESession,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
+        getTokenResponse: TokenResponseCallback
     ): TokenResponse {
         val authorizationEndpoint = authorizationServerMetadata.authorizationEndpoint
             ?: throw DownloadFailedException("Missing authorization endpoint")

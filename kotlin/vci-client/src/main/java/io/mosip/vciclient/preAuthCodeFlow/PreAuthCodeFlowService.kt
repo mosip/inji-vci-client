@@ -9,18 +9,19 @@ import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.jwt.JWTProof
-import io.mosip.vciclient.token.TokenRequest
-import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.types.TxCodeCallback
 
 class PreAuthCodeFlowService {
     suspend fun requestCredentials(
         issuerMetadata: IssuerMetadata,
         jwtProofSigningAlgorithms: List<String>,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        getProofJwt: suspend (credentialIssuer: String, cNonce: String?, proofSigningAlgorithmsSupported: List<String>) -> String,
+        getTokenResponse: TokenResponseCallback,
+        getProofJwt: ProofJwtCallback,
         credentialConfigurationId: String,
-        getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)? = null,
+        getTxCode: TxCodeCallback? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
         offer: CredentialOffer,
     ): CredentialResponse {

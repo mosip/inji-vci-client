@@ -16,6 +16,9 @@ import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.proof.Proof
+import io.mosip.vciclient.types.AuthorizeUserCallback
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TxCodeCallback
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -28,13 +31,9 @@ class VCIClientTest {
 
     private val mockCredentialResponse = mockk<CredentialResponse>()
 
-    private lateinit var getTxCode: suspend (String?, String?, Int?) -> String
-    private lateinit var getProofJwt: suspend (
-        credentialIssuer: String,
-        cNonce: String?,
-        proofSigningAlgorithmsSupported: List<String>
-    ) -> String
-    private lateinit var getAuthCode: suspend (authorizationEndpoint: String) -> String
+    private lateinit var getTxCode: TxCodeCallback
+    private lateinit var getProofJwt: ProofJwtCallback
+    private lateinit var authorizeUser: AuthorizeUserCallback
 
     @Before
     fun setup() {
@@ -56,11 +55,11 @@ class VCIClientTest {
             )
         } returns mockCredentialResponse
 
-        getTxCode = object : suspend (String?, String?, Int?) -> String {
+        getTxCode = object : TxCodeCallback {
             override suspend fun invoke(p1: String?, p2: String?, p3: Int?): String = "mockTxCode"
         }
 
-        getProofJwt = object : suspend (String, String?, List<String>) -> String {
+        getProofJwt = object : ProofJwtCallback {
             override suspend fun invoke(
                 credentialIssuer: String,
                 cNonce: String?,
@@ -69,7 +68,7 @@ class VCIClientTest {
         }
 
 
-        getAuthCode = object : suspend (String) -> String {
+        authorizeUser = object : AuthorizeUserCallback {
             override suspend fun invoke(authEndpoint: String): String = "mockAuthCode"
         }
 
@@ -131,7 +130,7 @@ class VCIClientTest {
             credentialOffer = "sample-offer",
             clientMetadata = mockk(),
             getTxCode = getTxCode,
-            authorizeUser = getAuthCode,
+            authorizeUser = authorizeUser,
             getTokenResponse = mockk(relaxed = true),
             getProofJwt = getProofJwt,
             onCheckIssuerTrust = mockk(relaxed = true),
@@ -164,7 +163,7 @@ class VCIClientTest {
             credentialIssuer = "https://example.com/issuer",
             credentialConfigurationId = "config-id",
             clientMetadata = mockk(),
-            authorizeUser = getAuthCode,
+            authorizeUser = authorizeUser,
             getTokenResponse = mockk(relaxed = true),
             getProofJwt = getProofJwt,
             downloadTimeoutInMillis = 10000
@@ -185,7 +184,7 @@ class VCIClientTest {
                 credentialOffer = "sample-offer",
                 clientMetadata = mockk(),
                 getTxCode = getTxCode,
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getTokenResponse = mockk(relaxed = true),
                 getProofJwt = getProofJwt,
                 onCheckIssuerTrust = mockk(),
@@ -207,7 +206,7 @@ class VCIClientTest {
                 credentialIssuer = "https://example.com/issuer",
                 credentialConfigurationId = "config-id",
                 clientMetadata = mockk(),
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getTokenResponse = mockk(relaxed = true),
                 getProofJwt = getProofJwt,
                 downloadTimeoutInMillis = 10000

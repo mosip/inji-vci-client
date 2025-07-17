@@ -8,23 +8,22 @@ import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
-import io.mosip.vciclient.token.TokenRequest
-import io.mosip.vciclient.token.TokenResponse
+import io.mosip.vciclient.types.AuthorizeUserCallback
+import io.mosip.vciclient.types.CheckIssuerTrustCallback
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.types.TxCodeCallback
 
 class CredentialOfferFlowHandler {
 
     suspend fun downloadCredentials(
         credentialOffer: String,
         clientMetadata: ClientMetadata,
-        getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)?,
-        authorizeUser: suspend (authorizationEndpoint: String) -> String,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        getProofJwt: suspend (
-            credentialIssuer: String,
-            cNonce: String?,
-            proofSigningAlgorithmsSupported: List<String>
-        ) -> String,
-        onCheckIssuerTrust: (suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean)? = null,
+        getTxCode: TxCodeCallback?,
+        authorizeUser: AuthorizeUserCallback,
+        getTokenResponse: TokenResponseCallback,
+        getProofJwt: ProofJwtCallback,
+        onCheckIssuerTrust: CheckIssuerTrustCallback? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): CredentialResponse {
         val offer = CredentialOfferService().fetchCredentialOffer(credentialOffer)
@@ -90,7 +89,7 @@ class CredentialOfferFlowHandler {
     private suspend fun ensureIssuerTrust(
         credentialIssuer: String,
         issuerDisplay: List<Map<String, Any>>,
-        onCheckIssuerTrust: (suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean)?
+        onCheckIssuerTrust: CheckIssuerTrustCallback?
     ) {
         if (onCheckIssuerTrust != null) {
             val consented = onCheckIssuerTrust(credentialIssuer, issuerDisplay)

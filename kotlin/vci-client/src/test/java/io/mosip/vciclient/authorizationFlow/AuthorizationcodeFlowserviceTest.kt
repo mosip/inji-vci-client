@@ -17,13 +17,14 @@ import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
-import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
 import io.mosip.vciclient.proof.jwt.JWTProof
-import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
+import io.mosip.vciclient.types.AuthorizeUserCallback
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TokenResponseCallback
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -39,13 +40,12 @@ class AuthorizationCodeFlowServiceTest {
     }
     private val clientMetadata = ClientMetadata("client-id", "app://callback")
     private val credentialOffer = mockk<CredentialOffer>()
-    private val issuerMetadata = mapOf("some" to "value")
     private val credentialConfigurationId = "UniversityDegreeCredential"
     private val pkceSession = PKCESession("verifier", "challenge", "state", "nonce")
 
-    private lateinit var authorizeUser: suspend (String) -> String
-    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
-    private lateinit var getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse
+    private lateinit var authorizeUser: AuthorizeUserCallback
+    private lateinit var getProofJwt: ProofJwtCallback
+    private lateinit var getTokenResponse: TokenResponseCallback
 
 
     @Before

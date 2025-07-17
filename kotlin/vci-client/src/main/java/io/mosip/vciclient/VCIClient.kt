@@ -5,9 +5,8 @@ import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.request.CredentialRequestFactory
-import io.mosip.vciclient.credentialOffer.CredentialOfferFlowHandler
-import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
 import io.mosip.vciclient.credential.response.CredentialResponse
+import io.mosip.vciclient.credentialOffer.CredentialOfferFlowHandler
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidAccessTokenException
@@ -18,8 +17,12 @@ import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.proof.Proof
-import io.mosip.vciclient.token.TokenRequest
-import io.mosip.vciclient.token.TokenResponse
+import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
+import io.mosip.vciclient.types.AuthorizeUserCallback
+import io.mosip.vciclient.types.CheckIssuerTrustCallback
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.types.TxCodeCallback
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okio.IOException
@@ -52,15 +55,11 @@ class VCIClient(traceabilityId: String) {
     suspend fun requestCredentialByCredentialOffer(
         credentialOffer: String,
         clientMetadata: ClientMetadata,
-        getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)?,
-        authorizeUser: suspend (authorizationUrl: String) -> String,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        getProofJwt: suspend (
-            credentialIssuer: String,
-            cNonce: String?,
-            proofSigningAlgorithmsSupported: List<String>
-        ) -> String,
-        onCheckIssuerTrust: (suspend (credentialIssuer: String, issuerDisplay: List<Map<String, Any>>) -> Boolean)? = null,
+        getTxCode: TxCodeCallback?,
+        authorizeUser: AuthorizeUserCallback,
+        getTokenResponse: TokenResponseCallback,
+        getProofJwt: ProofJwtCallback,
+        onCheckIssuerTrust: CheckIssuerTrustCallback? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
     ): CredentialResponse {
         try {
@@ -87,13 +86,9 @@ class VCIClient(traceabilityId: String) {
         credentialIssuer: String,
         credentialConfigurationId: String,
         clientMetadata: ClientMetadata,
-        authorizeUser: suspend (authorizationUrl: String) -> String,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
-        getProofJwt: suspend (
-            credentialIssuer: String,
-            cNonce: String?,
-            proofSigningAlgorithmsSupported: List<String>
-        ) -> String,
+        authorizeUser: AuthorizeUserCallback,
+        getTokenResponse: TokenResponseCallback,
+        getProofJwt: ProofJwtCallback,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
     ): CredentialResponse {
         try {

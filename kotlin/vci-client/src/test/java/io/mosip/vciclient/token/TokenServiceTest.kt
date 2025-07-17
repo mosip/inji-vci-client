@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mosip.vciclient.constants.GrantType
+import io.mosip.vciclient.types.TokenResponseCallback
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -22,7 +23,7 @@ class TokenServiceTest {
     @Test
     fun `getAccessToken should create correct request for pre-authorized flow`() = runBlocking {
         // Arrange
-        val getTokenResponse = mockk<suspend (TokenRequest) -> TokenResponse>()
+        val getTokenResponse = mockk<TokenResponseCallback>()
         coEvery { getTokenResponse(any()) } returns mockTokenResponse
 
         // Act
@@ -52,7 +53,7 @@ class TokenServiceTest {
     @Test
     fun `getAccessToken should create correct request for authorization code flow`() = runBlocking {
         // Arrange
-        val getTokenResponse = mockk<suspend (TokenRequest) -> TokenResponse>()
+        val getTokenResponse = mockk<TokenResponseCallback>()
         coEvery { getTokenResponse(any()) } returns mockTokenResponse
 
         // Act
@@ -85,7 +86,7 @@ class TokenServiceTest {
     fun `getAccessToken should handle errors from token response`() = runBlocking {
         // Arrange
         val exception = RuntimeException("Test error")
-        val getTokenResponse = mockk<suspend (TokenRequest) -> TokenResponse>()
+        val getTokenResponse = mockk<TokenResponseCallback>()
         coEvery { getTokenResponse(any()) } throws exception
 
         val ex = assertThrows<RuntimeException> {

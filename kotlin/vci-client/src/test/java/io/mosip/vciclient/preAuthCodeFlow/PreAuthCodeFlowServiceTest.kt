@@ -8,18 +8,19 @@ import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.common.Util
+import io.mosip.vciclient.credential.request.CredentialRequestExecutor
+import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.credentialOffer.CredentialOfferGrants
 import io.mosip.vciclient.credentialOffer.PreAuthCodeGrant
 import io.mosip.vciclient.credentialOffer.TxCode
-import io.mosip.vciclient.credential.request.CredentialRequestExecutor
-import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
-import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
+import io.mosip.vciclient.types.ProofJwtCallback
+import io.mosip.vciclient.types.TxCodeCallback
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -32,10 +33,9 @@ class PreAuthCodeFlowServiceTest {
     private val mockCredentialResponse = mockk<CredentialResponse>()
     private val resolvedIssuerMetaData = mockk<IssuerMetadata>()
     private val credentialConfigurationId = "UniversityDegreeCredential"
-    private val issuerMetadata = mapOf("issuer" to "mock")
 
-    private lateinit var getTxCode: suspend (String?, String?, Int?) -> String
-    private lateinit var getProofJwt: suspend (String, String?, List<String>) -> String
+    private lateinit var getTxCode: TxCodeCallback
+    private lateinit var getProofJwt: ProofJwtCallback
 
     @Before
     fun setup() {
@@ -61,11 +61,11 @@ class PreAuthCodeFlowServiceTest {
             )
         } returns mockCredentialResponse
 
-        getTxCode = object : suspend (String?, String?, Int?) -> String {
+        getTxCode = object : TxCodeCallback {
             override suspend fun invoke(p1: String?, p2: String?, p3: Int?): String = "mockTxCode"
         }
 
-        getProofJwt = object : suspend (String, String?, List<String>) -> String {
+        getProofJwt = object : ProofJwtCallback {
             override suspend fun invoke(
                 acredentialIssuer: String,
                 cNonce: String?,

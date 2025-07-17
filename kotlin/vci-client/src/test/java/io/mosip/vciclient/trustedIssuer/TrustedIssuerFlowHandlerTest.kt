@@ -21,6 +21,8 @@ import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
 import io.mosip.vciclient.testData.wellKnownResponseMap
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
+import io.mosip.vciclient.types.AuthorizeUserCallback
+import io.mosip.vciclient.types.ProofJwtCallback
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -39,12 +41,8 @@ class TrustedIssuerFlowHandlerTest {
     private val accessToken = "mockAccessToken"
     private val cNonce = "mockCNonce"
 
-    private lateinit var getAuthCode: suspend (String) -> String
-    private lateinit var getProofJwt: suspend (
-        credentialIssuer: String,
-        cNonce: String?,
-        proofSigningAlgorithmsSupported: List<String>
-    ) -> String
+    private lateinit var authorizeUser: AuthorizeUserCallback
+    private lateinit var getProofJwt: ProofJwtCallback
 
     @Before
     fun setup() {
@@ -69,13 +67,13 @@ class TrustedIssuerFlowHandlerTest {
             )
         } returns authUrl
 
-        getAuthCode = object : suspend (String) -> String {
+        authorizeUser = object : AuthorizeUserCallback {
             override suspend fun invoke(
                 authEndpoint: String,
             ): String = "mock-auth-code"
         }
 
-        getProofJwt = object : suspend (String, String?, List<String>) -> String {
+        getProofJwt = object : ProofJwtCallback {
             override suspend fun invoke(
                 acredentialIssuer: String,
                 cNonce: String?,
@@ -109,7 +107,7 @@ class TrustedIssuerFlowHandlerTest {
             credentialConfigurationId = credentialConfigurationId,
             clientMetadata = clientMetadata,
             getTokenResponse = mockk(relaxed = true),
-            authorizeUser = getAuthCode,
+            authorizeUser = authorizeUser,
             getProofJwt = getProofJwt,
             downloadTimeoutInMillis = 10000
         )
@@ -118,7 +116,7 @@ class TrustedIssuerFlowHandlerTest {
 
     @Test
     fun `should throw when getAuthCode throws`() = runBlocking {
-        val failingGetAuthCode: suspend (String) -> String = {
+        val failingAuthorizeUser: AuthorizeUserCallback = {
             throw IllegalStateException("User canceled")
         }
 
@@ -128,7 +126,7 @@ class TrustedIssuerFlowHandlerTest {
                 credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
-                authorizeUser = failingGetAuthCode,
+                authorizeUser = failingAuthorizeUser,
                 getProofJwt = getProofJwt,
                 downloadTimeoutInMillis = 10000
             )
@@ -139,7 +137,7 @@ class TrustedIssuerFlowHandlerTest {
 
     @Test
     fun `should throw when getProofJwt throws`() = runBlocking {
-        val failingProof: suspend (String, String?, List<String>) -> String =
+        val failingProof: ProofJwtCallback =
             { _, _, _ ->
                 throw IllegalArgumentException("Proof generation failed")
             }
@@ -150,7 +148,7 @@ class TrustedIssuerFlowHandlerTest {
                 credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getProofJwt = failingProof,
                 downloadTimeoutInMillis = 10000
             )
@@ -171,7 +169,7 @@ class TrustedIssuerFlowHandlerTest {
                 credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getProofJwt = getProofJwt,
                 downloadTimeoutInMillis = 10000
             )
@@ -192,7 +190,7 @@ class TrustedIssuerFlowHandlerTest {
                 credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
-                authorizeUser = getAuthCode,
+                authorizeUser = authorizeUser,
                 getProofJwt = getProofJwt,
                 downloadTimeoutInMillis = 10000
             )

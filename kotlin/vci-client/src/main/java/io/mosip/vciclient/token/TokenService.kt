@@ -1,12 +1,13 @@
 package io.mosip.vciclient.token
 
 import io.mosip.vciclient.constants.GrantType
+import io.mosip.vciclient.types.TokenResponseCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class TokenService {
     suspend fun getAccessToken(
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
+        getTokenResponse: TokenResponseCallback,
         tokenEndpoint: String,
         preAuthCode: String,
         txCode: String? = null,
@@ -19,7 +20,7 @@ class TokenService {
     )
 
     suspend fun getAccessToken(
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
+        getTokenResponse: TokenResponseCallback,
         tokenEndpoint: String,
         authCode: String,
         clientId: String? = null,
@@ -37,7 +38,7 @@ class TokenService {
 
     private suspend fun obtainAccessToken(
         grantType: GrantType,
-        getTokenResponse: suspend (tokenRequest: TokenRequest) -> TokenResponse,
+        getTokenResponse: TokenResponseCallback,
         tokenEndpoint: String,
         preAuthCode: String? = null,
         txCode: String? = null,
