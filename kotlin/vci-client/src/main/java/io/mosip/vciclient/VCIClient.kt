@@ -5,7 +5,7 @@ import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.request.CredentialRequestFactory
-import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
+import io.mosip.vciclient.credentialOffer.CredentialOfferFlowHandler
 import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
@@ -64,7 +64,7 @@ class VCIClient(traceabilityId: String) {
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
     ): CredentialResponse {
         try {
-            return CredentialOfferHandler().downloadCredentials(
+            return CredentialOfferFlowHandler().downloadCredentials(
                 credentialOffer,
                 clientMetadata,
                 getTxCode,

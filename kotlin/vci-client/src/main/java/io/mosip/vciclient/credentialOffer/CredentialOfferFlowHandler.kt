@@ -12,7 +12,7 @@ import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse
 
 //TODO: TODO rename to CredentialOfferFlowHandler
-class CredentialOfferHandler {
+class CredentialOfferFlowHandler {
 
     suspend fun downloadCredentials(
         credentialOffer: String,

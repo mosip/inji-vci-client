@@ -24,7 +24,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
-class CredentialOfferHandlerTest {
+class CredentialOfferFlowHandlerTest {
     private val mockCredentialResponse = CredentialResponse(
         JsonPrimitive("dummy-credential"),
         "SampleCredential",
@@ -104,7 +104,7 @@ class CredentialOfferHandlerTest {
         mockkConstructor(CredentialOfferService::class)
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
 
-        val result = CredentialOfferHandler().downloadCredentials(
+        val result = CredentialOfferFlowHandler().downloadCredentials(
             credentialOffer = "some-offer",
             clientMetadata = mockClientMetadata,
             getTxCode = txCode,
@@ -129,7 +129,7 @@ class CredentialOfferHandlerTest {
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
 
         assertThrows<CredentialOfferFetchFailedException> {
-            CredentialOfferHandler().downloadCredentials(
+            CredentialOfferFlowHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
                 getTxCode = txCode,
@@ -171,7 +171,7 @@ class CredentialOfferHandlerTest {
         coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
 
         assertThrows<CredentialOfferFetchFailedException> {
-            CredentialOfferHandler().downloadCredentials(
+            CredentialOfferFlowHandler().downloadCredentials(
                 credentialOffer = "some-offer",
                 clientMetadata = mockClientMetadata,
                 getTxCode = txCode,
@@ -202,7 +202,7 @@ class CredentialOfferHandlerTest {
             } returns offer
 
             assertThrows<CredentialOfferFetchFailedException> {
-                CredentialOfferHandler().downloadCredentials(
+                CredentialOfferFlowHandler().downloadCredentials(
                     credentialOffer = "some-offer",
                     clientMetadata = mockClientMetadata,
                     getTxCode = txCode,
@@ -231,7 +231,7 @@ class CredentialOfferHandlerTest {
             coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
 
             val downloadFailedException = assertThrows<DownloadFailedException> {
-                CredentialOfferHandler().downloadCredentials(
+                CredentialOfferFlowHandler().downloadCredentials(
                     credentialOffer = "some-offer",
                     clientMetadata = mockClientMetadata,
                     getTxCode = txCode,

@@ -6,7 +6,7 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
 import io.mosip.vciclient.constants.CredentialFormat
-import io.mosip.vciclient.credentialOffer.CredentialOfferHandler
+import io.mosip.vciclient.credentialOffer.CredentialOfferFlowHandler
 import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.dto.IssuerMetaData
@@ -40,12 +40,12 @@ class VCIClientTest {
     fun setup() {
 
 
-        mockkConstructor(CredentialOfferHandler::class)
+        mockkConstructor(CredentialOfferFlowHandler::class)
         mockkConstructor(TrustedIssuerFlowHandler::class)
         mockkConstructor(IssuerMetadataService::class)
 
         coEvery {
-            anyConstructed<CredentialOfferHandler>().downloadCredentials(
+            anyConstructed<CredentialOfferFlowHandler>().downloadCredentials(
                 any(), any(), any(), any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
@@ -175,7 +175,7 @@ class VCIClientTest {
     @Test
     fun `should throw VCIClientException when credential offer flow throws`(): Unit = runBlocking {
         coEvery {
-            anyConstructed<CredentialOfferHandler>().downloadCredentials(
+            anyConstructed<CredentialOfferFlowHandler>().downloadCredentials(
                 any(), any(), any(), any(), any(), any(), any(), any()
             )
         } throws Exception("flow error")
