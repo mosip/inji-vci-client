@@ -15,6 +15,10 @@ class IssuerMetadataService {
     private val timeoutMillis: Long = 10000
     private var cachedIssuerMetadataResult: IssuerMetadataResult? = null
 
+    /**
+     * Fetches and resolves issuer metadata for a given issuer URI and credential configuration ID.
+     * Stores the result in a cache (member property) to avoid redundant network calls.
+     */
     suspend fun fetchIssuerMetadataResult(
         credentialIssuer: String,
         credentialConfigurationId: String
@@ -24,15 +28,15 @@ class IssuerMetadataService {
             return@withContext it
         }
 
-        val raw = fetchAndParseIssuerMetadata(credentialIssuer)
-        val resolved = resolveMetadata(
+        val rawIssuerMetadata = fetchAndParseIssuerMetadata(credentialIssuer)
+        val resolvedIssuerMetadata = resolveMetadata(
             credentialConfigurationId = credentialConfigurationId,
-            rawIssuerMetadata = raw
+            rawIssuerMetadata = rawIssuerMetadata
         )
 
         val result = IssuerMetadataResult(
-            issuerMetadata = resolved,
-            raw = raw,
+            issuerMetadata = resolvedIssuerMetadata,
+            raw = rawIssuerMetadata,
             credentialIssuer = credentialIssuer
         )
         // Update cache

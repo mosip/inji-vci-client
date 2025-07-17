@@ -6,16 +6,19 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
-import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
+import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
+import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
+import io.mosip.vciclient.testData.wellKnownResponseMap
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
 import kotlinx.coroutines.runBlocking
@@ -28,7 +31,8 @@ import org.junit.jupiter.api.assertThrows
 class TrustedIssuerFlowHandlerTest {
 
     private val mockCredentialResponse = mockk<CredentialResponse>()
-    private val resolvedMeta = mockk<IssuerMetadata>(relaxed = true)
+    private val credentialIssuer = "https://example.com/issuer"
+    private val credentialConfigurationId = "test-credential-config"
     private val clientMetadata = ClientMetadata("client-id", "app://callback")
     private val pkceSession = PKCESession("verifier", "challenge", "state", "nonce")
     private val authUrl = "https://auth/authorize?client_id=client-id"
@@ -49,10 +53,15 @@ class TrustedIssuerFlowHandlerTest {
         mockkObject(AuthorizationUrlBuilder)
         mockkConstructor(TokenService::class)
         mockkConstructor(CredentialRequestExecutor::class)
+        mockkConstructor(IssuerMetadataService::class)
 
         every { anyConstructed<PKCESessionManager>().createSession() } returns pkceSession
         mockkObject(Util.Companion)
         every { Util.getLogTag(any(), any()) } returns "TestLogTag"
+        coEvery { anyConstructed<IssuerMetadataService>().fetchIssuerMetadataResult(credentialIssuer, credentialConfigurationId) } returns IssuerMetadataResult(
+            issuerMetadata = mockk<IssuerMetadata>(relaxed = true),
+            raw = wellKnownResponseMap
+        )
 
         every {
             AuthorizationUrlBuilder.build(
@@ -96,8 +105,8 @@ class TrustedIssuerFlowHandlerTest {
     @Test
     fun `should return credential on successful flow`() = runBlocking {
         val result = TrustedIssuerFlowHandler().downloadCredentials(
-            issuerMetadata = resolvedMeta,
-            credentialConfigurationId = "test-credential-config",
+            credentialIssuer = credentialIssuer,
+            credentialConfigurationId = credentialConfigurationId,
             clientMetadata = clientMetadata,
             getTokenResponse = mockk(relaxed = true),
             authorizeUser = getAuthCode,
@@ -115,8 +124,8 @@ class TrustedIssuerFlowHandlerTest {
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerFlowHandler().downloadCredentials(
-                issuerMetadata = resolvedMeta,
-                credentialConfigurationId = "test-credential-config",
+                credentialIssuer = credentialIssuer,
+                credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
                 authorizeUser = failingGetAuthCode,
@@ -137,8 +146,8 @@ class TrustedIssuerFlowHandlerTest {
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerFlowHandler().downloadCredentials(
-                issuerMetadata = resolvedMeta,
-                credentialConfigurationId = "test-credential-config",
+                credentialIssuer = credentialIssuer,
+                credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
                 authorizeUser = getAuthCode,
@@ -158,8 +167,8 @@ class TrustedIssuerFlowHandlerTest {
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerFlowHandler().downloadCredentials(
-                issuerMetadata = resolvedMeta,
-                credentialConfigurationId = "test-credential-config",
+                credentialIssuer = credentialIssuer,
+                credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
                 authorizeUser = getAuthCode,
@@ -179,8 +188,8 @@ class TrustedIssuerFlowHandlerTest {
 
         val ex = assertThrows<DownloadFailedException> {
             TrustedIssuerFlowHandler().downloadCredentials(
-                issuerMetadata = resolvedMeta,
-                credentialConfigurationId = "test-credential-config",
+                credentialIssuer = credentialIssuer,
+                credentialConfigurationId = credentialConfigurationId,
                 clientMetadata = clientMetadata,
                 getTokenResponse = mockk(relaxed = true),
                 authorizeUser = getAuthCode,

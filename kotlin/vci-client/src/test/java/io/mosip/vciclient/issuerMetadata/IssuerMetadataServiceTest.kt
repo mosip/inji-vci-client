@@ -1,6 +1,5 @@
 package io.mosip.vciclient.issuerMetadata
 
-import com.google.gson.Gson
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.every
@@ -10,6 +9,8 @@ import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.exception.IssuerMetadataFetchException
 import io.mosip.vciclient.networkManager.NetworkManager
 import io.mosip.vciclient.networkManager.NetworkResponse
+import io.mosip.vciclient.testData.wellKnownResponse
+import io.mosip.vciclient.testData.wellKnownResponseMap
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -23,23 +24,6 @@ class IssuerMetadataServiceTest {
     private val issuerUrl = "https://mock.issuer"
     private val wellKnownUrl = "$issuerUrl/.well-known/openid-credential-issuer"
     private val credentialConfigId = "UniversityDegreeCredential"
-    private val wellKnownResponse = """
-        {
-          "credential_issuer": "https://mock.issuer",
-          "credential_endpoint": "https://mock.issuer/endpoint",
-          "authorization_servers": ["https://auth"],
-          "credential_configurations_supported": {
-            "UniversityDegreeCredential": {
-              "format": "ldp_vc",
-              "scope": "degree",
-              "credential_definition": {
-                "@context": ["https://www.w3.org/2018/credentials/v1"],
-                "type": ["VerifiableCredential"]
-              }
-            }
-          }
-        }
-    """.trimIndent()
 
     @Before
     fun setup() {
@@ -53,7 +37,8 @@ class IssuerMetadataServiceTest {
 
     @Test
     fun `fetchIssuerMetadataResult first call makes network request`() = runBlocking {
-        every { NetworkManager.sendRequest(wellKnownUrl, any(), any()) } returns NetworkResponse(wellKnownResponse, null)
+        every { NetworkManager.sendRequest(wellKnownUrl, any(), any()) } returns NetworkResponse(
+            wellKnownResponse, null)
 
         val service = IssuerMetadataService()
         service.fetchIssuerMetadataResult(issuerUrl, credentialConfigId)
@@ -81,7 +66,7 @@ class IssuerMetadataServiceTest {
         val result: IssuerMetadataResult = IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "UniversityDegreeCredential")
         val resolved = result.issuerMetadata
 
-        assertJsonEquals(wellKnownResponse, result.raw)
+        assertEquals(wellKnownResponseMap, result.raw)
         assertEquals(CredentialFormat.LDP_VC, resolved.credentialFormat)
         assertEquals("https://mock.issuer", resolved.credentialIssuer)
         assertEquals(listOf("VerifiableCredential"), resolved.credentialType)
@@ -197,14 +182,5 @@ class IssuerMetadataServiceTest {
           }
         }
         """
-    }
-
-    private fun assertJsonEquals(expectedJsonString: String, actualMap: Map<String, Any?>) {
-        val gson = Gson()
-
-        val normalizedExpected = gson.toJson(gson.fromJson(expectedJsonString, Map::class.java))
-        val normalizedActual = gson.toJson(actualMap)
-
-        assertEquals(normalizedExpected, normalizedActual)
     }
 }

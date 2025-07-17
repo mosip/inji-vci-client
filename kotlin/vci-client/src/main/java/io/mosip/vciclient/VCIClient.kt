@@ -32,7 +32,6 @@ class VCIClient(traceabilityId: String) {
     private val logTag = Util.getLogTag(javaClass.simpleName, traceabilityId)
     private val logger = Logger.getLogger(logTag)
 
-    //TODO: Add tests for this
     fun getIssuerMetadata(credentialIssuer: String): Map<String, Any> {
         try {
             return IssuerMetadataService().fetchAndParseIssuerMetadata(credentialIssuer)
@@ -98,13 +97,8 @@ class VCIClient(traceabilityId: String) {
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
     ): CredentialResponse {
         try {
-            val issuerMetadata = IssuerMetadataService().fetchIssuerMetadataResult(
-                credentialIssuer,
-                credentialConfigurationId
-            ).issuerMetadata
-
             return TrustedIssuerFlowHandler().downloadCredentials(
-                issuerMetadata,
+                credentialIssuer,
                 credentialConfigurationId,
                 clientMetadata,
                 getTokenResponse,
