@@ -71,19 +71,18 @@ class IssuerMetadataService {
         credentialConfigurationId: String,
         rawIssuerMetadata: Map<String, Any>
     ): IssuerMetadata {
-        val credentialConfigurationsSupported = rawIssuerMetadata["credential_configurations_supported"] as? Map<*, *>
-            ?: throw IssuerMetadataFetchException("Missing credential_configurations_supported")
-
-        val credentialType = credentialConfigurationsSupported[credentialConfigurationId] as? Map<*, *>
-            ?: throw IssuerMetadataFetchException("Credential configuration not found: $credentialConfigurationId")
-
+        val credentialConfigurationsSupported =
+            rawIssuerMetadata["credential_configurations_supported"] as? Map<*, *>
+                ?: throw IssuerMetadataFetchException("Missing credential_configurations_supported")
+        val credentialType =
+            credentialConfigurationsSupported[credentialConfigurationId] as? Map<*, *>
+                ?: throw IssuerMetadataFetchException("Credential configuration not found: $credentialConfigurationId")
         val credentialEndpoint = rawIssuerMetadata["credential_endpoint"] as? String
             ?: throw IssuerMetadataFetchException("Missing credential_endpoint")
-
         val credentialIssuer = rawIssuerMetadata["credential_issuer"] as? String
             ?: throw IssuerMetadataFetchException("Missing credential_issuer")
-
         val format = credentialType["format"] as? String
+        val scope = credentialType["scope"] as? String ?: "openid"
 
         return when (format) {
             CredentialFormat.MSO_MDOC.value -> {
@@ -97,15 +96,16 @@ class IssuerMetadataService {
                     credentialFormat = CredentialFormat.MSO_MDOC,
                     doctype = doctype,
                     claims = claims,
+                    scope = scope,
                     authorizationServers = rawIssuerMetadata["authorization_servers"] as? List<String>
                 )
             }
 
             CredentialFormat.LDP_VC.value -> {
-                val credentialDefinition = credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
+                val credentialDefinition =
+                    credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
                 val types = credentialDefinition["type"] as? List<String>
                 val context = credentialDefinition["@context"] as? List<String>
-                val scope = credentialType["scope"] as? String ?: ""
 
                 IssuerMetadata(
                     credentialIssuer = credentialIssuer,
@@ -114,7 +114,7 @@ class IssuerMetadataService {
                     context = context,
                     credentialFormat = CredentialFormat.LDP_VC,
                     authorizationServers = rawIssuerMetadata["authorization_servers"] as? List<String>,
-                    scope = "openid $scope".trim()
+                    scope = scope,
                 )
             }
 

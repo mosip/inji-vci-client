@@ -70,9 +70,19 @@ class IssuerMetadataServiceTest {
         assertEquals(CredentialFormat.LDP_VC, resolved.credentialFormat)
         assertEquals("https://mock.issuer", resolved.credentialIssuer)
         assertEquals(listOf("VerifiableCredential"), resolved.credentialType)
-        assertEquals("openid degree", resolved.scope)
+        assertEquals("degree", resolved.scope)
         assertTrue(resolved.authorizationServers!!.contains("https://auth"))
         assertTrue(resolved.context!!.contains("https://www.w3.org/2018/credentials/v1"))
+    }
+
+    @Test
+    fun `should set scope in IssuerMetadataResult to openid if no scope available in well-known response`() = runBlocking {
+        mockJsonResponse(LDP_VC_JSON_WITHOUT_SCOPE)
+
+        val result: IssuerMetadataResult = IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "UniversityDegreeCredential")
+        val resolved = result.issuerMetadata
+
+        assertEquals("openid", resolved.scope)
     }
 
     @Test
@@ -85,6 +95,7 @@ class IssuerMetadataServiceTest {
         assertEquals(CredentialFormat.MSO_MDOC, resolved.credentialFormat)
         assertEquals("org.iso.18013.5.1.mDL", resolved.doctype)
         assertTrue(resolved.claims!!.containsKey("name"))
+        assertEquals("mock_mdoc",resolved.scope)
     }
 
     @Test
@@ -153,6 +164,23 @@ class IssuerMetadataServiceTest {
         }
         """
 
+        const val LDP_VC_JSON_WITHOUT_SCOPE = """
+        {
+          "credential_issuer": "https://mock.issuer",
+          "credential_endpoint": "https://mock.issuer/endpoint",
+          "authorization_servers": ["https://auth"],
+          "credential_configurations_supported": {
+            "UniversityDegreeCredential": {
+              "format": "ldp_vc",
+              "credential_definition": {
+                "@context": ["https://www.w3.org/2018/credentials/v1"],
+                "type": ["VerifiableCredential"]
+              }
+            }
+          }
+        }
+        """
+
         const val MSO_MDOC_JSON = """
         {
           "credential_issuer": "https://mock.issuer",
@@ -160,6 +188,7 @@ class IssuerMetadataServiceTest {
           "authorization_servers": ["https://auth"],
           "credential_configurations_supported": {
             "DrivingLicense": {
+              "scope": "mock_mdoc",
               "format": "mso_mdoc",
               "doctype": "org.iso.18013.5.1.mDL",
               "claims": {
