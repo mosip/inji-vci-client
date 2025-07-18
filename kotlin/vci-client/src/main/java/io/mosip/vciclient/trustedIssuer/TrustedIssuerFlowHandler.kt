@@ -33,7 +33,7 @@ class TrustedIssuerFlowHandler {
             getTokenResponse = getTokenResponse,
             getProofJwt = getProofJwt,
             downloadTimeOutInMillis = downloadTimeoutInMillis,
-            jwtProofAlgorithmsSupported = listOf("ES256"),
+            jwtProofAlgorithmsSupported = issuerMetadataResult.extractJwtProofSigningAlgorithms(credentialConfigurationId),
         )
     }
 }
