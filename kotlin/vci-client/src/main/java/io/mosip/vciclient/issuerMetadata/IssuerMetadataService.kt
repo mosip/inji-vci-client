@@ -13,7 +13,7 @@ private const val CREDENTIAL_ISSUER_WELL_KNOWN_URI_SUFFIX = "/.well-known/openid
 @Suppress("UNCHECKED_CAST")
 class IssuerMetadataService {
     private val timeoutMillis: Long = 10000
-    private var cachedIssuerMetadataResult: IssuerMetadataResult? = null
+    private val cachedRawMetadata: MutableMap<String, Map<String, Any>> = mutableMapOf()
 
     /**
      * Fetches and resolves issuer metadata for a given issuer URI and credential configuration ID.
@@ -23,26 +23,24 @@ class IssuerMetadataService {
         credentialIssuer: String,
         credentialConfigurationId: String
     ): IssuerMetadataResult = withContext(Dispatchers.IO) {
-        // Check cache first
-        cachedIssuerMetadataResult?.takeIf { it.credentialIssuer == credentialIssuer }?.let {
-            return@withContext it
+        val rawIssuerMetadata = cachedRawMetadata[credentialIssuer] ?: run {
+            val fetched = fetchAndParseIssuerMetadata(credentialIssuer)
+            cachedRawMetadata[credentialIssuer] = fetched
+            fetched
         }
 
-        val rawIssuerMetadata = fetchAndParseIssuerMetadata(credentialIssuer)
         val resolvedIssuerMetadata = resolveMetadata(
             credentialConfigurationId = credentialConfigurationId,
             rawIssuerMetadata = rawIssuerMetadata
         )
 
-        val result = IssuerMetadataResult(
+        return@withContext IssuerMetadataResult(
             issuerMetadata = resolvedIssuerMetadata,
             raw = rawIssuerMetadata,
             credentialIssuer = credentialIssuer
         )
-        // Update cache
-        cachedIssuerMetadataResult = result
-        return@withContext result
     }
+
 
     fun fetchAndParseIssuerMetadata(credentialIssuer: String): Map<String, Any> {
         val wellKnownUrl = "$credentialIssuer$CREDENTIAL_ISSUER_WELL_KNOWN_URI_SUFFIX"

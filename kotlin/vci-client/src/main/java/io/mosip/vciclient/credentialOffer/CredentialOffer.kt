@@ -22,7 +22,7 @@ data class CredentialOfferGrants(
 )
 
 data class PreAuthCodeGrant(
-    @SerializedName("pre-auth_code")
+    @SerializedName("pre-authorized_code")
     val preAuthCode: String,
 
     @SerializedName("tx_code")
