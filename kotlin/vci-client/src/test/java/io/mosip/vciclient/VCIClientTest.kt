@@ -16,9 +16,9 @@ import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.proof.Proof
-import io.mosip.vciclient.types.AuthorizeUserCallback
-import io.mosip.vciclient.types.ProofJwtCallback
-import io.mosip.vciclient.types.TxCodeCallback
+import io.mosip.vciclient.constants.AuthorizeUserCallback
+import io.mosip.vciclient.constants.ProofJwtCallback
+import io.mosip.vciclient.constants.TxCodeCallback
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After

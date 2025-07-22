@@ -1,7 +1,7 @@
 package io.mosip.vciclient.token
 
 import io.mosip.vciclient.constants.GrantType
-import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

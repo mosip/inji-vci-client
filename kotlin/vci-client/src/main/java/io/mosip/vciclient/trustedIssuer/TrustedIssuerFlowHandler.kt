@@ -6,9 +6,9 @@ import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
-import io.mosip.vciclient.types.AuthorizeUserCallback
-import io.mosip.vciclient.types.ProofJwtCallback
-import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.constants.AuthorizeUserCallback
+import io.mosip.vciclient.constants.ProofJwtCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
 
 class TrustedIssuerFlowHandler {
     private val issuerMetadataService = IssuerMetadataService()

@@ -4,7 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mosip.vciclient.constants.GrantType
-import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test

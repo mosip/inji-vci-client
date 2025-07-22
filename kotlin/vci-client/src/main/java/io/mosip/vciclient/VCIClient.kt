@@ -18,11 +18,11 @@ import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.proof.Proof
 import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
-import io.mosip.vciclient.types.AuthorizeUserCallback
-import io.mosip.vciclient.types.CheckIssuerTrustCallback
-import io.mosip.vciclient.types.ProofJwtCallback
-import io.mosip.vciclient.types.TokenResponseCallback
-import io.mosip.vciclient.types.TxCodeCallback
+import io.mosip.vciclient.constants.AuthorizeUserCallback
+import io.mosip.vciclient.constants.CheckIssuerTrustCallback
+import io.mosip.vciclient.constants.ProofJwtCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
+import io.mosip.vciclient.constants.TxCodeCallback
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okio.IOException

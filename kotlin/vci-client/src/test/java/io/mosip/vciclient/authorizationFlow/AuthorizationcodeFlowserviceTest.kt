@@ -22,9 +22,9 @@ import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
 import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
-import io.mosip.vciclient.types.AuthorizeUserCallback
-import io.mosip.vciclient.types.ProofJwtCallback
-import io.mosip.vciclient.types.TokenResponseCallback
+import io.mosip.vciclient.constants.AuthorizeUserCallback
+import io.mosip.vciclient.constants.ProofJwtCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals

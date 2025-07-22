@@ -1,4 +1,4 @@
-package io.mosip.vciclient.types
+package io.mosip.vciclient.constants
 
 import io.mosip.vciclient.token.TokenRequest
 import io.mosip.vciclient.token.TokenResponse

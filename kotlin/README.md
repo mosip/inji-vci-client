@@ -1,7 +1,7 @@
 # INJI VCI Client
 
 The **Inji VCI Client** is a Kotlin-based library built to simplify credential issuance via [OpenID for Verifiable Credential Issuance (OID4VCI)](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-13.html) protocol.  
-It supports both **Credential Offer** and **Trusted Issuer** flows, with secure proof handling, PKCE support, and custom error handling.
+It supports **Issuer Initiated (Credential Offer)** and **Wallet Initiated (Trusted Issuer)** flows, with secure proof handling, PKCE support, and custom error handling.
 
 ---
 
@@ -9,12 +9,11 @@ It supports both **Credential Offer** and **Trusted Issuer** flows, with secure 
 
 - Request credentials from OID4VCI-compliant credential issuers
 - Supports both:
-  - Credential Offer Flow. 
-  - Trusted Issuer Flow.
+  - Issuer Initiated Flow (Credential Offer Flow).
+  - Wallet Initiated Flow (Trusted Issuer Flow).
 - Authorization server discovery for both flows
 - PKCE-compliant OAuth 2.0 Authorization Code flow (RFC 7636)
   - PKCE session is managed internally by the library
-- Automatic CNonce + Proof JWT handling
 - Well-defined **exception handling** with `VCI-XXX` error codes (see more on [this](#error-handling))
 - Support for multiple Credential formats:
   - `ldp_vc`
@@ -65,20 +64,17 @@ Retrieve the issuer metadata from the credential issuer's well-known endpoint.
 
 > Note: This method does not parse the metadata, it simply returns the raw Network response of well-known endpoint as a `Map<String, Any>`.
 
-###### Sample returned response
-
-```Kotlin
-val issuerMetadata = mapOf(
-    "credential_issuer" to "https://example.com/issuer",
-    "credential_endpoint" to "https://example.com/issuer/credential",
-)
-```
-
 #### Example Usage
 
 ```kotlin
 val issuerMetadata : Map<String, Any> = VCIClient(traceabilityId).getIssuerMetadata(
     credentialIssuer = "https://example.com/issuer"
+)
+
+//The response looks similar to this
+mapOf(
+  "credential_issuer" to "https://example.com/issuer",
+  "credential_endpoint" to "https://example.com/issuer/credential",
 )
 ```
 
@@ -89,8 +85,8 @@ val issuerMetadata : Map<String, Any> = VCIClient(traceabilityId).getIssuerMetad
 - Method: `requestCredentialByCredentialOffer`
 - This method allows you to request a credential using a credential offer, which can be either an embedded JSON or a URI pointing to the credential offer.
 - It supports both **Pre-Authorization** and **Authorization** flows.
-- The library handles the PKCE flow internally, including the generation of `c_nonce` and proof JWTs.
-- You can also implement user-trust based credential download from issuer using `onCheckIssuerTrust` parameter.
+- The library handles the PKCE flow internally.
+- User-trust based credential download supported through onCheckIssuerTrust callback.
 
 #### Parameters
 
@@ -114,18 +110,6 @@ An instance of `CredentialResponse` containing:
 | credential                | JsonElement | The credential downloaded from the Issuer                                      |
 | credentialConfigurationId | String      | The identifier of the respective supported credential from well-known response |
 | credentialIssuer          | String      | URI of the Credential Issuer                                                   |
-
-
-##### Sample returned response
-
-```kotlin
-//Consider the credential is a Driver's License credential (credential format `mso_mdoc`)
-val credentialResponse = vciClient.requestCredentialByCredentialOffer(credentialOffer, clientMetadata, getTxCode, authorizeUser, getTokenResponse, getProofJwt, onCheckIssuerTrust, downloadTimeoutInMillis)
-credentialResponse.credential // This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
-credentialResponse.credentialConfigurationId // eg - "DriversLicense"
-credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
-```
-
 
 #### Example usage
 
@@ -183,6 +167,12 @@ val credentialResponse: CredentialResponse = vciClient.requestCredentialByCreden
   },
   downloadTimeoutInMillis = 10000
 )
+
+//Consider the credential is a Driver's License credential (credential format `mso_mdoc`)
+val credentialResponse = vciClient.requestCredentialByCredentialOffer(credentialOffer, clientMetadata, getTxCode, authorizeUser, getTokenResponse, getProofJwt, onCheckIssuerTrust, downloadTimeoutInMillis)
+credentialResponse.credential // This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
+credentialResponse.credentialConfigurationId // eg - "DriversLicense"
+credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
 ```
 
 ### 2.2 Request Credential from Trusted Issuer
@@ -213,16 +203,6 @@ An instance of `CredentialResponse` containing:
 | credential                | JsonElement | The credential downloaded from the Issuer                                      |
 | credentialConfigurationId | String      | The identifier of the respective supported credential from well-known response |
 | credentialIssuer          | String      | URI of the Credential Issuer                                                   |
-
-##### Sample returned response
-
-```kotlin
-//Consider the credential is a Driver's License credential (credential format `mso_mdoc`)
-val credentialResponse = vciClient.requestCredentialByCredentialOffer(credentialOffer, clientMetadata, getTxCode, authorizeUser, getTokenResponse, getProofJwt, onCheckIssuerTrust, downloadTimeoutInMillis)
-credentialResponse.credential // This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
-credentialResponse.credentialConfigurationId // eg - "DriversLicense"
-credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
-```
 
 #### Example usage
 
@@ -268,13 +248,19 @@ val credentialResponse: CredentialResponse = vciClient.requestCredentialFromTrus
   },
   downloadTimeoutInMillis = 10000
 )
+
+//Consider the credential is a Driver's License credential (credential format `mso_mdoc`)
+val credentialResponse = vciClient.requestCredentialByCredentialOffer(credentialOffer, clientMetadata, getTxCode, authorizeUser, getTokenResponse, getProofJwt, onCheckIssuerTrust, downloadTimeoutInMillis)
+credentialResponse.credential // This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
+credentialResponse.credentialConfigurationId // eg - "DriversLicense"
+credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
 ```
 
 ### 2.3 Request Credential
 - Method: `requestCredential`
 - Request for credential from the providers (credential issuer), and receive the credential back.
 
-> Note: This method is deprecated and will be removed in future releases. Please migrate to `requestCredentialByCredentialOffer()` or `requestCredentialFromTrustedIssuer()` as soon as possible.
+> Note: This method is deprecated and will be removed in future releases. Please migrate to `requestCredentialByCredentialOffer()` or `requestCredentialFromTrustedIssuer()`.
  
 #### Parameters
 
@@ -339,7 +325,7 @@ credentialResponse.credentialIssuer // This will be null
 
 ## 🚨 Deprecation Notice
 
-The following methods are deprecated and will be removed in future releases. Please migrate to the suggested alternatives as soon as possible.
+The following methods are deprecated and will be removed in future releases. Please migrate to the suggested alternatives.
 
 | Method Name       | Description                                                                                     | Deprecated Since | Suggested Alternative                                                                                                                                                       |
 |-------------------|-------------------------------------------------------------------------------------------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -381,8 +367,19 @@ Mock-based tests are available covering:
 
 - Credential download flow (offer + trusted issuer)
 - Proof JWT signing callbacks
-- Token exchange and CNonce logic
+- Token exchange logic
 
 > See `VCIClientTest` for full coverage
+
+## Platform Support
+
+- **Kotlin:** 1.9+
+- **JVM:** Java 17
+- **Android:** minSdk 23, compileSdk 34
+- **Gradle:** 8.0+
+- **AGP (Android Gradle Plugin):** 8.0+
+
+Architecture decisions are noted as ADRs [here](https://github.com/mosip/inji-vci-client/tree/master/doc).
+**Note: The android library is available [here](https://github.com/mosip/inji-vci-client)**
 
 

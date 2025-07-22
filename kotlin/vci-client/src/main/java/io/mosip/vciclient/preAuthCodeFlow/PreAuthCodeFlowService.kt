@@ -10,9 +10,9 @@ import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.token.TokenService
-import io.mosip.vciclient.types.ProofJwtCallback
-import io.mosip.vciclient.types.TokenResponseCallback
-import io.mosip.vciclient.types.TxCodeCallback
+import io.mosip.vciclient.constants.ProofJwtCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
+import io.mosip.vciclient.constants.TxCodeCallback
 
 class PreAuthCodeFlowService {
     suspend fun requestCredentials(
