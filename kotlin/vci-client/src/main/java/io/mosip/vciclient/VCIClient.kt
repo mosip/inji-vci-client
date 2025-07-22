@@ -1,13 +1,12 @@
 package io.mosip.vciclient
 
-import io.mosip.vciclient.clientMetadata.ClientMetadata
+import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.constants.Constants
-import io.mosip.vciclient.credentialRequest.CredentialRequestFactory
-import io.mosip.vciclient.credentialRequestFlowHandlers.CredentialOfferHandler
-import io.mosip.vciclient.credentialRequestFlowHandlers.TrustedIssuerHandler
-import io.mosip.vciclient.credentialResponse.CredentialResponse
+import io.mosip.vciclient.credential.request.CredentialRequestFactory
+import io.mosip.vciclient.credential.response.CredentialResponse
+import io.mosip.vciclient.credentialOffer.CredentialOfferFlowHandler
 import io.mosip.vciclient.dto.IssuerMetaData
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.InvalidAccessTokenException
@@ -16,7 +15,14 @@ import io.mosip.vciclient.exception.NetworkRequestFailedException
 import io.mosip.vciclient.exception.NetworkRequestTimeoutException
 import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
+import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.proof.Proof
+import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
+import io.mosip.vciclient.constants.AuthorizeUserCallback
+import io.mosip.vciclient.constants.CheckIssuerTrustCallback
+import io.mosip.vciclient.constants.ProofJwtCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
+import io.mosip.vciclient.constants.TxCodeCallback
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okio.IOException
@@ -24,76 +30,84 @@ import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
-class VCIClient(private val traceabilityId: String?) {
+class VCIClient(traceabilityId: String) {
 
     private val logTag = Util.getLogTag(javaClass.simpleName, traceabilityId)
     private val logger = Logger.getLogger(logTag)
-    suspend fun requestCredentialByCredentialOffer(
-        credentialOffer: String,
-        clientMetadata: ClientMetadata,
-        getTxCode: (suspend (inputMode: String?, description: String?, length: Int?) -> String)?,
-        getProofJwt: suspend (accessToken: String, cNonce: String?, issuerMetadata: Map<String, *>?, credentialConfigurationId: String?) -> String,
-        getAuthCode: suspend (authorisationEndpoint: String) -> String,
-        onCheckIssuerTrust: (suspend (issuerMetadata: Map<String, Any>) -> Boolean)? = null,
-        downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
-    ): CredentialResponse {
+
+    fun getIssuerMetadata(credentialIssuer: String): Map<String, Any> {
         try {
-            return CredentialOfferHandler().downloadCredentials(
-                credentialOffer,
-                clientMetadata,
-                getTxCode,
-                getProofJwt,
-                getAuthCode,
-                onCheckIssuerTrust,
-                downloadTimeoutInMillis,
-                traceabilityId
-            )
-        } catch (e: VCIClientException) {
+            return IssuerMetadataService().fetchAndParseIssuerMetadata(credentialIssuer)
+        } catch (exception: VCIClientException) {
             logger.severe(
-                "Downloading credential failed due to ${e.message}"
+                "Fetching issuer metadata failed due to ${exception.message}"
             )
-            throw e
+            throw exception
         } catch (e: Exception) {
             logger.severe(
-                "Downloading credential failed due to ${e.message}"
+                "Fetching issuer metadata failed due to ${e.message}"
             )
             throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
         }
     }
 
-    suspend fun requestCredentialFromTrustedIssuer(
-        issuerMetadata: IssuerMetadata,
+
+    suspend fun requestCredentialByCredentialOffer(
+        credentialOffer: String,
         clientMetadata: ClientMetadata,
-        getProofJwt: suspend (
-            accessToken: String,
-            cNonce: String?,
-            issuerMetadata: Map<String, *>?,
-            credentialConfigurationId: String?,
-        ) -> String,
-        getAuthCode: suspend (authorizationEndpoint: String) -> String,
-        downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
-    ): CredentialResponse? {
+        getTxCode: TxCodeCallback?,
+        authorizeUser: AuthorizeUserCallback,
+        getTokenResponse: TokenResponseCallback,
+        getProofJwt: ProofJwtCallback,
+        onCheckIssuerTrust: CheckIssuerTrustCallback? = null,
+        downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
+    ): CredentialResponse {
         try {
-            return TrustedIssuerHandler().downloadCredentials(
-                resolvedMeta = issuerMetadata,
-                clientMetadata = clientMetadata,
-                getProofJwt = getProofJwt,
-                getAuthCode = getAuthCode,
-                downloadTimeOutInMillis = downloadTimeoutInMillis,
-                traceabilityId = traceabilityId
+            return CredentialOfferFlowHandler().downloadCredentials(
+                credentialOffer,
+                clientMetadata,
+                getTxCode,
+                authorizeUser,
+                getTokenResponse,
+                getProofJwt,
+                onCheckIssuerTrust,
+                downloadTimeoutInMillis
             )
         } catch (e: VCIClientException) {
-            logger.severe(
-                "Downloading credential failed due to ${e.message}"
-            )
             throw e
         } catch (e: Exception) {
-            logger.severe(
-                "Downloading credential failed due to ${e.message}"
-            )
+            logger.severe("Downloading credential failed due to ${e.message}")
             throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
         }
+    }
 
+
+    suspend fun requestCredentialFromTrustedIssuer(
+        credentialIssuer: String,
+        credentialConfigurationId: String,
+        clientMetadata: ClientMetadata,
+        authorizeUser: AuthorizeUserCallback,
+        getTokenResponse: TokenResponseCallback,
+        getProofJwt: ProofJwtCallback,
+        downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
+    ): CredentialResponse {
+        try {
+            return TrustedIssuerFlowHandler().downloadCredentials(
+                credentialIssuer,
+                credentialConfigurationId,
+                clientMetadata,
+                getTokenResponse,
+                authorizeUser,
+                getProofJwt,
+                downloadTimeoutInMillis,
+            )
+        } catch (e: VCIClientException) {
+            logger.severe("Downloading credential failed due to ${e.message}")
+            throw e
+        } catch (e: Exception) {
+            logger.severe("Downloading credential failed due to ${e.message}")
+            throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
+        }
     }
 
     @Deprecated(
@@ -112,7 +126,7 @@ class VCIClient(private val traceabilityId: String?) {
             ).build()
 
             val metadata = IssuerMetadata(
-                credentialAudience = issuerMetadata.credentialAudience,
+                credentialIssuer = issuerMetadata.credentialAudience,
                 credentialEndpoint = issuerMetadata.credentialEndpoint,
                 credentialType = issuerMetadata.credentialType?.toList(),
                 credentialFormat = issuerMetadata.credentialFormat,

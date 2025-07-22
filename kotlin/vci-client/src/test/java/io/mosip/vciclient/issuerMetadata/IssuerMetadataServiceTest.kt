@@ -1,12 +1,16 @@
 package io.mosip.vciclient.issuerMetadata
 
 import io.mockk.clearAllMocks
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockkObject
+import io.mockk.verify
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.exception.IssuerMetadataFetchException
 import io.mosip.vciclient.networkManager.NetworkManager
 import io.mosip.vciclient.networkManager.NetworkResponse
+import io.mosip.vciclient.testData.wellKnownResponse
+import io.mosip.vciclient.testData.wellKnownResponseMap
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -19,6 +23,7 @@ class IssuerMetadataServiceTest {
 
     private val issuerUrl = "https://mock.issuer"
     private val wellKnownUrl = "$issuerUrl/.well-known/openid-credential-issuer"
+    private val credentialConfigId = "UniversityDegreeCredential"
 
     @Before
     fun setup() {
@@ -31,30 +36,66 @@ class IssuerMetadataServiceTest {
     }
 
     @Test
+    fun `fetchIssuerMetadataResult first call makes network request`() = runBlocking {
+        every { NetworkManager.sendRequest(wellKnownUrl, any(), any()) } returns NetworkResponse(
+            wellKnownResponse, null)
+
+        val service = IssuerMetadataService()
+        service.fetchIssuerMetadataResult(issuerUrl, credentialConfigId)
+
+        verify(exactly = 1) { NetworkManager.sendRequest(wellKnownUrl, any(), any()) }
+    }
+
+    @Test
+    fun `fetchIssuerMetadataResult second call uses cache and does not make network request`() = runBlocking {
+        every { NetworkManager.sendRequest(wellKnownUrl, any(), any()) } returns NetworkResponse(wellKnownResponse, null)
+
+        val service = IssuerMetadataService()
+        service.fetchIssuerMetadataResult(issuerUrl, credentialConfigId)
+        clearMocks(NetworkManager)
+
+        service.fetchIssuerMetadataResult(issuerUrl, credentialConfigId)
+
+        verify(exactly = 0) { NetworkManager.sendRequest(any(), any(), any()) }
+    }
+
+    @Test
     fun `should parse ldp_vc metadata successfully`() = runBlocking {
         mockJsonResponse(LDP_VC_JSON)
 
-        val result = IssuerMetadataService().fetch(issuerUrl, "UniversityDegreeCredential")
+        val result: IssuerMetadataResult = IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "UniversityDegreeCredential")
         val resolved = result.issuerMetadata
 
+        assertEquals(wellKnownResponseMap, result.raw)
         assertEquals(CredentialFormat.LDP_VC, resolved.credentialFormat)
-        assertEquals("https://mock.issuer", resolved.credentialAudience)
+        assertEquals("https://mock.issuer", resolved.credentialIssuer)
         assertEquals(listOf("VerifiableCredential"), resolved.credentialType)
-        assertEquals("openid degree", resolved.scope)
+        assertEquals("degree", resolved.scope)
         assertTrue(resolved.authorizationServers!!.contains("https://auth"))
         assertTrue(resolved.context!!.contains("https://www.w3.org/2018/credentials/v1"))
+    }
+
+    @Test
+    fun `should set scope in IssuerMetadataResult to openid if no scope available in well-known response`() = runBlocking {
+        mockJsonResponse(LDP_VC_JSON_WITHOUT_SCOPE)
+
+        val result: IssuerMetadataResult = IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "UniversityDegreeCredential")
+        val resolved = result.issuerMetadata
+
+        assertEquals("openid", resolved.scope)
     }
 
     @Test
     fun `should parse mso_mdoc metadata successfully`() = runBlocking {
         mockJsonResponse(MSO_MDOC_JSON)
 
-        val result = IssuerMetadataService().fetch(issuerUrl, "DrivingLicense")
+        val result = IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "DrivingLicense")
         val resolved = result.issuerMetadata
 
         assertEquals(CredentialFormat.MSO_MDOC, resolved.credentialFormat)
         assertEquals("org.iso.18013.5.1.mDL", resolved.doctype)
         assertTrue(resolved.claims!!.containsKey("name"))
+        assertEquals("mock_mdoc",resolved.scope)
     }
 
     @Test
@@ -62,7 +103,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse("")
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "Invalid")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "Invalid")
         }
         assertTrue(ex.message.contains("response is empty"))
     }
@@ -72,7 +113,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse("""{ "credential_issuer": "https://mock.issuer" }""")
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "MissingConfig")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "MissingConfig")
         }
         assertTrue(ex.message.contains("credential_configurations_supported"))
     }
@@ -82,7 +123,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse(LDP_VC_JSON) // only contains "UniversityDegreeCredential"
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "NonExistentCredential")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "NonExistentCredential")
         }
         assertTrue(ex.message.contains("Credential configuration not found"))
     }
@@ -92,7 +133,7 @@ class IssuerMetadataServiceTest {
         mockJsonResponse(INVALID_FORMAT_JSON)
 
         val ex = assertThrows<IssuerMetadataFetchException> {
-            IssuerMetadataService().fetch(issuerUrl, "TestCredential")
+            IssuerMetadataService().fetchIssuerMetadataResult(issuerUrl, "TestCredential")
         }
         assertTrue(ex.message.contains("Unsupported or missing credential format"))
     }
@@ -123,6 +164,23 @@ class IssuerMetadataServiceTest {
         }
         """
 
+        const val LDP_VC_JSON_WITHOUT_SCOPE = """
+        {
+          "credential_issuer": "https://mock.issuer",
+          "credential_endpoint": "https://mock.issuer/endpoint",
+          "authorization_servers": ["https://auth"],
+          "credential_configurations_supported": {
+            "UniversityDegreeCredential": {
+              "format": "ldp_vc",
+              "credential_definition": {
+                "@context": ["https://www.w3.org/2018/credentials/v1"],
+                "type": ["VerifiableCredential"]
+              }
+            }
+          }
+        }
+        """
+
         const val MSO_MDOC_JSON = """
         {
           "credential_issuer": "https://mock.issuer",
@@ -130,6 +188,7 @@ class IssuerMetadataServiceTest {
           "authorization_servers": ["https://auth"],
           "credential_configurations_supported": {
             "DrivingLicense": {
+              "scope": "mock_mdoc",
               "format": "mso_mdoc",
               "doctype": "org.iso.18013.5.1.mDL",
               "claims": {

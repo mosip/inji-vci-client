@@ -1,142 +1,101 @@
 package io.mosip.vciclient.token
 
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockkObject
-import io.mosip.vciclient.exception.DownloadFailedException
-import io.mosip.vciclient.exception.InvalidAccessTokenException
-import io.mosip.vciclient.networkManager.HttpMethod
-import io.mosip.vciclient.networkManager.NetworkManager
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
+import io.mosip.vciclient.constants.GrantType
+import io.mosip.vciclient.constants.TokenResponseCallback
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
 class TokenServiceTest {
-
-    private val tokenEndpoint = "https://mock.token.endpoint"
-    private val invalidResponse = """{ "tokenType": "Bearer" }"""
-    private val validTokenResponse = """
-        {
-            "access_token": "valid_token",
-            "token_type": "Bearer",
-            "c_nonce": "sample_nonce",
-            "exprires_in": 3600
-        }
-    """.trimIndent()
-
-    @Before
-    fun setup() {
-        mockkObject(NetworkManager)
-    }
-
-    @After
-    fun tearDown() {
-        clearAllMocks()
-    }
+    private val tokenService = TokenService()
+    private val tokenEndpoint = "https://token.endpoint"
+    private val mockTokenResponse = TokenResponse(
+        accessToken = "test_token",
+        tokenType = "Bearer",
+        expiresIn = 3600,
+        cNonce = "test_nonce"
+    )
 
     @Test
-    fun `should return token when pre-auth flow succeeds`() = runBlocking {
-        every {
-            NetworkManager.sendRequest(
-                url = tokenEndpoint,
-                method = HttpMethod.POST,
-                headers = any(),
-                bodyParams = match { it["pre-authorized_code"] == "abc123" },
-                timeoutMillis = any()
-            )
-        } returns io.mosip.vciclient.networkManager.NetworkResponse(validTokenResponse, null)
+    fun `getAccessToken should create correct request for pre-authorized flow`() = runBlocking {
+        // Arrange
+        val getTokenResponse = mockk<TokenResponseCallback>()
+        coEvery { getTokenResponse(any()) } returns mockTokenResponse
 
-        val result = TokenService().getAccessToken(
-            tokenEndpoint = tokenEndpoint, preAuthCode = "abc123"
-        )
-
-        assertEquals("valid_token", result.accessToken)
-    }
-
-    @Test
-    fun `should return token when authorization code flow succeeds`() = runBlocking {
-        every {
-            NetworkManager.sendRequest(
-                url = tokenEndpoint,
-                method = HttpMethod.POST,
-                headers = any(),
-                bodyParams = match { it["code"] == "auth-code-123" },
-                timeoutMillis = any()
-            )
-        } returns io.mosip.vciclient.networkManager.NetworkResponse(validTokenResponse, null)
-
-        val result = TokenService().getAccessToken(
+        // Act
+        val result = tokenService.getAccessToken(
+            getTokenResponse = getTokenResponse,
             tokenEndpoint = tokenEndpoint,
-            authCode = "auth-code-123",
-            clientId = "client-id",
-            redirectUri = "app://redirect",
-            codeVerifier = "verifier123"
+            preAuthCode = "pre-auth-code",
+            txCode = "tx-code"
         )
 
-        assertEquals("valid_token", result.accessToken)
+        // Assert
+        assertEquals(mockTokenResponse, result)
+        coVerify {
+            getTokenResponse(match { request ->
+                request.grantType == GrantType.PRE_AUTHORIZED &&
+                        request.tokenEndpoint == tokenEndpoint &&
+                        request.preAuthCode == "pre-auth-code" &&
+                        request.txCode == "tx-code" &&
+                        request.authCode == null &&
+                        request.clientId == null &&
+                        request.redirectUri == null &&
+                        request.codeVerifier == null
+            })
+        }
     }
 
     @Test
-    fun `should throw when preAuthCode is missing`() {
-        val exception = assertThrows<DownloadFailedException> {
-            runBlocking {
-                TokenService().getAccessToken(
-                    tokenEndpoint = tokenEndpoint, preAuthCode = ""
-                )
-            }
-        }
+    fun `getAccessToken should create correct request for authorization code flow`() = runBlocking {
+        // Arrange
+        val getTokenResponse = mockk<TokenResponseCallback>()
+        coEvery { getTokenResponse(any()) } returns mockTokenResponse
 
-        assertTrue(exception.message.contains("Pre-authorized code is missing."))
+        // Act
+        val result = tokenService.getAccessToken(
+            getTokenResponse = getTokenResponse,
+            tokenEndpoint = tokenEndpoint,
+            authCode = "auth-code",
+            clientId = "client-id",
+            redirectUri = "redirect-uri",
+            codeVerifier = "code-verifier"
+        )
+
+        // Assert
+        assertEquals(mockTokenResponse, result)
+        coVerify {
+            getTokenResponse(match { request ->
+                request.grantType == GrantType.AUTHORIZATION_CODE &&
+                        request.tokenEndpoint == tokenEndpoint &&
+                        request.authCode == "auth-code" &&
+                        request.clientId == "client-id" &&
+                        request.redirectUri == "redirect-uri" &&
+                        request.codeVerifier == "code-verifier" &&
+                        request.preAuthCode == null &&
+                        request.txCode == null
+            })
+        }
     }
 
     @Test
-    fun `should throw when authCode is missing`() {
-        val exception = assertThrows<DownloadFailedException> {
-            runBlocking {
-                TokenService().getAccessToken(
-                    tokenEndpoint = tokenEndpoint, authCode = ""
-                )
-            }
+    fun `getAccessToken should handle errors from token response`() = runBlocking {
+        // Arrange
+        val exception = RuntimeException("Test error")
+        val getTokenResponse = mockk<TokenResponseCallback>()
+        coEvery { getTokenResponse(any()) } throws exception
+
+        val ex = assertThrows<RuntimeException> {
+            tokenService.getAccessToken(
+                getTokenResponse = getTokenResponse,
+                tokenEndpoint = tokenEndpoint,
+                preAuthCode = "pre-auth-code"
+            )
         }
-        assertTrue(exception.message.contains("Authorization code is missing."))
-    }
-
-    @Test
-    fun `should throw when response body is empty`() {
-        every {
-            NetworkManager.sendRequest(any(), any(), any(), any(), any())
-        } returns io.mosip.vciclient.networkManager.NetworkResponse("", null)
-
-        val exception = assertThrows<DownloadFailedException> {
-            runBlocking {
-                TokenService().getAccessToken(
-                    tokenEndpoint = tokenEndpoint, preAuthCode = "abc123"
-                )
-            }
-        }
-
-        assertTrue(exception.message.contains("Token response body is empty"))
-    }
-
-    @Test
-    fun `should throw when access token is missing in response`() {
-
-        every {
-            NetworkManager.sendRequest(any(), any(), any(), any(), any())
-        } returns io.mosip.vciclient.networkManager.NetworkResponse(invalidResponse, null)
-
-        val exception = assertThrows<InvalidAccessTokenException> {
-            runBlocking {
-                TokenService().getAccessToken(
-                    tokenEndpoint = tokenEndpoint, preAuthCode = "abc123"
-                )
-            }
-        }
-
-        assertTrue(exception.message.contains("Access token missing in token response"))
+        assertEquals(exception.message, ex.message)
     }
 }

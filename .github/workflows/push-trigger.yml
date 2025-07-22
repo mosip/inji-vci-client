@@ -19,7 +19,7 @@ jobs:
   build-kotlin:
     uses: mosip/kattu/.github/workflows/gradle-build.yml@master
     with:
-      SERVICE_LOCATION: kotlin
+      SERVICE_LOCATION: kotlin/vci-client
       JAVA_VERSION: 17
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
