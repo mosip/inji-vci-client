@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
+    id("org.jetbrains.dokka") version "1.9.20"
     id("signing")
 
     jacoco
@@ -9,7 +10,7 @@ plugins {
 }
 
 jacoco {
-    toolVersion = "0.8.12"
+    toolVersion = "0.8.11"
     reportsDirectory = layout.buildDirectory.dir("reports/jacoco")
 }
 
@@ -46,7 +47,6 @@ android {
         }
     }
 }
-
 dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
@@ -90,6 +90,16 @@ tasks {
     }
 }
 
+tasks.register<Jar>("javadocJar") {
+    dependsOn("dokkaJavadoc")
+    archiveClassifier.set("javadoc")
+    from(tasks.named("dokkaHtml").get().outputs.files)
+}
+tasks.register<Jar>("sourcesJar") {
+    archiveClassifier.set("sources")
+    from(android.sourceSets["main"].java.srcDirs)
+}
+
 tasks.build {
     finalizedBy("jacocoTestReport")
 }
@@ -101,6 +111,21 @@ sonarqube {
         property( "sonar.exclusions", "**/build/**, **/*.kt.generated, **/R.java, **/BuildConfig.java")
         property( "sonar.scm.disabled", "true")
         property( "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
+    }
+}
+
+tasks.withType<Jar>().configureEach {
+    doLast {
+        ant.withGroovyBuilder {
+            "checksum"(
+                "algorithm" to "md5",
+                "file" to archiveFile.get().asFile
+            )
+            "checksum"(
+                "algorithm" to "sha1",
+                "file" to archiveFile.get().asFile
+            )
+        }
     }
 }
 
