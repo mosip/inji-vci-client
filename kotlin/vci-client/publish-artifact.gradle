@@ -10,6 +10,8 @@ publishing {
             groupId = "io.mosip"
             artifactId = "inji-vci-client"
             version = "0.3.0-SNAPSHOT"
+            artifact(tasks.named("javadocJar").get())
+            artifact(tasks.named("sourcesJar").get())
             pom {
                 withXml {
                     asNode().appendNode('name', "Inji VCI Client")
