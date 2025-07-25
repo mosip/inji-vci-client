@@ -9,14 +9,10 @@ on:
         default: 'Triggered for inji-vci-client Updates'
         type: string
       publication_type:
-        description: 'Select artifact type to publish'
+        description: 'Select artifact type to publish: aar, jar, or both'
         required: true
         default: both
-        type: choice
-        options:
-          - aar
-          - jar
-          - both
+        type: string
 
 jobs:
   maven-publish:
