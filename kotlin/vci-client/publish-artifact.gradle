@@ -9,7 +9,7 @@ publishing {
         aar(MavenPublication) {
             groupId = "io.mosip"
             artifactId = "inji-vci-client"
-            version = "0.3.0-SNAPSHOT"
+            version = "0.3.0"
             artifact(tasks.named("javadocJar").get())
             artifact(tasks.named("sourcesJar").get())
             pom {
