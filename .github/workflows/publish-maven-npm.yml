@@ -8,16 +8,25 @@ on:
         required: false
         default: 'Triggered for inji-vci-client Updates'
         type: string
-
+      publication_type:
+        description: 'Select artifact type to publish'
+        required: true
+        default: both
+        type: choice
+        options:
+          - aar
+          - jar
+          - both
 
 jobs:
   maven-publish:
-    uses: mosip/kattu/.github/workflows/maven-publish-android-download.yaml@master
+    uses: Prafulrakhade/kattu/.github/workflows/maven-publish-android-download.yaml@master-conditional-checks
     with:
       SERVICE_LOCATION: 'kotlin'
       ANDROID_SERVICE_LOCATION: 'vci-client'
       JAVA_VERSION: 21
       LICENSE_NAME: 'MPL-2.0'
+      PUBLICATION_TYPE: ${{ inputs.publication_type }}
     secrets:
       OSSRH_USER: ${{ secrets.OSSRH_USER }}
       OSSRH_URL: ${{secrets.OSSRH_GRADLE_URL }}
