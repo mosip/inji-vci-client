@@ -6,14 +6,14 @@ on:
     - main
     - develop
     - qa-develop
-    - release-*
+    - 'release-**'
   pull_request:
     types: [opened, reopened, synchronize]
     branches:
     - main
     - develop
     - qa-develop
-    - release-*
+    - 'release-**'
 
 jobs:
   build-kotlin:
