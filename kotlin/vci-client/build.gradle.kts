@@ -102,7 +102,7 @@ tasks {
     }
 }
 tasks.register("generatePom") {
-    dependsOn("generatePomFileForAarPublication", "generatePomFileForJarReleasePublication")
+    dependsOn("generatePomFileForAarPublication")
 }
 
 
