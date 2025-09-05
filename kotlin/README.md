@@ -18,6 +18,7 @@ It supports **Issuer Initiated (Credential Offer)** and **Wallet Initiated (Trus
 - Support for multiple Credential formats:
   - `ldp_vc`
   - `mso_mdoc`
+  - `vc+sd-jwt` / `dc+sd-jwt`
 
 > ⚠️ Consumer of this library is responsible for processing and rendering the credential after it is downloaded.
 
@@ -28,7 +29,7 @@ It supports **Issuer Initiated (Credential Offer)** and **Wallet Initiated (Trus
 Add the following dependency to your `build.gradle` to include the library from **Maven Central**:
 
 ```groovy
-implementation "io.mosip:inji-vci-client:0.4.0"
+implementation "io.mosip:inji-vci-client:0.5.0"
 ```
 
 ## 🏗️ Construction of VCIClient instance
@@ -292,6 +293,25 @@ val issuerMetadata = IssuerMetaData(
                         CredentialFormat.MSO_MDOC )
 ```
 
+3. Format: `vc+sd-jwt`
+```
+val issuerMetadata = IssuerMetaData(
+                        CREDENTIAL_AUDIENCE,
+                        CREDENTIAL_ENDPOINT,
+                        DOWNLOAD_TIMEOUT,
+                        VCT,
+                        CredentialFormat.VC_SD_JWT )
+```
+
+4. Format: `dc+sd-jwt`
+```
+val issuerMetadata = IssuerMetaData(
+                        CREDENTIAL_AUDIENCE,
+                        CREDENTIAL_ENDPOINT,
+                        DOWNLOAD_TIMEOUT,
+                        VCT,
+                        CredentialFormat.DC_SD_JWT )
+```
 #### Returns
 
 An instance of `CredentialResponse` containing:
