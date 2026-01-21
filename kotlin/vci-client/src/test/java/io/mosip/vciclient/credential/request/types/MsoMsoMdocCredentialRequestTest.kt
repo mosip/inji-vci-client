@@ -45,7 +45,7 @@ class MsoMsoMdocCredentialRequestTest {
         assertEquals(URI(credentialEndpoint), msoMdocCredentialRequest.url.toUri())
         assertEquals("POST", msoMdocCredentialRequest.method)
         assertEquals(
-            "{\"format\":\"mso_mdoc\",\"doctype\":\"org.iso.18013.5.1.mDL\",\"claims\":{\"org.iso.18013.5.1\":{\"given_name\":{}}},\"proof\":{\"proof_type\":\"jwt\",\"jwt\":\"headerEncoded.payloadEncoded.signature\"}}",
+            "{\"format\":\"mso_mdoc\",\"doctype\":\"org.iso.18013.5.1.mDL\",\"proof\":{\"proof_type\":\"jwt\",\"jwt\":\"headerEncoded.payloadEncoded.signature\"}}",
             getRequestBodyInJsonString(msoMdocCredentialRequest.body!!)
         )
     }

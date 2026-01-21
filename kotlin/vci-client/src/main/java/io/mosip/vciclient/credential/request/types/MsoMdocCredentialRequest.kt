@@ -36,7 +36,6 @@ class MsoMdocCredentialRequest(
 
     private fun generateRequestBody(): RequestBody {
         val credentialRequestBody = MdocCredentialRequestBody(
-            claims = issuerMetadata.claims,
             proof = proof,
             format = this.issuerMetadata.credentialFormat.value,
             doctype = issuerMetadata.doctype!!
@@ -49,7 +48,6 @@ class MsoMdocCredentialRequest(
 private data class MdocCredentialRequestBody(
     val format: String,
     val doctype: String,
-    val claims: Map<String, Any>? = null,
     val proof: Proof,
 ) {
     fun toJson(): String {
