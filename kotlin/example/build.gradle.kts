@@ -42,11 +42,24 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        // Fix: Upgrade compiler to match Kotlin stdlib versions required by transitive dependencies (Tink/Nimbus).
+        kotlinCompilerExtensionVersion = "1.5.11"
     }
+
+    // PACKAGING STRATEGY: License Collisions
+    // Multiple dependencies (Bouncy Castle, Tink, JSON-LD) include identical LICENSE/NOTICE files, causing build failures.
+    // 'pickFirst' resolves this by safely bundling the first instance found.
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            pickFirsts += "META-INF/LICENSE.txt"
+            pickFirsts += "META-INF/NOTICE.txt"
+            pickFirsts += "META-INF/DEPENDENCIES"
+            pickFirsts += "META-INF/LICENSE"
+            pickFirsts += "META-INF/NOTICE"
+            pickFirsts += "META-INF/license.txt"
+            pickFirsts += "META-INF/notice.txt"
+            pickFirsts += "META-INF/ASL2.0"
         }
     }
 }
@@ -64,6 +77,8 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
+    // Fix: Force 'android' variant to prevent crashes caused by transitive 'jre' variant (from Tink).
+    implementation("com.google.guava:guava:31.1-android")
 
 
 //INJI VCI client project
@@ -94,4 +109,11 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Fix: Prevent duplicate classes by strictly replacing legacy 'jdk15on' with modern 'jdk15to18'.
+    modules {
+        module("org.bouncycastle:bcprov-jdk15on") {
+            replacedBy("org.bouncycastle:bcprov-jdk15to18", "Prevent class duplication")
+        }
+    }
 }

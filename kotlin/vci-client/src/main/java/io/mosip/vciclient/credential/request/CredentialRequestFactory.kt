@@ -18,7 +18,7 @@ class CredentialRequestFactory {
             proof: Proof,
         ): Request {
             when (credentialFormat) {
-                CredentialFormat.LDP_VC -> {
+                CredentialFormat.LDP_VC, CredentialFormat.JWT_VC -> {
                     return validateAndConstructRequest(
                         LdpVcCredentialRequest(
                             accessToken,
