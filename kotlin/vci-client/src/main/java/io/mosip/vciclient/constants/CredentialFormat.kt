@@ -2,6 +2,10 @@ package io.mosip.vciclient.constants
 
 enum class CredentialFormat(val value: String) {
     LDP_VC("ldp_vc"),
+    /**
+     * Represents the "jwt_vc_json" format as defined in OID4VCI Draft 11+.
+     * Note: Mapped to enum name 'JWT_VC' for brevity.
+     */
     JWT_VC("jwt_vc_json"),
     MSO_MDOC("mso_mdoc"),
     VC_SD_JWT("vc+sd-jwt"),
