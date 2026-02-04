@@ -10,18 +10,12 @@ subprojects {
         // RESOLUTION STRATEGY: Dependency Conflict (JWT Support)
         // The 'titanium-json-ld' library (required for LDP_VC) transitively pins Bouncy Castle to v1.60.
         // However, the modern security libraries ('Tink', 'Nimbus') required for JWT_VC strictly require v1.70+.
-        // We force the newer version (v1.70) globally to prevent 'Duplicate Class' errors and ensure security compliance.
+        // We force the newer version (v1.78) globally to prevent 'Duplicate Class' errors and ensure security compliance.
         resolutionStrategy.eachDependency {
             if (requested.group == "org.bouncycastle" && requested.name.contains("bcprov")) {
-                useTarget("org.bouncycastle:bcprov-jdk15to18:1.70")
+                useTarget("org.bouncycastle:bcprov-jdk15to18:1.78")
                 because("Resolve version conflict between legacy titanium-json-ld and modern Tink/Nimbus libraries.")
             }
         }
-
-        // EXCLUSIONS: Duplicate Implementations
-        // Exclude internal dependencies of the new JWT libraries that clash with existing Android implementations.
-        exclude(group = "com.google.protobuf", module = "protobuf-java")
-        exclude(group = "com.google.crypto.tink", module = "tink")
-        exclude(group = "com.apicatalog", module = "titanium-json-ld")
     }
 }

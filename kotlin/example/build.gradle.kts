@@ -117,3 +117,19 @@ dependencies {
         }
     }
 }
+
+configurations.all {
+    // FIX: Resolve Duplicate Class Collisions
+    // The 'example' app merges dependencies from 'vci-client' and its own test libraries. 
+    // This causes duplicates for Titanium, Protobuf, and Tink. 
+    // We exclude the duplicates here to allow the APK to package successfully.
+    
+    // 1. Titanium: Exclude duplicate instance (LDP support preserved via remaining instance)
+    exclude(group = "com.apicatalog", module = "titanium-json-ld")
+    
+    // 2. Protobuf: Exclude 'protobuf-java' which conflicts with Android's 'protobuf-javalite'
+    exclude(group = "com.google.protobuf", module = "protobuf-java")
+    
+    // 3. Tink: Exclude duplicate 'tink' artifact to prevent collision with 'tink-android'
+    exclude(group = "com.google.crypto.tink", module = "tink")
+}
