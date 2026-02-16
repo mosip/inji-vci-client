@@ -219,7 +219,7 @@ class VCIClientTest {
         }
     }
 
-    @Ignore("Fixing brittle mock setup in a future PR")
+    @Ignore("Test depends on environment-specific OkHttpClient behavior; needs migration to a mock web server.")
     @Test
     fun `should return credential when requestCredential succeeds`() {
         // Arrange
