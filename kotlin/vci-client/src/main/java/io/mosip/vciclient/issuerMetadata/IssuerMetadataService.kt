@@ -122,7 +122,7 @@ class IssuerMetadataService {
                 )
             }
 
-            CredentialFormat.LDP_VC.value, CredentialFormat.JWT_VC.value -> {
+            CredentialFormat.LDP_VC.value, CredentialFormat.JWT_VC_JSON.value -> {
                 val credentialDefinition =
                     credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
                 val types = credentialDefinition["type"] as? List<String>

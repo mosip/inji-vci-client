@@ -4,6 +4,7 @@ import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.proof.jwt.JWTProof
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -49,7 +50,20 @@ class CredentialRequestFactoryTest {
                 ), JWTProof("headerEncoded.payloadEncoded.signature")
             )
         }
-
     }
 
+    @Test
+    fun `should return valid request when format is JWT_VC_JSON`() {
+        val request = CredentialRequestFactory.createCredentialRequest(
+            CredentialFormat.JWT_VC_JSON, "access-token",
+            IssuerMetadata(
+                "/credentialAudience",
+                "https://credentialendpoint/",
+                listOf("VerifiableCredential", "UniversityDegreeCredential"),
+                credentialFormat = CredentialFormat.JWT_VC_JSON,
+            ), JWTProof("headerEncoded.payloadEncoded.signature")
+        )
+
+        assertNotNull("The factory should return a valid request object for JWT_VC_JSON", request)
+    }
 }

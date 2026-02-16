@@ -45,10 +45,6 @@ android {
         // Fix: Upgrade compiler to match Kotlin stdlib versions required by transitive dependencies (Tink/Nimbus).
         kotlinCompilerExtensionVersion = "1.5.11"
     }
-
-    // PACKAGING STRATEGY: License Collisions
-    // Multiple dependencies (Bouncy Castle, Tink, JSON-LD) include identical LICENSE/NOTICE files, causing build failures.
-    // 'pickFirst' resolves this by safely bundling the first instance found.
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -119,17 +115,7 @@ dependencies {
 }
 
 configurations.all {
-    // FIX: Resolve Duplicate Class Collisions
-    // The 'example' app merges dependencies from 'vci-client' and its own test libraries. 
-    // This causes duplicates for Titanium, Protobuf, and Tink. 
-    // We exclude the duplicates here to allow the APK to package successfully.
-    
-    // 1. Titanium: Exclude duplicate instance (LDP support preserved via remaining instance)
     exclude(group = "com.apicatalog", module = "titanium-json-ld")
-    
-    // 2. Protobuf: Exclude 'protobuf-java' which conflicts with Android's 'protobuf-javalite'
     exclude(group = "com.google.protobuf", module = "protobuf-java")
-    
-    // 3. Tink: Exclude duplicate 'tink' artifact to prevent collision with 'tink-android'
     exclude(group = "com.google.crypto.tink", module = "tink")
 }
