@@ -48,14 +48,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            pickFirsts += "META-INF/LICENSE.txt"
-            pickFirsts += "META-INF/NOTICE.txt"
-            pickFirsts += "META-INF/DEPENDENCIES"
-            pickFirsts += "META-INF/LICENSE"
-            pickFirsts += "META-INF/NOTICE"
-            pickFirsts += "META-INF/license.txt"
-            pickFirsts += "META-INF/notice.txt"
-            pickFirsts += "META-INF/ASL2.0"
+            pickFirsts += "META-INF/{LICENSE,LICENSE.txt,license.txt,NOTICE,NOTICE.txt,notice.txt,DEPENDENCIES,ASL2.0}"
+            pickFirsts += "META-INF/INDEX.LIST"
+            pickFirsts += "META-INF/io.netty.versions.properties"
         }
     }
 }

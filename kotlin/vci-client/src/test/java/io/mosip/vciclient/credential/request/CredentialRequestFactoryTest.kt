@@ -54,13 +54,15 @@ class CredentialRequestFactoryTest {
 
     @Test
     fun `should return valid request when format is JWT_VC_JSON`() {
+        val targetFormat = CredentialFormat.JWT_VC_JSON
+        
         val request = CredentialRequestFactory.createCredentialRequest(
-            CredentialFormat.JWT_VC_JSON, "access-token",
+            targetFormat, "access-token",
             IssuerMetadata(
                 "/credentialAudience",
                 "https://credentialendpoint/",
                 listOf("VerifiableCredential", "UniversityDegreeCredential"),
-                credentialFormat = CredentialFormat.JWT_VC_JSON,
+                credentialFormat = targetFormat,
             ), JWTProof("headerEncoded.payloadEncoded.signature")
         )
 
