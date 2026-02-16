@@ -134,7 +134,7 @@ class IssuerMetadataService {
                     credentialEndpoint = credentialEndpoint,
                     credentialType = types,
                     context = context,
-                    credentialFormat = CredentialFormat.LDP_VC,
+                    credentialFormat = resolvedFormat,
                     authorizationServers = rawIssuerMetadata["authorization_servers"] as? List<String>,
                     scope = scope,
                 )
