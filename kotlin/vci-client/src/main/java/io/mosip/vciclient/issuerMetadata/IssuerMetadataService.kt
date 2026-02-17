@@ -122,7 +122,7 @@ class IssuerMetadataService {
                 )
             }
 
-            CredentialFormat.LDP_VC.value, CredentialFormat.JWT_VC_JSON.value -> {
+            CredentialFormat.LDP_VC.value -> {
                 val credentialDefinition =
                     credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
                 val types = credentialDefinition["type"] as? List<String>
@@ -137,6 +137,21 @@ class IssuerMetadataService {
                     credentialFormat = resolvedFormat,
                     authorizationServers = rawIssuerMetadata["authorization_servers"] as? List<String>,
                     scope = scope,
+                )
+            }
+
+            CredentialFormat.JWT_VC_JSON.value -> {
+                val credentialDefinition = credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
+                val types = credentialDefinition["type"] as? List<String>
+                
+                IssuerMetadata(
+                    credentialIssuer = credentialIssuer,
+                    credentialEndpoint = credentialEndpoint,
+                    credentialType = types,
+                    context = null,
+                    credentialFormat = CredentialFormat.JWT_VC_JSON,
+                    authorizationServers = rawIssuerMetadata["authorization_servers"] as? List<String>,
+                    scope = scope
                 )
             }
 

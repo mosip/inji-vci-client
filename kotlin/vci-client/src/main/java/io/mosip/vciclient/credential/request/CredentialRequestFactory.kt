@@ -4,6 +4,7 @@ import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.credential.request.types.LdpVcCredentialRequest
 import io.mosip.vciclient.credential.request.types.MsoMdocCredentialRequest
 import io.mosip.vciclient.credential.request.types.SdJwtCredentialRequest
+import io.mosip.vciclient.credential.request.types.JwtVcCredentialRequest
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.Proof
@@ -18,9 +19,19 @@ class CredentialRequestFactory {
             proof: Proof,
         ): Request {
             when (credentialFormat) {
-                CredentialFormat.LDP_VC, CredentialFormat.JWT_VC_JSON -> {
+                CredentialFormat.LDP_VC -> {
                     return validateAndConstructRequest(
                         LdpVcCredentialRequest(
+                            accessToken,
+                            issuerMetadata,
+                            proof
+                        )
+                    )
+                }
+
+                CredentialFormat.JWT_VC_JSON -> {
+                    return validateAndConstructRequest(
+                        JwtVcCredentialRequest(
                             accessToken,
                             issuerMetadata,
                             proof
