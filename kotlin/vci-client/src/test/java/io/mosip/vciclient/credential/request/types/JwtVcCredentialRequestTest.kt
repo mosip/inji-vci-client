@@ -39,7 +39,7 @@ class JwtVcCredentialRequestTest {
     }
 
     @Test
-    fun `constructRequest should build a valid POST HTTP request`() {
+    fun `constructRequest should build a valid POST request with correct body JSON`() {
         val request = JwtVcCredentialRequest(
             accessToken = sampleAccessToken,
             issuerMetadata = issuerMetadata,
@@ -51,6 +51,14 @@ class JwtVcCredentialRequestTest {
         assertEquals("Bearer $sampleAccessToken", request.header("Authorization"))
         assertEquals(APPLICATION_JSON, request.header(CONTENT_TYPE))
         assertNotNull(request.body)
+
+        val buffer = Buffer()
+        request.body!!.writeTo(buffer)
+        val requestBodyString = buffer.readUtf8()
+
+        assertTrue(requestBodyString.contains("credential_definition"))
+        assertTrue(requestBodyString.contains("format"))
+        assertTrue(requestBodyString.contains("proof"))
     }
 
     @Test
@@ -90,22 +98,5 @@ class JwtVcCredentialRequestTest {
 
         assertFalse(validatorResult.isValid)
         assertTrue(validatorResult.invalidFields.contains("credentialType"))
-    }
-
-    @Test
-    fun `constructRequest should include credential_definition and proof in body JSON`() {
-        val request = JwtVcCredentialRequest(
-            accessToken = sampleAccessToken,
-            issuerMetadata = issuerMetadata,
-            proof = sampleProof
-        ).constructRequest()
-
-        val buffer = Buffer()
-        request.body!!.writeTo(buffer)
-        val requestBodyString = buffer.readUtf8()
-
-        assertTrue(requestBodyString.contains("credential_definition"))
-        assertTrue(requestBodyString.contains("format"))
-        assertTrue(requestBodyString.contains("proof"))
     }
 }

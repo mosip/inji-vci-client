@@ -127,14 +127,13 @@ class IssuerMetadataService {
                     credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
                 val types = credentialDefinition["type"] as? List<String>
                 val context = credentialDefinition["@context"] as? List<String>
-                val resolvedFormat = CredentialFormat.values().firstOrNull { it.value == format } ?: CredentialFormat.LDP_VC
 
                 IssuerMetadata(
                     credentialIssuer = credentialIssuer,
                     credentialEndpoint = credentialEndpoint,
                     credentialType = types,
                     context = context,
-                    credentialFormat = resolvedFormat,
+                    credentialFormat = CredentialFormat.LDP_VC,
                     authorizationServers = rawIssuerMetadata["authorization_servers"] as? List<String>,
                     scope = scope,
                 )

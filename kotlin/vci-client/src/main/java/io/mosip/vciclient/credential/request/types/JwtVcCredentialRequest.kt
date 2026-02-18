@@ -7,6 +7,7 @@ import io.mosip.vciclient.credential.request.CredentialRequest
 import io.mosip.vciclient.credential.request.util.ValidatorResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.proof.Proof
+import io.mosip.vciclient.exception.InvalidDataProvidedException
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -40,7 +41,7 @@ class JwtVcCredentialRequest(
 
     private fun generateRequestBody(): RequestBody {
         val definition = JwtVcCredentialDefinition(
-            type = issuerMetadata.credentialType ?: emptyList()
+            type = issuerMetadata.credentialType ?: throw InvalidDataProvidedException("Credential type is missing in issuer metadata")
         )
         val request = JwtVcRequestBody(
             format = issuerMetadata.credentialFormat.value,
