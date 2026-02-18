@@ -3,6 +3,7 @@ package io.mosip.vciclient.issuerMetadata
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.exception.IssuerMetadataFetchException
+import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.Dispatchers
@@ -23,18 +24,34 @@ class IssuerMetadataService {
         credentialIssuer: String,
         credentialConfigurationId: String
     ): IssuerMetadataResult = withContext(Dispatchers.IO) {
-        val rawIssuerMetadata = getOrFetchCachedMetadata(credentialIssuer)
+        try {
+            val rawIssuerMetadata = getOrFetchCachedMetadata(credentialIssuer)
 
-        val resolvedIssuerMetadata = resolveMetadata(
-            credentialConfigurationId = credentialConfigurationId,
-            rawIssuerMetadata = rawIssuerMetadata
-        )
+            val resolvedIssuerMetadata = resolveMetadata(
+                credentialConfigurationId = credentialConfigurationId,
+                rawIssuerMetadata = rawIssuerMetadata
+            )
 
-        return@withContext IssuerMetadataResult(
-            issuerMetadata = resolvedIssuerMetadata,
-            raw = rawIssuerMetadata,
-            credentialIssuer = credentialIssuer
-        )
+            return@withContext IssuerMetadataResult(
+                issuerMetadata = resolvedIssuerMetadata,
+                raw = rawIssuerMetadata,
+                credentialIssuer = credentialIssuer
+            )
+        } catch (e: IssuerMetadataFetchException) {
+            throw e
+        } catch (e: VCIClientException) {
+            throw IssuerMetadataFetchException(
+                e.message,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription,
+                cause = e
+            )
+        } catch (e: Exception) {
+            throw IssuerMetadataFetchException(
+                "Unexpected error while resolving issuer metadata: ${e.message}",
+                cause = e
+            )
+        }
     }
 
     fun fetchCredentialConfigurationsSupported(credentialIssuer: String): Map<String, Any> {
@@ -77,16 +94,27 @@ class IssuerMetadataService {
             return JsonUtils.toMap(body)
         } catch (e: IssuerMetadataFetchException) {
             throw e
+        } catch (e: VCIClientException) {
+            throw IssuerMetadataFetchException(
+                e.message,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription,
+                cause = e
+            )
         } catch (e: Exception) {
-            throw IssuerMetadataFetchException("Failed to fetch issuer metadata: ${e.message}")
+            throw IssuerMetadataFetchException(
+                "Unexpected error while fetching issuer metadata: ${e.message}",
+                cause = e
+            )
         }
     }
 
-    private fun getOrFetchCachedMetadata(credentialIssuer: String) = cachedRawMetadata[credentialIssuer] ?: run {
-        val fetched = fetchAndParseIssuerMetadata(credentialIssuer)
-        cachedRawMetadata[credentialIssuer] = fetched
-        fetched
-    }
+    private fun getOrFetchCachedMetadata(credentialIssuer: String) =
+        cachedRawMetadata[credentialIssuer] ?: run {
+            val fetched = fetchAndParseIssuerMetadata(credentialIssuer)
+            cachedRawMetadata[credentialIssuer] = fetched
+            fetched
+        }
 
     private fun resolveMetadata(
         credentialConfigurationId: String,
@@ -140,9 +168,10 @@ class IssuerMetadataService {
             }
 
             CredentialFormat.JWT_VC_JSON.value -> {
-                val credentialDefinition = credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
+                val credentialDefinition =
+                    credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
                 val types = credentialDefinition["type"] as? List<String>
-                
+
                 IssuerMetadata(
                     credentialIssuer = credentialIssuer,
                     credentialEndpoint = credentialEndpoint,

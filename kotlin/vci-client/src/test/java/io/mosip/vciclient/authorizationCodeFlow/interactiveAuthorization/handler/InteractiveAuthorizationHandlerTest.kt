@@ -233,7 +233,7 @@ class InteractiveAuthorizationHandlerTest {
                 )
         }
 
-        assert(ex.message.contains("Interactive authorization failed"))
+        assert(ex.message.contains("network down"))
     }
 
     @Test

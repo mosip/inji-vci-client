@@ -57,8 +57,6 @@ class CredentialRequestFactory {
                             proof
                         )
                     )
-
-                else -> throw InvalidDataProvidedException("Unsupported or missing credential format in configuration")
             }
         }
 

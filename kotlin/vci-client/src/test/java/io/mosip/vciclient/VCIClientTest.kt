@@ -121,7 +121,7 @@ class VCIClientTest {
                 .fetchAndParseIssuerMetadata(any())
         } throws IssuerMetadataFetchException("Failed to fetch metadata")
 
-        val vciClientException = assertThrows<IssuerMetadataFetchException> {
+        val vciClientException = assertThrows<VCIClientException> {
             VCIClient("trace-id").getIssuerMetadata(
                 credentialIssuer = "https://example.com/issuer"
             )
@@ -292,7 +292,7 @@ class VCIClientTest {
 
         val client = VCIClient("trace-id")
 
-        val exception = assertThrows<IssuerMetadataFetchException> {
+        val exception = assertThrows<VCIClientException> {
             client.getCredentialConfigurationsSupported("https://issuer.com")
         }
 

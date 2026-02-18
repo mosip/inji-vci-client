@@ -15,6 +15,7 @@ import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.constants.Constants.APPLICATION_X_WWW_FORM_URLENCODED
 import io.mosip.vciclient.constants.Constants.CONTENT_TYPE
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
+import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.Dispatchers
@@ -52,27 +53,38 @@ class PresentationDuringIssuanceAuthorizationMethodService(
         var vpResponse: Map<String, Any>
 
         try {
-            val authorizationRequest =
-                validatePresentationRequest(requestData.ovpRequest)
+            try {
+                val authorizationRequest =
+                    validatePresentationRequest(requestData.ovpRequest)
 
-            vpResponse = handlePresentation(authorizationRequest)
+                vpResponse = handlePresentation(authorizationRequest)
 
-        } catch (error: Exception) {
-            logger.warning("Error during presentation handling: ${error.message}")
-            vpResponse = openId4vp.constructErrorInfo(error)
-        }
+            } catch (error: Exception) {
+                logger.warning("Error during presentation handling: ${error.message}")
+                vpResponse = openId4vp.constructErrorInfo(error)
+            }
 
-        return try {
-            sendOVPAuthorizationResponseToIssuer(
+            return sendOVPAuthorizationResponseToIssuer(
                 iar = requestData.iar,
                 authSession = requestData.authSession,
                 vpResponse = vpResponse
             )
+        } catch (ex: InteractiveAuthorizationException) {
+            throw ex
+        } catch (ex: VCIClientException) {
+            throw InteractiveAuthorizationException(
+                "Error during presentation authorization: ${ex.message}",
+                cause = ex,
+                serverErrorCode = ex.serverErrorCode,
+                serverErrorDescription = ex.serverErrorDescription
+            )
         } catch (ex: Exception) {
             throw InteractiveAuthorizationException(
-                "Failed to send VP response to issuer. ${ex.message}"
+                "Unexpected error during interactive authorization: ${ex.message}",
+                cause = ex
             )
         }
+
     }
 
 
@@ -152,8 +164,21 @@ class PresentationDuringIssuanceAuthorizationMethodService(
                     headers = mapOf(CONTENT_TYPE to APPLICATION_X_WWW_FORM_URLENCODED)
                 )
             }
+
+        } catch (ex: InteractiveAuthorizationException) {
+            throw ex
+        } catch (ex: VCIClientException) {
+            throw InteractiveAuthorizationException(
+                "Error while posting VP response: ${ex.message}",
+                cause = ex,
+                serverErrorCode = ex.serverErrorCode,
+                serverErrorDescription = ex.serverErrorDescription
+            )
         } catch (ex: Exception) {
-            throw InteractiveAuthorizationException("Network error while posting VP response: ${ex.message}")
+            throw InteractiveAuthorizationException(
+                "Unexpected error while posting VP response: ${ex.message}",
+                cause = ex
+            )
         }
 
         return JsonUtils.deserialize(networkResponse.body, AuthorizationResponse::class.java)

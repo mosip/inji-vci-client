@@ -3,6 +3,7 @@ package io.mosip.vciclient.credentialOffer
 import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.constants.Constants.APPLICATION_JSON
 import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
+import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.Dispatchers
@@ -19,9 +20,9 @@ internal class CredentialOfferService {
             )
             val uri = URI(normalized)
             val queryParams = uri.rawQuery?.split("&")?.associate {
-                    val (key, value) = it.split("=")
-                    key to URLDecoder.decode(value, "UTF-8")
-                } ?: throw CredentialOfferFetchFailedException("No query parameters in the URI")
+                val (key, value) = it.split("=")
+                key to URLDecoder.decode(value, "UTF-8")
+            } ?: throw CredentialOfferFetchFailedException("No query parameters in the URI")
 
             return when {
                 queryParams.containsKey("credential_offer") -> {
@@ -40,8 +41,22 @@ internal class CredentialOfferService {
                     "Invalid credential offer URL: must contain 'credential_offer' or 'credential_offer_uri'"
                 )
             }
+        } catch (e: CredentialOfferFetchFailedException) {
+            throw e
+        } catch (e: VCIClientException) {
+            throw CredentialOfferFetchFailedException(
+                e.message,
+                e.serverErrorCode,
+                e.serverErrorDescription,
+                e
+            )
         } catch (e: Exception) {
-            throw CredentialOfferFetchFailedException("Credential offer URL not valid $e.message")
+            throw CredentialOfferFetchFailedException(
+                message = e.message,
+                null,
+                null,
+                cause = e
+            )
         }
     }
 

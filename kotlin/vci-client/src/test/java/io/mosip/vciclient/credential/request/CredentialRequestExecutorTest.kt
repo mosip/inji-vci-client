@@ -87,36 +87,59 @@ class CredentialRequestExecutorTest {
                 resolvedMeta,"SampleCredential", mockProof, accessToken
             )
         }
-
-        assertTrue(ex.message.contains("Bad Request"))
+        assertTrue(ex.serverErrorDescription?.contains("Bad Request") == true)
     }
 
     @Test
-    fun `should throw NetworkRequestTimeoutException for delayed response`() {
+    fun `should throw DownloadFailedException for delayed response`() {
         mockWebServer.enqueue(
             MockResponse().setBody("{}").setResponseCode(200).setBodyDelay(2, TimeUnit.SECONDS)
         )
 
-        val ex = assertThrows<NetworkRequestTimeoutException> {
+        val ex = assertThrows<DownloadFailedException> {
             CredentialRequestExecutor().requestCredential(
                 resolvedMeta,"SampleCredential", mockProof, accessToken, downloadTimeoutInMillis = 500
             )
         }
-
-        assertTrue(ex.message.contains("Download failed due to request timeout -"))
+        assertTrue(ex.message.contains("Credential download timed out after"))
 
     }
 
     @Test
     fun `should throw NetworkRequestFailedException when network fails`() {
-        mockWebServer.shutdown()
+        mockWebServer.enqueue(
+            MockResponse()
+                .setSocketPolicy(okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START)
+        )
 
-        val ex = assertThrows<NetworkRequestFailedException> {
+        val ex = assertThrows<DownloadFailedException> {
             CredentialRequestExecutor().requestCredential(
                 resolvedMeta, "SampleCredential",mockProof, accessToken
             )
         }
 
         assertNotNull(ex.message)
+    }
+
+    @Test
+    fun `should propagate server error code and description with cause from NetworkManager`() {
+        val errorJson = """{"error":"invalid_proof","error_description":"proof is missing"}"""
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(400).setBody(errorJson)
+        )
+
+        val ex = assertThrows<DownloadFailedException> {
+            CredentialRequestExecutor().requestCredential(
+                issuerMetadata = resolvedMeta,
+                credentialConfigurationId = "SampleCredential",
+                proof = mockProof,
+                accessToken = accessToken
+            )
+        }
+
+        assertTrue(ex.cause is NetworkRequestFailedException)
+        assertTrue(ex.message.contains("HTTP 400"))
+        assertTrue(ex.serverErrorCode == "invalid_proof")
+        assertTrue(ex.serverErrorDescription == "proof is missing")
     }
 }

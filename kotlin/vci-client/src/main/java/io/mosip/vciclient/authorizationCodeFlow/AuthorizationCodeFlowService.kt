@@ -14,6 +14,7 @@ import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.exception.DownloadFailedException
+import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.proof.jwt.JWTProof
@@ -48,9 +49,19 @@ internal class AuthorizationCodeFlowService(
 
             val authorizationServerMetadata = try {
                 authorizationServerResolver.resolveForAuthCode(issuerMetadata, credentialOffer)
+            } catch (e: DownloadFailedException) {
+                throw e
+            } catch (e: VCIClientException) {
+                throw DownloadFailedException(
+                    "Failed to resolve authorization server metadata for issuer ${issuerMetadata.credentialIssuer}: ${e.message} ",
+                    serverErrorCode = e.serverErrorCode,
+                    serverErrorDescription = e.serverErrorDescription,
+                    cause = e
+                )
             } catch (e: Exception) {
                 throw DownloadFailedException(
-                    "Failed to resolve authorization server metadata for issuer ${issuerMetadata.credentialIssuer}: ${e.message} "
+                    "Failed to resolve authorization server metadata for issuer ${issuerMetadata.credentialIssuer}: ${e.message}",
+                    cause = e
                 )
             }
 
@@ -67,9 +78,17 @@ internal class AuthorizationCodeFlowService(
                 )
             } catch (e: DownloadFailedException) {
                 throw e
+            } catch (e: VCIClientException) {
+                throw DownloadFailedException(
+                    "Failed to obtain access token via authorization code flow: ${e.message}",
+                    serverErrorCode = e.serverErrorCode,
+                    serverErrorDescription = e.serverErrorDescription,
+                    cause = e
+                )
             } catch (e: Exception) {
                 throw DownloadFailedException(
-                    "Failed to obtain access token via authorization code flow: ${e.message}"
+                    "Failed to obtain access token via authorization code flow: ${e.message}",
+                    cause = e
                 )
             }
 
@@ -81,7 +100,8 @@ internal class AuthorizationCodeFlowService(
                 )
             } catch (e: Exception) {
                 throw DownloadFailedException(
-                    "Failed to obtain proof JWT from callback: ${e.message}"
+                    "Failed to obtain proof JWT from callback: ${e.message}",
+                    cause = e
                 )
             }
 
@@ -100,6 +120,13 @@ internal class AuthorizationCodeFlowService(
                 ?: throw DownloadFailedException("Credential request returned null.")
         } catch (e: DownloadFailedException) {
             throw e
+        } catch (e: VCIClientException) {
+            throw DownloadFailedException(
+                e.message,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription,
+                cause = e
+            )
         } catch (e: Exception) {
             throw DownloadFailedException(
                 "Download failed via authorization code flow: ${e.message}"
@@ -186,7 +213,6 @@ internal class AuthorizationCodeFlowService(
                     pkceSession = pkceSession,
                     credentialConfigurationId = credentialConfigurationId,
                     authorizationMethods = authorizationMethods,
-                    authorizationServerMetadata = authorizationServerMetadata,
                     traceabilityId = traceabilityId
                 )
             }
@@ -209,7 +235,6 @@ internal class AuthorizationCodeFlowService(
         clientMetadata: ClientMetadata,
         pkceSession: PKCESessionManager.PKCESession,
         credentialConfigurationId: String,
-        authorizationServerMetadata: AuthorizationServerMetadata,
         authorizationMethods: List<AuthorizationMethod>,
         traceabilityId: String? = null
     ): String {
@@ -227,15 +252,25 @@ internal class AuthorizationCodeFlowService(
                 pkceSession = pkceSession,
                 traceabilityId = traceabilityId
             )
+        } catch (e: VCIClientException) {
+            throw DownloadFailedException(
+                "Interactive authorization failed at endpoint $endpoint : ${e.message}",
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription,
+                cause = e
+            )
         } catch (e: Exception) {
             throw DownloadFailedException(
-                "Interactive authorization failed at endpoint $endpoint : ${e.message}"
+                "Interactive authorization failed at endpoint $endpoint : ${e.message}",
+                cause = e
             )
         }
 
         return response.authorizationCode
             ?: throw DownloadFailedException(
-                "Authorization failed: code not received from interactive authorization endpoint $endpoint. Error : ${response.error}, Description: ${response.errorDescription}"
+                "Authorization failed: code not received from interactive authorization endpoint $endpoint. Error : ${response.error}, Description: ${response.errorDescription}",
+                serverErrorCode = response.error,
+                serverErrorDescription = response.errorDescription
             )
     }
 
@@ -272,9 +307,17 @@ internal class AuthorizationCodeFlowService(
                 RedirectToWebAuthorizationMethodService(redirectToWebAuthMethod.openWebPage)
                     .authorizeUser(requestData)
 
+            } catch (e: VCIClientException) {
+                throw DownloadFailedException(
+                    "Authorization failed at authorization endpoint $authorizationEndpoint: ${e.message}",
+                    serverErrorCode = e.serverErrorCode,
+                    serverErrorDescription = e.serverErrorDescription,
+                    cause = e
+                )
             } catch (e: Exception) {
                 throw DownloadFailedException(
-                    "Authorization failed at authorization endpoint $authorizationEndpoint: ${e.message}"
+                    "Authorization failed at authorization endpoint $authorizationEndpoint: ${e.message}",
+                    cause = e
                 )
             }
             return response.authorizationCode

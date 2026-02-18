@@ -18,6 +18,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertTrue
 
 class RedirectToWebAuthorizationMethodServiceTest {
 
@@ -56,14 +57,13 @@ class RedirectToWebAuthorizationMethodServiceTest {
     fun `should throw if requestData is not ImplicitAuthorizationRequestData`() = runTest {
         val service = RedirectToWebAuthorizationMethodService(openWebPage)
 
-        val ex = assertThrows<IllegalArgumentException> {
+        val ex = assertThrows<InteractiveAuthorizationException> {
             service.authorizeUser(mockk<AuthorizationRequestData>())
         }
-
-        assertEquals(
-            "RedirectToWebAuthorizationHandler expects ImplicitAuthorizationRequestData but received AuthorizationRequestData",
-            ex.message
-        )
+        print(ex)
+        assertTrue {
+            ex.message.contains("RedirectToWebAuthorizationHandler expects ImplicitAuthorizationRequestData but received AuthorizationRequestData")
+        }
     }
 
 

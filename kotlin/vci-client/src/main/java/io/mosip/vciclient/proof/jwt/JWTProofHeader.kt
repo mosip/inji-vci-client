@@ -25,7 +25,7 @@ class JWTProofHeader(algorithm: String, publicKeyPem: String) {
         try {
             publicKeyJWK = JSONWebKey.build(publicKeyPem)
         } catch (exception: Exception) {
-            throw InvalidPublicKeyException(exception.toString())
+            throw InvalidPublicKeyException(message = exception.toString(), cause = exception)
         }
         val jwkJson = JSONObject(publicKeyJWK.toJSON())
         jwkJson.put(ALGORITHM, JWTProofType.Algorithms.RS256)

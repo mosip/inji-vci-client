@@ -8,9 +8,11 @@ import io.mosip.vciclient.common.JsonUtils
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertSame
 
 class CredentialOfferServiceTest {
 
@@ -63,7 +65,8 @@ class CredentialOfferServiceTest {
         val ex = assertThrows<CredentialOfferFetchFailedException> {
             CredentialOfferService().fetchCredentialOffer("openid-credential-offer://?")
         }
-        assert(ex.message.contains("URL not valid"))
+        print(ex)
+        assert(ex.message.contains("Failed to fetch credential offer"))
     }
 
     @Test
@@ -115,5 +118,19 @@ class CredentialOfferServiceTest {
             CredentialOfferService().fetchCredentialOffer(malformed)
         }
         assert(ex.message.isNotBlank())
+    }
+
+    @Test
+    fun `should wrap network error while fetching credential_offer_uri with cause`() = runBlocking {
+        val networkException = java.io.IOException("Offer fetch failed")
+        every {
+            NetworkManager.sendRequest(uriOfferUrl, HttpMethod.GET, any(), any())
+        } throws networkException
+
+        val ex = assertThrows<CredentialOfferFetchFailedException> {
+            CredentialOfferService().fetchCredentialOffer(wrappedUri)
+        }
+        assertTrue(ex.cause !== null)
+        assert(ex.message.contains("Offer fetch failed"))
     }
 }

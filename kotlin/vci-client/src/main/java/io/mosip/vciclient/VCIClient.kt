@@ -44,7 +44,13 @@ class VCIClient(val traceabilityId: String) {
             logger.severe(
                 "Fetching issuer metadata failed due to ${exception.message}"
             )
-            throw exception
+            throw VCIClientException(
+                "VCI-010",
+                exception.message,
+                cause = exception,
+                serverErrorCode = exception.serverErrorCode,
+                serverErrorDescription = exception.serverErrorDescription
+            )
         } catch (e: Exception) {
             logger.severe(
                 "Fetching issuer metadata failed due to ${e.message}"
@@ -60,12 +66,18 @@ class VCIClient(val traceabilityId: String) {
             logger.severe(
                 "Fetching credentialConfigurationsSupported from issuer metadata failed due to ${exception.message}"
             )
-            throw exception
+            throw VCIClientException(
+                "VCI-010",
+                exception.message,
+                cause = exception,
+                serverErrorCode = exception.serverErrorCode,
+                serverErrorDescription = exception.serverErrorDescription
+            )
         } catch (e: Exception) {
             logger.severe(
                 "Fetching credentialConfigurationsSupported from issuer metadata failed"
             )
-            throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
+            throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}", cause = e)
         }
     }
 
@@ -103,7 +115,13 @@ class VCIClient(val traceabilityId: String) {
             )
         } catch (e: VCIClientException) {
             logger.severe("Downloading credential failed due to ${e.message}")
-            throw e
+            throw VCIClientException(
+                code = e.code,
+                message = e.message,
+                cause = e,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription
+            )
         } catch (e: Exception) {
             logger.severe("Downloading credential failed due to ${e.message}")
             throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
@@ -142,7 +160,13 @@ class VCIClient(val traceabilityId: String) {
             )
         } catch (e: VCIClientException) {
             logger.severe("Downloading credential failed due to ${e.message}")
-            throw e
+            throw VCIClientException(
+                code = e.code,
+                message = e.message,
+                cause = e,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription
+            )
         } catch (e: Exception) {
             logger.severe("Downloading credential failed due to ${e.message}")
             throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
@@ -170,7 +194,13 @@ class VCIClient(val traceabilityId: String) {
             )
         } catch (e: VCIClientException) {
             logger.severe("Downloading credential failed due to ${e.message}")
-            throw e
+            throw VCIClientException(
+                code = e.code,
+                message = e.message,
+                cause = e,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription
+            )
         } catch (e: Exception) {
             logger.severe("Downloading credential failed due to ${e.message}")
             throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
@@ -200,7 +230,13 @@ class VCIClient(val traceabilityId: String) {
             )
         } catch (e: VCIClientException) {
             logger.severe("Downloading credential failed due to ${e.message}")
-            throw e
+            throw VCIClientException(
+                code = e.code,
+                message = e.message,
+                cause = e,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription
+            )
         } catch (e: Exception) {
             logger.severe("Downloading credential failed due to ${e.message}")
             throw VCIClientException("VCI-010", "Unknown Exception - ${e.message}")
@@ -285,3 +321,5 @@ class VCIClient(val traceabilityId: String) {
     }
 
 }
+
+

@@ -4,29 +4,21 @@ import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.common.Util
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.DownloadFailedException
-import io.mosip.vciclient.exception.InvalidAccessTokenException
 import io.mosip.vciclient.exception.InvalidPublicKeyException
 import io.mosip.vciclient.exception.NetworkRequestFailedException
 import io.mosip.vciclient.exception.NetworkRequestTimeoutException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
+import io.mosip.vciclient.networkManager.NetworkManager
 import io.mosip.vciclient.proof.Proof
-import okhttp3.OkHttpClient
-import okhttp3.Response
-import okio.IOException
-import java.io.InterruptedIOException
-import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
 class CredentialRequestExecutor {
 
-    private val logTag = Util.getLogTag(javaClass.simpleName)
+    private val logTag = Util.getLogTag(javaClass.simpleName, "")
     private val logger = Logger.getLogger(logTag)
 
     @Throws(
         DownloadFailedException::class,
-        InvalidAccessTokenException::class,
-        NetworkRequestTimeoutException::class,
-        InvalidPublicKeyException::class
     )
     fun requestCredential(
         issuerMetadata: IssuerMetadata,
@@ -36,58 +28,65 @@ class CredentialRequestExecutor {
         downloadTimeoutInMillis: Long? = 10000,
     ): CredentialResponse? {
 
+        val timeout = downloadTimeoutInMillis ?: 10000
+
         try {
-            val client = OkHttpClient.Builder().callTimeout(
-                downloadTimeoutInMillis!!, TimeUnit.MILLISECONDS
-            ).build()
 
             val request = CredentialRequestFactory.createCredentialRequest(
-                issuerMetadata.credentialFormat, accessToken, issuerMetadata, proof,
+                issuerMetadata.credentialFormat,
+                accessToken,
+                issuerMetadata,
+                proof
             )
-            val response: Response = client.newCall(request).execute()
 
-            if (response.code != 200) {
-                val errorResponse: String? = response.body?.string()
-                logger.severe(
-                    "Downloading credential failed with response code ${response.code} - ${response.message}. Error - $errorResponse"
-                )
-                if (errorResponse != "" && errorResponse != null) {
-                    throw DownloadFailedException(errorResponse)
-                }
-                throw DownloadFailedException(response.message)
-            }
-            val responseBody: String =
-                response.body?.byteStream()?.bufferedReader().use { it?.readText() } ?: ""
-            logger.info("credential downloaded successfully!")
+            val networkResponse = NetworkManager.sendRequest(
+                request = request,
+                timeoutMillis = timeout
+            )
 
-            if (responseBody != "") {
+            val responseBody = networkResponse.body
+
+            logger.info("Credential downloaded successfully")
+
+            if (responseBody.isNotBlank()) {
+
                 val credentialResponse =
                     JsonUtils.deserialize(responseBody, CredentialResponse::class.java)
+
                 credentialResponse?.credentialConfigurationId = credentialConfigurationId
                 credentialResponse?.credentialIssuer = issuerMetadata.credentialIssuer
+
                 return credentialResponse
             }
 
-            logger.warning(
-                "The response body from credentialEndpoint is empty, responseCode - ${response.code}, responseMessage ${response.message}, returning null."
-            )
+            logger.warning("Credential endpoint returned empty body")
             return null
-        } catch (exception: InterruptedIOException) {
-            logger.severe(
-                "Network request for ${issuerMetadata.credentialEndpoint} took more than expected time(${downloadTimeoutInMillis!! / 1000}s). Exception - $exception"
+
+        } catch (e: NetworkRequestTimeoutException) {
+            logger.severe("Credential download timed out after ${timeout / 1000}s")
+            throw DownloadFailedException(
+                message = "Credential download timed out after ${timeout / 1000}s",
+                cause = e,
             )
-            throw NetworkRequestTimeoutException("")
-        } catch (exception: IOException) {
-            logger.severe(
-                "Network request failed due to Exception - $exception"
+        } catch (e: NetworkRequestFailedException) {
+            logger.severe("Credential download failed: ${e.message}")
+            throw DownloadFailedException(
+                message = e.message,
+                cause = e,
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription
             )
-            throw NetworkRequestFailedException(exception.message)
-        } catch (exception: Exception) {
-            if (exception is DownloadFailedException || exception is InvalidAccessTokenException || exception is InvalidPublicKeyException) throw exception
-            logger.severe(
-                "Downloading credential failed due to ${exception.message}"
+        } catch (e: InvalidPublicKeyException) {
+            throw DownloadFailedException(
+                e.message,
+                cause = e
             )
-            throw DownloadFailedException(exception.message!!)
+        } catch (e: Exception) {
+            logger.severe("Unexpected error during credential download: ${e.message}")
+            throw DownloadFailedException(
+                message = e.message,
+                cause = e
+            )
         }
     }
 }

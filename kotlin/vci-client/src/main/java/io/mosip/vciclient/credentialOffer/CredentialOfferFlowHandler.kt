@@ -3,17 +3,16 @@ package io.mosip.vciclient.credentialOffer
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationMethod
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
-import io.mosip.vciclient.constants.AuthorizeUserCallback
+import io.mosip.vciclient.constants.CheckIssuerTrustCallback
 import io.mosip.vciclient.constants.Constants
+import io.mosip.vciclient.constants.ProofJwtCallback
+import io.mosip.vciclient.constants.TokenResponseCallback
+import io.mosip.vciclient.constants.TxCodeCallback
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.preAuthCodeFlow.PreAuthCodeFlowService
-import io.mosip.vciclient.constants.CheckIssuerTrustCallback
-import io.mosip.vciclient.constants.ProofJwtCallback
-import io.mosip.vciclient.constants.TokenResponseCallback
-import io.mosip.vciclient.constants.TxCodeCallback
 
 class CredentialOfferFlowHandler {
 

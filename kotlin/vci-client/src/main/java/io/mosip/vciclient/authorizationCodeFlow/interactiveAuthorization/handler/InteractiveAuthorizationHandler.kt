@@ -12,6 +12,7 @@ import io.mosip.vciclient.common.JsonUtils
 import io.mosip.vciclient.constants.Constants.APPLICATION_X_WWW_FORM_URLENCODED
 import io.mosip.vciclient.constants.Constants.CONTENT_TYPE
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
+import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import io.mosip.vciclient.pkce.PKCESessionManager
@@ -77,9 +78,20 @@ class InteractiveAuthorizationHandler {
         } catch (e: InteractiveAuthorizationException) {
             logger.warning("Interactive authorization failed: ${e.message}")
             throw e
-        } catch (e: Exception) {
+        } catch (e: VCIClientException) {
             logger.severe("Interactive authorization failed: ${e.message}")
-            throw InteractiveAuthorizationException("Interactive authorization failed: ${e.message}")
+            throw InteractiveAuthorizationException(
+                "Interactive authorization failed: ${e.message}",
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription,
+                cause = e
+            )
+        } catch (e: Exception) {
+            logger.severe("Unexpected error during interactive authorization: ${e.message}")
+            throw InteractiveAuthorizationException(
+                "Unexpected error during interactive authorization: ${e.message}",
+                cause = e
+            )
         }
     }
 
@@ -126,6 +138,8 @@ class InteractiveAuthorizationHandler {
                         append(" - $errorDescription")
                     }
                 },
+                error,
+                errorDescription
             )
         } else {
             throw InteractiveAuthorizationException("Missing 'type' in interaction response from authorization server")
@@ -149,7 +163,10 @@ class InteractiveAuthorizationHandler {
         try {
             parsedPresentationInteractionResponse.validate()
         } catch (e: Exception) {
-            throw InteractiveAuthorizationException("Invalid presentation interaction response: ${e.message}")
+            throw InteractiveAuthorizationException(
+                "Invalid presentation interaction response: ${e.message}",
+                cause = e
+            )
         }
 
         val presentationMethod = authorizationMethods

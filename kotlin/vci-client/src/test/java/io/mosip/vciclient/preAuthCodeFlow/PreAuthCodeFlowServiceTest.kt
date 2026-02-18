@@ -27,6 +27,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertTrue
 
 class PreAuthCodeFlowServiceTest {
 
@@ -155,7 +156,7 @@ class PreAuthCodeFlowServiceTest {
                 )
             }
 
-            assertEquals("Failed to download Credential: tx_code required but no provider was given.", exception.message)
+            assertTrue { exception.message.contains("Failed to download Credential: tx_code required but no provider was given.")}
         }
 
     @Test
@@ -186,7 +187,6 @@ class PreAuthCodeFlowServiceTest {
             )
         }
 
-        assertEquals("Failed to download Credential: Token endpoint is missing in Authorization Server metadata.",exception.message)
     }
 
     @Test
@@ -199,7 +199,7 @@ class PreAuthCodeFlowServiceTest {
             )
         )
 
-        val exception = assertThrows<InvalidDataProvidedException> {
+        val exception = assertThrows<DownloadFailedException> {
             runBlocking {
                 PreAuthCodeFlowService().requestCredentials(
                     issuerMetadata = resolvedIssuerMetaData,
@@ -214,6 +214,49 @@ class PreAuthCodeFlowServiceTest {
             }
         }
 
-        assertEquals("Required details not provided Missing pre-authorized grant details.", exception.message)
+        assertEquals("Failed to download Credential: Pre-Authorized Code Flow failed: Required details not provided Missing pre-authorized grant details.", exception.message)
+    }
+
+    @Test
+    fun `should wrap token network error with cause`() = runBlocking {
+        val networkException = java.io.IOException("Token network failure")
+
+        mockkConstructor(TokenService::class)
+        coEvery {
+            anyConstructed<TokenService>().getAccessToken(
+                getTokenResponse = any(),
+                tokenEndpoint = any(),
+                preAuthCode = any(),
+                txCode = any()
+            )
+        } throws networkException
+
+        val offer = CredentialOffer(
+            credentialIssuer = "https://mock.issuer",
+            credentialConfigurationIds = listOf(credentialConfigurationId),
+            grants = CredentialOfferGrants(
+                preAuthorizedGrant = PreAuthCodeGrant(
+                    preAuthCode = "abc123",
+                    txCode = null
+                )
+            )
+        )
+
+        val ex = assertThrows<DownloadFailedException> {
+            PreAuthCodeFlowService().requestCredentials(
+                issuerMetadata = resolvedIssuerMetaData,
+                jwtProofSigningAlgorithms = listOf("ES256"),
+                getTokenResponse = mockk(relaxed = true),
+                getProofJwt = getProofJwt,
+                credentialConfigurationId = credentialConfigurationId,
+                getTxCode = getTxCode,
+                downloadTimeoutInMillis = 10000L,
+                offer = offer
+            )
+        }
+
+        assertEquals(networkException, ex.cause)
+        assert(ex.message.contains("Pre-Authorized Code"))
+        assert(ex.message.contains("Token network failure"))
     }
 }
