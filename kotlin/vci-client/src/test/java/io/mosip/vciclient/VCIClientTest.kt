@@ -27,7 +27,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.Ignore
 
 class VCIClientTest {
 
@@ -219,7 +218,6 @@ class VCIClientTest {
         }
     }
 
-    @Ignore("Test depends on environment-specific OkHttpClient behavior; needs migration to a mock web server.")
     @Test
     fun `should return credential when requestCredential succeeds`() {
         // Arrange
