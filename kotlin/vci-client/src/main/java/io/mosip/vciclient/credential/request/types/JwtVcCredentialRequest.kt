@@ -45,7 +45,7 @@ class JwtVcCredentialRequest(
         )
         val request = JwtVcRequestBody(
             format = issuerMetadata.credentialFormat.value,
-            credential_definition = definition,
+            credentialDefinition = definition,
             proof = proof
         ).toJson()
         return request.toRequestBody(APPLICATION_JSON.toMediaTypeOrNull())
@@ -58,7 +58,7 @@ private data class JwtVcCredentialDefinition(
 
 private data class JwtVcRequestBody(
     val format: String,
-    val credential_definition: JwtVcCredentialDefinition,
+    val credentialDefinition: JwtVcCredentialDefinition,
     val proof: Proof
 ) {
     fun toJson(): String = JsonUtils.serialize(this)
