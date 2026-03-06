@@ -60,7 +60,7 @@ dependencies {
     testImplementation("org.json:json:20231013")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     implementation("com.squareup.okio:okio:3.6.0")
-    implementation("io.inji:inji-openid4vp-aar:0.7.0-SNAPSHOT")
+    implementation("io.inji:inji-openid4vp-aar:0.7.0")
     testImplementation(kotlin("test"))
 }
 
