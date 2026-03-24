@@ -138,6 +138,38 @@ class InteractiveAuthorizationHandlerTest {
     }
 
     @Test
+    fun `should surface authorization server error details from interaction response`() = runTest {
+        val responseBody =
+            """{ "error": "access_denied", "error_description": "user cancelled the flow" }"""
+
+        every {
+            NetworkManager.sendRequest(any(), any(), any(), any())
+        } returns NetworkResponse(responseBody, null)
+
+        val ex = assertFailsWith<InteractiveAuthorizationException> {
+            handler.handle(
+                endpoint,
+                clientMetadata,
+                credentialConfigId,
+                listOf(
+                    AuthorizationMethod.PresentationDuringIssuance(
+                        selectCredentialsForPresentation = mockk(relaxed = true),
+                        signVerifiablePresentation = mockk(relaxed = true)
+                    )
+                ),
+                pkceSession
+            )
+        }
+
+        assertEquals("access_denied", ex.serverErrorCode)
+        assertEquals("user cancelled the flow", ex.serverErrorDescription)
+        assertEquals(
+            "Failed to authorize via interaction: authorization server error: access_denied - user cancelled the flow",
+            ex.message
+        )
+    }
+
+    @Test
     fun `should throw error on malformed JSON response`() = runTest {
         val responseBody = "{ invalid-json"
 

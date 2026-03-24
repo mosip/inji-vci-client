@@ -407,4 +407,63 @@ class CredentialOfferFlowHandlerTest {
             ex.message.substringAfterLast("fetch credential offer: ")
         )
     }
+
+    @Test
+    fun `should request credential via authorization code flow with default issuer display`() = runBlocking {
+        val offer = CredentialOffer(
+            credentialIssuer = "https://issuer.example.com",
+            credentialConfigurationIds = listOf("UniversityDegreeCredential"),
+            grants = CredentialOfferGrants(
+                preAuthorizedGrant = null,
+                authorizationCodeGrant = AuthorizationCodeGrant("issuer-state")
+            )
+        )
+        val issuerMetadataResult = mockk<IssuerMetadataResult>()
+
+        coEvery { anyConstructed<CredentialOfferService>().fetchCredentialOffer(any()) } returns offer
+        coEvery {
+            anyConstructed<IssuerMetadataService>().fetchIssuerMetadataResult(
+                offer.credentialIssuer,
+                "UniversityDegreeCredential"
+            )
+        } returns issuerMetadataResult
+        every { issuerMetadataResult.issuerMetadata } returns mockk(relaxed = true)
+        every { issuerMetadataResult.raw } returns emptyMap()
+        every { issuerMetadataResult.extractJwtProofSigningAlgorithms("UniversityDegreeCredential") } returns listOf("ES256")
+
+        coEvery {
+            onCheckIssuerTrust.invoke(
+                offer.credentialIssuer,
+                listOf(emptyMap())
+            )
+        } returns true
+
+        coEvery {
+            anyConstructed<AuthorizationCodeFlowService>().requestCredentials(
+                issuerMetadata = issuerMetadataResult.issuerMetadata,
+                credentialConfigurationId = "UniversityDegreeCredential",
+                clientMetadata = mockClientMetadata,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                credentialOffer = offer,
+                downloadTimeOutInMillis = any(),
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                authorizationMethods = listOf(authorizationMethod),
+                traceabilityId = "trace-id"
+            )
+        } returns mockCredentialResponse
+
+        val result = CredentialOfferFlowHandler().downloadCredentials(
+            credentialOffer = "some-offer",
+            clientMetadata = mockClientMetadata,
+            getTxCode = txCode,
+            getTokenResponse = getTokenResponse,
+            getProofJwt = getProofJwt,
+            authorizationMethods = listOf(authorizationMethod),
+            onCheckIssuerTrust = onCheckIssuerTrust,
+            traceabilityId = "trace-id"
+        )
+
+        assertEquals(mockCredentialResponse, result)
+    }
 }

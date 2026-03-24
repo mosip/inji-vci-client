@@ -23,6 +23,8 @@ import io.mosip.vciclient.credential.request.CredentialRequestExecutor
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.credentialOffer.CredentialOffer
 import io.mosip.vciclient.exception.DownloadFailedException
+import io.mosip.vciclient.exception.InteractiveAuthorizationException
+import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.pkce.PKCESessionManager.PKCESession
@@ -381,6 +383,198 @@ class AuthorizationCodeFlowServiceTest {
         assertTrue(ex.message.contains("Credential request returned null"))
     }
 
-}
+    @Test
+    fun `should wrap resolver client exception details`() = runBlocking {
+        coEvery {
+            anyConstructed<AuthorizationServerResolver>().resolveForAuthCode(any(), any())
+        } throws InvalidDataProvidedException(
+            message = "issuer metadata missing",
+            serverErrorCode = "invalid_request",
+            serverErrorDescription = "credential issuer missing"
+        )
 
+        val ex = assertThrows<DownloadFailedException> {
+            AuthorizationCodeFlowService().requestCredentials(
+                issuerMetadata = resolvedIssuerMetadata,
+                credentialConfigurationId = credentialConfigurationId,
+                clientMetadata = clientMetadata,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                credentialOffer = credentialOffer,
+                downloadTimeOutInMillis = downloadTimeout,
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                authorizationMethods = listOf(authorizationMethod),
+            )
+        }
+
+        assertEquals("invalid_request", ex.serverErrorCode)
+        assertEquals("credential issuer missing", ex.serverErrorDescription)
+        assertTrue(ex.message.contains("Failed to resolve authorization server metadata"))
+    }
+
+    @Test
+    fun `should wrap interactive authorization client exception details`() = runBlocking {
+        coEvery {
+            anyConstructed<AuthorizationServerResolver>().resolveForAuthCode(any(), any())
+        } returns mockk {
+            every { authorizationEndpoint } returns "https://auth.example.com"
+            every { tokenEndpoint } returns "https://token.example.com"
+            every { interactiveAuthorizationEndpoint } returns "https://auth.example.com/interactive"
+        }
+
+        val mockHandler = mockkClass(InteractiveAuthorizationHandler::class)
+        coEvery {
+            mockHandler.handle(any(), any(), any(), any(), any(), any())
+        } throws InteractiveAuthorizationException(
+            message = "interaction rejected",
+            serverErrorCode = "access_denied",
+            serverErrorDescription = "user cancelled"
+        )
+
+        val ex = assertThrows<DownloadFailedException> {
+            AuthorizationCodeFlowService(
+                interactiveAuthorizationHandler = mockHandler
+            ).requestCredentials(
+                issuerMetadata = resolvedIssuerMetadata,
+                credentialConfigurationId = credentialConfigurationId,
+                clientMetadata = clientMetadata,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                credentialOffer = credentialOffer,
+                downloadTimeOutInMillis = downloadTimeout,
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                authorizationMethods = listOf(authorizationMethod),
+            )
+        }
+
+        assertEquals("access_denied", ex.serverErrorCode)
+        assertEquals("user cancelled", ex.serverErrorDescription)
+        assertTrue(ex.message.contains("Interactive authorization failed at endpoint"))
+    }
+
+    @Test
+    fun `should wrap interactive authorization runtime failures`() = runBlocking {
+        coEvery {
+            anyConstructed<AuthorizationServerResolver>().resolveForAuthCode(any(), any())
+        } returns mockk {
+            every { authorizationEndpoint } returns "https://auth.example.com"
+            every { tokenEndpoint } returns "https://token.example.com"
+            every { interactiveAuthorizationEndpoint } returns "https://auth.example.com/interactive"
+        }
+
+        val mockHandler = mockkClass(InteractiveAuthorizationHandler::class)
+        coEvery {
+            mockHandler.handle(any(), any(), any(), any(), any(), any())
+        } throws RuntimeException("interactive flow crashed")
+
+        val ex = assertThrows<DownloadFailedException> {
+            AuthorizationCodeFlowService(
+                interactiveAuthorizationHandler = mockHandler
+            ).requestCredentials(
+                issuerMetadata = resolvedIssuerMetadata,
+                credentialConfigurationId = credentialConfigurationId,
+                clientMetadata = clientMetadata,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                credentialOffer = credentialOffer,
+                downloadTimeOutInMillis = downloadTimeout,
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                authorizationMethods = listOf(authorizationMethod),
+            )
+        }
+
+        assertTrue(ex.message.contains("Interactive authorization failed at endpoint"))
+        assertTrue(ex.message.contains("interactive flow crashed"))
+    }
+
+    @Test
+    fun `should wrap credential executor client exception details`() = runBlocking {
+        every {
+            anyConstructed<CredentialRequestExecutor>().requestCredential(
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } throws InvalidDataProvidedException(
+            message = "proof missing",
+            serverErrorCode = "invalid_proof",
+            serverErrorDescription = "proof callback returned invalid JWT"
+        )
+
+        val ex = assertThrows<DownloadFailedException> {
+            AuthorizationCodeFlowService().requestCredentials(
+                issuerMetadata = resolvedIssuerMetadata,
+                credentialConfigurationId = credentialConfigurationId,
+                clientMetadata = clientMetadata,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                credentialOffer = credentialOffer,
+                downloadTimeOutInMillis = downloadTimeout,
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                authorizationMethods = listOf(authorizationMethod),
+            )
+        }
+
+        assertEquals("invalid_proof", ex.serverErrorCode)
+        assertEquals("proof callback returned invalid JWT", ex.serverErrorDescription)
+        assertEquals(
+            "Failed to download Credential: Required details not provided proof missing",
+            ex.message
+        )
+    }
+
+    @Test
+    fun `should wrap unexpected credential executor failures`() = runBlocking {
+        every {
+            anyConstructed<CredentialRequestExecutor>().requestCredential(
+                any(),
+                any(),
+                any(),
+                any(),
+                any()
+            )
+        } throws RuntimeException("credential request crashed")
+
+        val ex = assertThrows<DownloadFailedException> {
+            AuthorizationCodeFlowService().requestCredentials(
+                issuerMetadata = resolvedIssuerMetadata,
+                credentialConfigurationId = credentialConfigurationId,
+                clientMetadata = clientMetadata,
+                getTokenResponse = getTokenResponse,
+                getProofJwt = getProofJwt,
+                credentialOffer = credentialOffer,
+                downloadTimeOutInMillis = downloadTimeout,
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                authorizationMethods = listOf(authorizationMethod),
+            )
+        }
+
+        assertEquals(
+            "Failed to download Credential: Download failed via authorization code flow: credential request crashed",
+            ex.message
+        )
+    }
+
+    @Test
+    fun `should append redirect to web authorization method when authorize user callback is provided`() =
+        runBlocking {
+            val service = AuthorizationCodeFlowService()
+            val methods = service.normalizeAuthorizationMethods(
+                authorizeUser = { authUrl ->
+                    assertEquals("https://issuer.example.com/authorize", authUrl)
+                    "auth-code"
+                },
+                authorizationMethods = listOf(authorizationMethod)
+            )
+
+            assertEquals(2, methods.size)
+            val redirectMethod = methods.last() as AuthorizationMethod.RedirectToWeb
+            val response = redirectMethod.openWebPage.invoke("https://issuer.example.com/authorize")
+
+            assertEquals("auth-code", response["code"])
+        }
+
+}
 
