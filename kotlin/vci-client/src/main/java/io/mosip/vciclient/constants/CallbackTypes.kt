@@ -11,12 +11,12 @@ import io.mosip.vciclient.token.TokenResponse
 typealias TxCodeCallback = (suspend (inputMode: String?, description: String?, length: Int?) -> String)
 typealias AuthorizeUserCallback = (suspend (authorizationUrl: String) -> String)
 typealias TokenResponseCallback = suspend (tokenRequest: TokenRequest) -> TokenResponse
-typealias ProofJwtCallback = (suspend (
+internal typealias ProofJwtCallback = (suspend (
     credentialIssuer: String,
     cNonce: String?,
     proofSigningAlgorithmsSupported: List<String>
 ) -> String)
-internal typealias ProofsCallback = (suspend (
+typealias ProofsCallback = (suspend (
     credentialIssuer: String,
     nonce: String?,
     proofSigningAlgorithmsSupported: List<String>
