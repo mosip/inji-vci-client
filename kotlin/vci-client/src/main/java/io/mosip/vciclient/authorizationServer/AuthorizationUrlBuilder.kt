@@ -29,6 +29,18 @@ object AuthorizationUrlBuilder {
         }
     }
 
+    fun buildWithRequestUri(
+        baseUrl: String,
+        clientId: String,
+        requestUri: String,
+    ): String {
+        return buildString {
+            append(baseUrl)
+            append("?client_id=").append(encode(clientId))
+            append("&request_uri=").append(encode(requestUri))
+        }
+    }
+
     private fun encode(value: String): String =
         URLEncoder.encode(value, "UTF-8")
 }

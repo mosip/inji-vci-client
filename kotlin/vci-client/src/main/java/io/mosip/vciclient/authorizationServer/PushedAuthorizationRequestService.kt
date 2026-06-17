@@ -1,0 +1,88 @@
+package io.mosip.vciclient.authorizationServer
+
+import io.mosip.vciclient.common.JsonUtils
+import io.mosip.vciclient.constants.AuthorizationResponseType
+import io.mosip.vciclient.constants.CodeChallengeMethod
+import io.mosip.vciclient.constants.Constants
+import io.mosip.vciclient.constants.Constants.APPLICATION_X_WWW_FORM_URLENCODED
+import io.mosip.vciclient.constants.Constants.CONTENT_TYPE
+import io.mosip.vciclient.exception.PushedAuthorizationRequestException
+import io.mosip.vciclient.exception.VCIClientException
+import io.mosip.vciclient.networkManager.HttpMethod
+import io.mosip.vciclient.networkManager.NetworkManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.logging.Logger
+
+class PushedAuthorizationRequestService {
+    private val logger = Logger.getLogger(javaClass.simpleName)
+
+    suspend fun pushAuthorizationRequest(
+        parEndpoint: String,
+        clientId: String,
+        redirectUri: String,
+        codeChallenge: String,
+        state: String,
+        nonce: String,
+        scope: String? = null,
+        authorizationDetails: String? = null,
+        issuerState: String? = null,
+        codeChallengeMethod: CodeChallengeMethod = CodeChallengeMethod.S256,
+        responseType: AuthorizationResponseType = AuthorizationResponseType.CODE,
+        clientAuthParams: Map<String, String> = emptyMap(),
+        timeoutMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
+    ): PushedAuthorizationResponse = withContext(Dispatchers.IO) {
+        val params = mutableMapOf(
+            "response_type" to responseType.value,
+            "client_id" to clientId,
+            "redirect_uri" to redirectUri,
+            "code_challenge" to codeChallenge,
+            "code_challenge_method" to codeChallengeMethod.value,
+            "state" to state,
+            "nonce" to nonce,
+        )
+        if (!authorizationDetails.isNullOrBlank()) {
+            params["authorization_details"] = authorizationDetails
+        } else if (!scope.isNullOrBlank()) {
+            params["scope"] = scope
+        }
+        if (!issuerState.isNullOrBlank()) params["issuer_state"] = issuerState
+        params.putAll(clientAuthParams)
+
+        logger.info("Pushing authorization request to PAR endpoint: $parEndpoint")
+
+        val response = try {
+            NetworkManager.sendRequest(
+                url = parEndpoint,
+                method = HttpMethod.POST,
+                headers = mapOf(CONTENT_TYPE to APPLICATION_X_WWW_FORM_URLENCODED),
+                bodyParams = params,
+                timeoutMillis = timeoutMillis,
+            )
+        } catch (e: VCIClientException) {
+            throw PushedAuthorizationRequestException(
+                "PAR request failed at $parEndpoint: ${e.message}",
+                serverErrorCode = e.serverErrorCode,
+                serverErrorDescription = e.serverErrorDescription,
+                cause = e,
+            )
+        } catch (e: Exception) {
+            throw PushedAuthorizationRequestException(
+                "PAR request failed at $parEndpoint: ${e.message}",
+                serverErrorCode = null,
+                serverErrorDescription = null,
+                cause = e,
+            )
+        }
+
+        val parResponse = JsonUtils.deserialize(
+            response.body, PushedAuthorizationResponse::class.java
+        )
+        if (parResponse == null || parResponse.requestUri.isBlank()) {
+            throw PushedAuthorizationRequestException(
+                "Invalid PAR response from $parEndpoint: missing request_uri"
+            )
+        }
+        parResponse
+    }
+}

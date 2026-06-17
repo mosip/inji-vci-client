@@ -1,6 +1,7 @@
 package io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.redirectToWeb
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -8,6 +9,8 @@ import io.mosip.vciclient.authorizationCodeFlow.implicitAuthorization.ImplicitAu
 import io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.handler.InteractionType
 import io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.request.AuthorizationRequestData
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
+import io.mosip.vciclient.authorizationServer.PushedAuthorizationRequestService
+import io.mosip.vciclient.authorizationServer.PushedAuthorizationResponse
 import io.mosip.vciclient.constants.OpenWebPageCallback
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
 import io.mosip.vciclient.pkce.PKCESessionManager
@@ -130,6 +133,105 @@ class RedirectToWebAuthorizationMethodServiceTest {
         )
     }
 
+
+    @Test
+    fun `should push authorization request and use short URL when PAR endpoint present`() = runTest {
+        every {
+            AuthorizationUrlBuilder.buildWithRequestUri(any(), any(), any())
+        } returns "https://auth.example.com/authorize?client_id=client-id&request_uri=urn:req:abc"
+
+        val parService = mockk<PushedAuthorizationRequestService>()
+        coEvery {
+            parService.pushAuthorizationRequest(
+                parEndpoint = any(),
+                clientId = any(),
+                redirectUri = any(),
+                codeChallenge = any(),
+                state = any(),
+                nonce = any(),
+                scope = any(),
+                authorizationDetails = any(),
+                issuerState = any()
+            )
+        } returns PushedAuthorizationResponse("urn:req:abc", 90)
+
+        coEvery { openWebPage.invoke(any()) } returns mapOf("code" to "auth-code-123")
+
+        val service = RedirectToWebAuthorizationMethodService(openWebPage, parService)
+        val response = service.authorizeUser(parRequest())
+
+        assertEquals("success", response.status)
+        assertEquals("auth-code-123", response.authorizationCode)
+
+        coVerify(exactly = 1) {
+            parService.pushAuthorizationRequest(
+                parEndpoint = "https://as.example.com/as/par",
+                clientId = "client-id",
+                redirectUri = "app://callback",
+                codeChallenge = "challenge",
+                state = "state",
+                nonce = "nonce",
+                scope = "openid",
+                authorizationDetails = null,
+                issuerState = "issuer-state-xyz"
+            )
+        }
+        io.mockk.verify(exactly = 1) {
+            AuthorizationUrlBuilder.buildWithRequestUri(
+                "https://auth.example.com", "client-id", "urn:req:abc"
+            )
+        }
+    }
+
+    @Test
+    fun `should use long URL and not call PAR when PAR endpoint absent`() = runTest {
+        val parService = mockk<PushedAuthorizationRequestService>()
+        coEvery { openWebPage.invoke(any()) } returns mapOf("code" to "auth-code-123")
+
+        val service = RedirectToWebAuthorizationMethodService(openWebPage, parService)
+        val response = service.authorizeUser(standardRequest())
+
+        assertEquals("success", response.status)
+        assertEquals("auth-code-123", response.authorizationCode)
+
+        coVerify(exactly = 0) {
+            parService.pushAuthorizationRequest(
+                parEndpoint = any(),
+                clientId = any(),
+                redirectUri = any(),
+                codeChallenge = any(),
+                state = any(),
+                nonce = any(),
+                scope = any(),
+                authorizationDetails = any(),
+                issuerState = any()
+            )
+        }
+        io.mockk.verify(exactly = 1) {
+            AuthorizationUrlBuilder.build(
+                any(), any(), any(), any(), any(), any(), any(), any(), any()
+            )
+        }
+    }
+
+    private fun parRequest(): ImplicitAuthorizationRequestData {
+        return ImplicitAuthorizationRequestData(
+            authorizeUrl = "https://auth.example.com",
+            clientMetadata = ClientMetadata(
+                clientId = "client-id",
+                redirectUri = "app://callback"
+            ),
+            pkceSession = PKCESessionManager.PKCESession(
+                codeVerifier = "verifier",
+                codeChallenge = "challenge",
+                state = "state",
+                nonce = "nonce"
+            ),
+            scope = "openid",
+            pushedAuthorizationRequestEndpoint = "https://as.example.com/as/par",
+            issuerState = "issuer-state-xyz"
+        )
+    }
 
     private fun standardRequest(): ImplicitAuthorizationRequestData {
         return ImplicitAuthorizationRequestData(
