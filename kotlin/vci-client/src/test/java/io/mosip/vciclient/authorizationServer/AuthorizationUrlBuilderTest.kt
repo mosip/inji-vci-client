@@ -29,4 +29,19 @@ class AuthorizationUrlBuilderTest {
 
         assertEquals(expected, actual)
     }
+
+    @Test
+    fun `buildWithRequestUri should return short URL with client_id and request_uri`() {
+        val actual = AuthorizationUrlBuilder.buildWithRequestUri(
+            baseUrl = "https://example.com/auth",
+            clientId = "myClientId",
+            requestUri = "urn:ietf:params:oauth:request_uri:abc123"
+        )
+
+        val expected = "https://example.com/auth" +
+                "?client_id=myClientId" +
+                "&request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3Aabc123"
+
+        assertEquals(expected, actual)
+    }
 }

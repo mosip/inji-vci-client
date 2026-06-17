@@ -6,11 +6,13 @@ import io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.request
 import io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.response.AuthorizationResponse
 import io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.handler.InteractionType
 import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
+import io.mosip.vciclient.authorizationServer.PushedAuthorizationRequestService
 import io.mosip.vciclient.constants.OpenWebPageCallback
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
 
 class RedirectToWebAuthorizationMethodService(
-    val openWebPage: OpenWebPageCallback
+    val openWebPage: OpenWebPageCallback,
+    private val parService: PushedAuthorizationRequestService = PushedAuthorizationRequestService(),
 ) : AuthorizationMethodService {
 
     override fun type(): String {
@@ -25,15 +27,35 @@ class RedirectToWebAuthorizationMethodService(
             )
         }
 
-        val authUrl = AuthorizationUrlBuilder.build(
-            baseUrl = requestData.authorizeUrl,
-            clientId = requestData.clientMetadata.clientId,
-            redirectUri = requestData.clientMetadata.redirectUri,
-            scope = requestData.scope,
-            state = requestData.pkceSession.state,
-            codeChallenge = requestData.pkceSession.codeChallenge,
-            nonce = requestData.pkceSession.nonce
-        )
+        val parEndpoint = requestData.pushedAuthorizationRequestEndpoint
+        val authUrl = if (!parEndpoint.isNullOrBlank()) {
+            val parResponse = parService.pushAuthorizationRequest(
+                parEndpoint = parEndpoint,
+                clientId = requestData.clientMetadata.clientId,
+                redirectUri = requestData.clientMetadata.redirectUri,
+                codeChallenge = requestData.pkceSession.codeChallenge,
+                state = requestData.pkceSession.state,
+                nonce = requestData.pkceSession.nonce,
+                scope = requestData.scope,
+                authorizationDetails = requestData.authorizationDetails,
+                issuerState = requestData.issuerState
+            )
+            AuthorizationUrlBuilder.buildWithRequestUri(
+                baseUrl = requestData.authorizeUrl,
+                clientId = requestData.clientMetadata.clientId,
+                requestUri = parResponse.requestUri
+            )
+        } else {
+            AuthorizationUrlBuilder.build(
+                baseUrl = requestData.authorizeUrl,
+                clientId = requestData.clientMetadata.clientId,
+                redirectUri = requestData.clientMetadata.redirectUri,
+                scope = requestData.scope,
+                state = requestData.pkceSession.state,
+                codeChallenge = requestData.pkceSession.codeChallenge,
+                nonce = requestData.pkceSession.nonce
+            )
+        }
         val authorizationResponse = openWebPage(authUrl)
 
         if (authorizationResponse.containsKey("error")) {
