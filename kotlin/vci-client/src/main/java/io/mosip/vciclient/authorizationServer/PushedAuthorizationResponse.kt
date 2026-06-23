@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class PushedAuthorizationResponse(
     @SerializedName("request_uri")
-    val requestUri: String,
+    val requestUri: String? = null,
 
     @SerializedName("expires_in")
     val expiresIn: Long? = null,

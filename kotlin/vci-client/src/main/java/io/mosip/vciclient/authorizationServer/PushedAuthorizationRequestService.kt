@@ -32,22 +32,27 @@ class PushedAuthorizationRequestService {
         clientAuthParams: Map<String, String> = emptyMap(),
         timeoutMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): PushedAuthorizationResponse = withContext(Dispatchers.IO) {
-        val params = mutableMapOf(
-            "response_type" to responseType.value,
-            "client_id" to clientId,
-            "redirect_uri" to redirectUri,
-            "code_challenge" to codeChallenge,
-            "code_challenge_method" to codeChallengeMethod.value,
-            "state" to state,
-            "nonce" to nonce,
-        )
+        val params = mutableMapOf<String, String>()
+        // Client authentication params are applied first so the core authorization
+        // request params below always take precedence and cannot be overwritten.
+        params.putAll(clientAuthParams)
+        params["response_type"] = responseType.value
+        params["client_id"] = clientId
+        params["redirect_uri"] = redirectUri
+        params["code_challenge"] = codeChallenge
+        params["code_challenge_method"] = codeChallengeMethod.value
+        params["state"] = state
+        params["nonce"] = nonce
         if (!authorizationDetails.isNullOrBlank()) {
             params["authorization_details"] = authorizationDetails
         } else if (!scope.isNullOrBlank()) {
             params["scope"] = scope
+        } else {
+            throw PushedAuthorizationRequestException(
+                "Either scope or authorization_details must be provided for a PAR request"
+            )
         }
         if (!issuerState.isNullOrBlank()) params["issuer_state"] = issuerState
-        params.putAll(clientAuthParams)
 
         logger.info("Pushing authorization request to PAR endpoint: $parEndpoint")
 
@@ -78,7 +83,7 @@ class PushedAuthorizationRequestService {
         val parResponse = JsonUtils.deserialize(
             response.body, PushedAuthorizationResponse::class.java
         )
-        if (parResponse == null || parResponse.requestUri.isBlank()) {
+        if (parResponse == null || parResponse.requestUri.isNullOrBlank()) {
             throw PushedAuthorizationRequestException(
                 "Invalid PAR response from $parEndpoint: missing request_uri"
             )

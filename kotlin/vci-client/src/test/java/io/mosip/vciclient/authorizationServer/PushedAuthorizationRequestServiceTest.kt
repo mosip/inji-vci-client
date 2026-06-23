@@ -199,6 +199,41 @@ class PushedAuthorizationRequestServiceTest {
     }
 
     @Test
+    fun `clientAuthParams must not overwrite core params like client_id`() = runBlocking {
+        val bodySlot = slot<Map<String, String>>()
+        stubSuccessNetwork(bodySlot)
+        stubDeserialize(PushedAuthorizationResponse("urn:request_uri:abc"))
+
+        PushedAuthorizationRequestService().pushAuthorizationRequest(
+            parEndpoint = parEndpoint,
+            clientId = "real-client-id",
+            redirectUri = "app://callback",
+            codeChallenge = "challenge",
+            state = "state-123",
+            nonce = "nonce-123",
+            scope = "openid",
+            clientAuthParams = mapOf("client_id" to "malicious-id")
+        )
+
+        assertEquals("real-client-id", bodySlot.captured["client_id"])
+    }
+
+    @Test
+    fun `should throw when neither scope nor authorization_details is provided`() = runBlocking {
+        val ex = assertThrows<PushedAuthorizationRequestException> {
+            PushedAuthorizationRequestService().pushAuthorizationRequest(
+                parEndpoint = parEndpoint,
+                clientId = "client-id",
+                redirectUri = "app://callback",
+                codeChallenge = "challenge",
+                state = "state-123",
+                nonce = "nonce-123"
+            )
+        }
+        assertTrue(ex.message.contains("scope or authorization_details"))
+    }
+
+    @Test
     fun `should throw when response has no request_uri`() = runBlocking {
         val bodySlot = slot<Map<String, String>>()
         stubSuccessNetwork(bodySlot)

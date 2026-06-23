@@ -9,6 +9,7 @@ import io.mosip.vciclient.authorizationServer.AuthorizationUrlBuilder
 import io.mosip.vciclient.authorizationServer.PushedAuthorizationRequestService
 import io.mosip.vciclient.constants.OpenWebPageCallback
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
+import io.mosip.vciclient.exception.PushedAuthorizationRequestException
 
 class RedirectToWebAuthorizationMethodService(
     val openWebPage: OpenWebPageCallback,
@@ -40,10 +41,14 @@ class RedirectToWebAuthorizationMethodService(
                 authorizationDetails = requestData.authorizationDetails,
                 issuerState = requestData.issuerState
             )
+            val requestUri = parResponse.requestUri
+                ?: throw PushedAuthorizationRequestException(
+                    "PAR response from $parEndpoint did not contain a request_uri"
+                )
             AuthorizationUrlBuilder.buildWithRequestUri(
                 baseUrl = requestData.authorizeUrl,
                 clientId = requestData.clientMetadata.clientId,
-                requestUri = parResponse.requestUri
+                requestUri = requestUri
             )
         } else {
             AuthorizationUrlBuilder.build(
