@@ -149,9 +149,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
                 codeChallenge = any(),
                 state = any(),
                 nonce = any(),
-                scope = any(),
-                authorizationDetails = any(),
-                issuerState = any()
+                scope = any()
             )
         } returns PushedAuthorizationResponse("urn:req:abc", 90)
 
@@ -171,9 +169,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
                 codeChallenge = "challenge",
                 state = "state",
                 nonce = "nonce",
-                scope = "openid",
-                authorizationDetails = null,
-                issuerState = "issuer-state-xyz"
+                scope = "openid"
             )
         }
         io.mockk.verify(exactly = 1) {
@@ -202,9 +198,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
                 codeChallenge = any(),
                 state = any(),
                 nonce = any(),
-                scope = any(),
-                authorizationDetails = any(),
-                issuerState = any()
+                scope = any()
             )
         }
         io.mockk.verify(exactly = 1) {
@@ -228,8 +222,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
                 nonce = "nonce"
             ),
             scope = "openid",
-            pushedAuthorizationRequestEndpoint = "https://as.example.com/as/par",
-            issuerState = "issuer-state-xyz"
+            pushedAuthorizationRequestEndpoint = "https://as.example.com/as/par"
         )
     }
 

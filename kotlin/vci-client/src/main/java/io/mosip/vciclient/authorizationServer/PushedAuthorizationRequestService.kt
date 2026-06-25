@@ -25,8 +25,6 @@ class PushedAuthorizationRequestService {
         state: String,
         nonce: String,
         scope: String? = null,
-        authorizationDetails: String? = null,
-        issuerState: String? = null,
         codeChallengeMethod: CodeChallengeMethod = CodeChallengeMethod.S256,
         responseType: AuthorizationResponseType = AuthorizationResponseType.CODE,
         clientAuthParams: Map<String, String> = emptyMap(),
@@ -43,16 +41,9 @@ class PushedAuthorizationRequestService {
         params["code_challenge_method"] = codeChallengeMethod.value
         params["state"] = state
         params["nonce"] = nonce
-        if (!authorizationDetails.isNullOrBlank()) {
-            params["authorization_details"] = authorizationDetails
-        } else if (!scope.isNullOrBlank()) {
+        if (!scope.isNullOrBlank()) {
             params["scope"] = scope
-        } else {
-            throw PushedAuthorizationRequestException(
-                "Either scope or authorization_details must be provided for a PAR request"
-            )
         }
-        if (!issuerState.isNullOrBlank()) params["issuer_state"] = issuerState
 
         logger.info("Pushing authorization request to PAR endpoint: $parEndpoint")
 

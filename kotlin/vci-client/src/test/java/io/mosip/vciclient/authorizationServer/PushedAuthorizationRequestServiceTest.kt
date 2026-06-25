@@ -96,29 +96,7 @@ class PushedAuthorizationRequestServiceTest {
     }
 
     @Test
-    fun `should send authorization_details when provided and omit scope`() = runBlocking {
-        val bodySlot = slot<Map<String, String>>()
-        stubSuccessNetwork(bodySlot)
-        stubDeserialize(PushedAuthorizationResponse("urn:request_uri:abc"))
-
-        PushedAuthorizationRequestService().pushAuthorizationRequest(
-            parEndpoint = parEndpoint,
-            clientId = "client-id",
-            redirectUri = "app://callback",
-            codeChallenge = "challenge",
-            state = "state-123",
-            nonce = "nonce-123",
-            scope = "openid",
-            authorizationDetails = """[{"type":"openid_credential"}]"""
-        )
-
-        val body = bodySlot.captured
-        assertEquals("""[{"type":"openid_credential"}]""", body["authorization_details"])
-        assertFalse(body.containsKey("scope"))
-    }
-
-    @Test
-    fun `should send scope when authorization_details is absent`() = runBlocking {
+    fun `should send scope and never authorization_details`() = runBlocking {
         val bodySlot = slot<Map<String, String>>()
         stubSuccessNetwork(bodySlot)
         stubDeserialize(PushedAuthorizationResponse("urn:request_uri:abc"))
@@ -136,38 +114,6 @@ class PushedAuthorizationRequestServiceTest {
         val body = bodySlot.captured
         assertEquals("openid", body["scope"])
         assertFalse(body.containsKey("authorization_details"))
-    }
-
-    @Test
-    fun `should include issuer_state only when present`() = runBlocking {
-        val withSlot = slot<Map<String, String>>()
-        stubSuccessNetwork(withSlot)
-        stubDeserialize(PushedAuthorizationResponse("urn:request_uri:abc"))
-
-        PushedAuthorizationRequestService().pushAuthorizationRequest(
-            parEndpoint = parEndpoint,
-            clientId = "client-id",
-            redirectUri = "app://callback",
-            codeChallenge = "challenge",
-            state = "state-123",
-            nonce = "nonce-123",
-            scope = "openid",
-            issuerState = "issuer-state-xyz"
-        )
-        assertEquals("issuer-state-xyz", withSlot.captured["issuer_state"])
-
-        val withoutSlot = slot<Map<String, String>>()
-        stubSuccessNetwork(withoutSlot)
-        PushedAuthorizationRequestService().pushAuthorizationRequest(
-            parEndpoint = parEndpoint,
-            clientId = "client-id",
-            redirectUri = "app://callback",
-            codeChallenge = "challenge",
-            state = "state-123",
-            nonce = "nonce-123",
-            scope = "openid"
-        )
-        assertFalse(withoutSlot.captured.containsKey("issuer_state"))
     }
 
     @Test
@@ -216,21 +162,6 @@ class PushedAuthorizationRequestServiceTest {
         )
 
         assertEquals("real-client-id", bodySlot.captured["client_id"])
-    }
-
-    @Test
-    fun `should throw when neither scope nor authorization_details is provided`() = runBlocking {
-        val ex = assertThrows<PushedAuthorizationRequestException> {
-            PushedAuthorizationRequestService().pushAuthorizationRequest(
-                parEndpoint = parEndpoint,
-                clientId = "client-id",
-                redirectUri = "app://callback",
-                codeChallenge = "challenge",
-                state = "state-123",
-                nonce = "nonce-123"
-            )
-        }
-        assertTrue(ex.message.contains("scope or authorization_details"))
     }
 
     @Test

@@ -10,6 +10,4 @@ data class ImplicitAuthorizationRequestData(
     val pkceSession: PKCESessionManager.PKCESession,
     val scope: String,
     val pushedAuthorizationRequestEndpoint: String? = null,
-    val authorizationDetails: String? = null,
-    val issuerState: String? = null,
 ) : AuthorizationRequestData()

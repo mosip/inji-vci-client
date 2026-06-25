@@ -145,8 +145,6 @@ internal class AuthorizationCodeFlowService(
         try {
             val pkceSession = pkceSessionManager.createSession()
 
-            val issuerState = credentialOffer?.grants?.authorizationCodeGrant?.issuerState
-
             val authorizationServerMetadata = try {
                 authorizationServerResolver.resolveForAuthCode(issuerMetadata, credentialOffer)
             } catch (e: DownloadFailedException) {
@@ -174,7 +172,6 @@ internal class AuthorizationCodeFlowService(
                     getTokenResponse = getTokenResponse,
                     credentialConfigurationId = credentialConfigurationId,
                     authorizationMethods = authorizationMethods,
-                    issuerState = issuerState,
                     traceabilityId = traceabilityId
                 )
             } catch (e: DownloadFailedException) {
@@ -219,7 +216,6 @@ internal class AuthorizationCodeFlowService(
         getTokenResponse: TokenResponseCallback,
         credentialConfigurationId: String,
         authorizationMethods: List<AuthorizationMethod>,
-        issuerState: String? = null,
         traceabilityId: String? = null,
     ): TokenResponse {
         val tokenEndpoint = issuerMetadata.tokenEndpoint
@@ -235,7 +231,6 @@ internal class AuthorizationCodeFlowService(
             pkceSession = pkceSession,
             credentialConfigurationId = credentialConfigurationId,
             authorizationMethods = authorizationMethods,
-            issuerState = issuerState,
             traceabilityId = traceabilityId
         )
 
@@ -278,7 +273,6 @@ internal class AuthorizationCodeFlowService(
         pkceSession: PKCESessionManager.PKCESession,
         credentialConfigurationId: String,
         authorizationMethods: List<AuthorizationMethod>,
-        issuerState: String? = null,
         traceabilityId: String? = null,
     ): String {
         val interactiveEndpoint = authorizationServerMetadata.interactiveAuthorizationEndpoint
@@ -302,8 +296,7 @@ internal class AuthorizationCodeFlowService(
                         issuerMetadata = issuerMetadata,
                         clientMetadata = clientMetadata,
                         pkceSession = pkceSession,
-                        authorizationMethods = authorizationMethods,
-                        issuerState = issuerState
+                        authorizationMethods = authorizationMethods
                     )
                 } else {
                     throw e
@@ -315,8 +308,7 @@ internal class AuthorizationCodeFlowService(
                 issuerMetadata = issuerMetadata,
                 clientMetadata = clientMetadata,
                 pkceSession = pkceSession,
-                authorizationMethods = authorizationMethods,
-                issuerState = issuerState
+                authorizationMethods = authorizationMethods
             )
         }
     }
@@ -371,7 +363,6 @@ internal class AuthorizationCodeFlowService(
         clientMetadata: ClientMetadata,
         pkceSession: PKCESessionManager.PKCESession,
         authorizationMethods: List<AuthorizationMethod>,
-        issuerState: String? = null,
     ): String {
         val authorizationEndpoint = authorizationServerMetadata.authorizationEndpoint
             ?: throw DownloadFailedException(
@@ -394,8 +385,7 @@ internal class AuthorizationCodeFlowService(
                 pkceSession = pkceSession,
                 scope = issuerMetadata.scope,
                 pushedAuthorizationRequestEndpoint =
-                    authorizationServerMetadata.pushedAuthorizationRequestEndpoint,
-                issuerState = issuerState
+                    authorizationServerMetadata.pushedAuthorizationRequestEndpoint
             )
 
             val response = try {
