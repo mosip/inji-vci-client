@@ -228,24 +228,6 @@ class IssuerMetadataService {
                 )
             }
 
-            CredentialFormat.JWT_VC_JSON.value -> {
-                val credentialDefinition =
-                    credentialType["credential_definition"] as? Map<*, *> ?: emptyMap<String, Any>()
-                val types = credentialDefinition["type"] as? List<String>
-
-                IssuerMetadata(
-                    credentialIssuer = credentialIssuer,
-                    credentialEndpoint = credentialEndpoint,
-                    credentialType = types,
-                    context = null,
-                    credentialFormat = CredentialFormat.JWT_VC_JSON,
-                    authorizationServers = rawIssuerMetadata["authorization_servers"] as? List<String>,
-                    scope = scope,
-                    nonceEndpoint = nonceEndpoint,
-                    specVersion = specVersion
-                )
-            }
-
             CredentialFormat.VC_SD_JWT.value, CredentialFormat.DC_SD_JWT.value -> {
                 val vct = credentialType["vct"] as? String
                     ?: throw IssuerMetadataFetchException("Missing vct for SD-JWT")

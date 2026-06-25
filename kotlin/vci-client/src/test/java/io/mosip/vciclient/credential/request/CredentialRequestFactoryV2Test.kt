@@ -22,7 +22,7 @@ class CredentialRequestFactoryV2Test {
             credentialIssuer = "https://issuer.example.com",
             credentialEndpoint = "https://issuer.example.com/credential",
             credentialType = listOf("VerifiableCredential"),
-            credentialFormat = CredentialFormat.JWT_VC_JSON
+            credentialFormat = CredentialFormat.LDP_VC
         )
 
         val request = factory.createCredentialRequest(
@@ -70,7 +70,7 @@ class CredentialRequestFactoryV2Test {
         val issuer = IssuerMetadata(
             credentialIssuer = "https://issuer.example.com",
             credentialEndpoint = "https://issuer.example.com/credential",
-            credentialFormat = CredentialFormat.JWT_VC_JSON
+            credentialFormat = CredentialFormat.LDP_VC
         )
 
         val exception = assertThrows(InvalidDataProvidedException::class.java) {
@@ -91,7 +91,7 @@ class CredentialRequestFactoryV2Test {
         val issuer = IssuerMetadata(
             credentialIssuer = "https://issuer.example.com",
             credentialEndpoint = "",
-            credentialFormat = CredentialFormat.JWT_VC_JSON
+            credentialFormat = CredentialFormat.LDP_VC
         )
 
         val exception = assertThrows(DownloadFailedException::class.java) {

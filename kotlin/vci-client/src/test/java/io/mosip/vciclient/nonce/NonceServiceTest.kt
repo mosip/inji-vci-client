@@ -118,7 +118,7 @@ class NonceServiceTest {
     private fun issuerMetadata(nonceEndpoint: String?) = IssuerMetadata(
         credentialIssuer = "https://issuer.example.com",
         credentialEndpoint = "https://issuer.example.com/credential",
-        credentialFormat = CredentialFormat.JWT_VC_JSON,
+        credentialFormat = CredentialFormat.LDP_VC,
         nonceEndpoint = nonceEndpoint
     )
 }

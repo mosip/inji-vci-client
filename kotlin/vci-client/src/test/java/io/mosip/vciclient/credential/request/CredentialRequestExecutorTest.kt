@@ -74,7 +74,7 @@ class CredentialRequestExecutorTest {
         )
 
         val response = CredentialRequestExecutor().requestCredential(
-            issuerMetadata = resolvedMeta.copy(credentialFormat = CredentialFormat.JWT_VC_JSON),
+            issuerMetadata = resolvedMeta.copy(credentialFormat = CredentialFormat.LDP_VC),
             credentialConfigurationId = "SampleCredential",
             proofs = CredentialRequestProofs(proofs = listOf("proof-1")),
             accessToken = accessToken
@@ -102,7 +102,7 @@ class CredentialRequestExecutorTest {
         mockWebServer.enqueue(MockResponse().setBody("").setResponseCode(200))
 
         val result = CredentialRequestExecutor().requestCredential(
-            issuerMetadata = resolvedMeta.copy(credentialFormat = CredentialFormat.JWT_VC_JSON),
+            issuerMetadata = resolvedMeta.copy(credentialFormat = CredentialFormat.LDP_VC),
             credentialConfigurationId = "SampleCredential",
             proofs = CredentialRequestProofs(proofs = listOf("proof-1")),
             accessToken = accessToken

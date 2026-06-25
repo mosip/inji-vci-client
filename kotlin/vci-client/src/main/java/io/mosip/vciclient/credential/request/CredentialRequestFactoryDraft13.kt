@@ -3,7 +3,6 @@ package io.mosip.vciclient.credential.request
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.exception.InvalidDataProvidedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
-import io.mosip.vciclient.credential.request.types.JwtVcCredentialRequestDraft13
 import io.mosip.vciclient.credential.request.types.LdpVcCredentialRequestDraft13
 import io.mosip.vciclient.credential.request.types.MsoMdocCredentialRequestDraft13
 import io.mosip.vciclient.credential.request.types.SdJwtCredentialRequestDraft13
@@ -26,7 +25,6 @@ class CredentialRequestFactoryDraft13 {
 
         val credentialRequest = when (credentialFormat) {
             CredentialFormat.LDP_VC -> LdpVcCredentialRequestDraft13(accessToken, issuerMetadata, jwtProof)
-            CredentialFormat.JWT_VC_JSON -> JwtVcCredentialRequestDraft13(accessToken, issuerMetadata, jwtProof)
             CredentialFormat.MSO_MDOC -> MsoMdocCredentialRequestDraft13(accessToken, issuerMetadata, jwtProof)
             CredentialFormat.VC_SD_JWT, CredentialFormat.DC_SD_JWT -> {
                 SdJwtCredentialRequestDraft13(accessToken, issuerMetadata, jwtProof)

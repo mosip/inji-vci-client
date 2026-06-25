@@ -212,7 +212,7 @@ class TrustedIssuerFlowHandlerTest {
         val issuerMetadata = IssuerMetadata(
             credentialIssuer = credentialIssuer,
             credentialEndpoint = "https://example.com/credential",
-            credentialFormat = CredentialFormat.JWT_VC_JSON,
+            credentialFormat = CredentialFormat.LDP_VC,
             specVersion = specVersion
         )
 

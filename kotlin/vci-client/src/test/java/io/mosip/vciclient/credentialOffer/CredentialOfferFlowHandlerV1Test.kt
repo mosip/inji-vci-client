@@ -43,7 +43,7 @@ class CredentialOfferFlowHandlerV1Test {
         issuerMetadata = IssuerMetadata(
             credentialIssuer = "https://issuer.example.com",
             credentialEndpoint = "https://issuer.example.com/credential",
-            credentialFormat = CredentialFormat.JWT_VC_JSON,
+            credentialFormat = CredentialFormat.LDP_VC,
             specVersion = OID4VCIVersion.V1
         ),
         raw = mapOf(

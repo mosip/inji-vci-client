@@ -25,7 +25,6 @@ The implementation follows
   - `ldp_vc`
   - `mso_mdoc`
   - `vc+sd-jwt` / `dc+sd-jwt`
-  - `jwt_vc_json`
 
 [//]: # (The reference for PDI is intentionally pointing to the common doc folder in the root of the repository, as the PDI support and its documentation are common for both the Kotlin and Swift libraries.)
 - Presentation During Issuance (PDI) support for both download flows (For more details on PDI support, please refer to the [Presentation During Issuance documentation](../doc/presentation-during-issuance-support.md))

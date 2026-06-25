@@ -121,7 +121,7 @@ class VCIClientTest {
 
     @Test
     fun `should return credential configurations supported`() = runBlocking {
-        val configurations = mapOf("UniversityDegreeCredential" to mapOf("format" to "jwt_vc_json"))
+        val configurations = mapOf("UniversityDegreeCredential" to mapOf("format" to "ldp_vc"))
         coEvery {
             anyConstructed<IssuerMetadataService>().fetchCredentialConfigurationsSupported(any())
         } returns configurations
