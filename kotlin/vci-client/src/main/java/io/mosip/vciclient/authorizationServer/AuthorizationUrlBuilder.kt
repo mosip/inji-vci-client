@@ -5,7 +5,7 @@ import io.mosip.vciclient.constants.AuthorizationResponseType
 import java.net.URLEncoder
 
 object AuthorizationUrlBuilder {
-    fun build(
+    fun buildAuthorizationRequestUrl(
         baseUrl: String,
         clientId: String,
         redirectUri: String,
@@ -29,7 +29,7 @@ object AuthorizationUrlBuilder {
         }
     }
 
-    fun buildWithRequestUri(
+    fun buildAuthorizationRequestUrlWithRequestUri(
         baseUrl: String,
         clientId: String,
         requestUri: String,

@@ -96,7 +96,7 @@ class AuthorizationCodeFlowServiceTest {
         }
 
         every {
-            AuthorizationUrlBuilder.build(
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
                 any(),
                 any(),
                 any(),

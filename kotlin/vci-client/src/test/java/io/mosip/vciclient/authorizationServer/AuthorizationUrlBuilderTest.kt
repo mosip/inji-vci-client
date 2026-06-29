@@ -7,7 +7,7 @@ class AuthorizationUrlBuilderTest {
 
     @Test
     fun `build should return exact expected URL using form-url-encoding`() {
-        val actual = AuthorizationUrlBuilder.build(
+        val actual = AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
             baseUrl = "https://example.com/auth",
             clientId = "myClientId",
             redirectUri = "https://myapp.com/callback",
@@ -32,7 +32,7 @@ class AuthorizationUrlBuilderTest {
 
     @Test
     fun `buildWithRequestUri should return short URL with client_id and request_uri`() {
-        val actual = AuthorizationUrlBuilder.buildWithRequestUri(
+        val actual = AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(
             baseUrl = "https://example.com/auth",
             clientId = "myClientId",
             requestUri = "urn:ietf:params:oauth:request_uri:abc123"

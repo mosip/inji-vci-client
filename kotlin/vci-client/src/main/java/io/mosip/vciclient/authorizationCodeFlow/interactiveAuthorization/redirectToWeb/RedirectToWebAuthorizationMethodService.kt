@@ -43,13 +43,13 @@ class RedirectToWebAuthorizationMethodService(
                 ?: throw PushedAuthorizationRequestException(
                     "PAR response from $parEndpoint did not contain a request_uri"
                 )
-            AuthorizationUrlBuilder.buildWithRequestUri(
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(
                 baseUrl = requestData.authorizeUrl,
                 clientId = requestData.clientMetadata.clientId,
                 requestUri = requestUri
             )
         } else {
-            AuthorizationUrlBuilder.build(
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
                 baseUrl = requestData.authorizeUrl,
                 clientId = requestData.clientMetadata.clientId,
                 redirectUri = requestData.clientMetadata.redirectUri,

@@ -32,7 +32,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
         mockkObject(AuthorizationUrlBuilder)
 
         every {
-            AuthorizationUrlBuilder.build(
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
                 any(),
                 any(),
                 any(),
@@ -137,7 +137,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
     @Test
     fun `should push authorization request and use short URL when PAR endpoint present`() = runTest {
         every {
-            AuthorizationUrlBuilder.buildWithRequestUri(any(), any(), any())
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(any(), any(), any())
         } returns "https://auth.example.com/authorize?client_id=client-id&request_uri=urn:req:abc"
 
         val parService = mockk<PushedAuthorizationRequestService>()
@@ -173,7 +173,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
             )
         }
         io.mockk.verify(exactly = 1) {
-            AuthorizationUrlBuilder.buildWithRequestUri(
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(
                 "https://auth.example.com", "client-id", "urn:req:abc"
             )
         }
@@ -202,7 +202,7 @@ class RedirectToWebAuthorizationMethodServiceTest {
             )
         }
         io.mockk.verify(exactly = 1) {
-            AuthorizationUrlBuilder.build(
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
                 any(), any(), any(), any(), any(), any(), any(), any(), any()
             )
         }
