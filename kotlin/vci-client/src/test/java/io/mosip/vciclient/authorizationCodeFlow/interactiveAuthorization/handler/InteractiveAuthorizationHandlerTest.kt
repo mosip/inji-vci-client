@@ -1,11 +1,13 @@
 package io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.handler
 
+import kotlin.test.assertTrue
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationMethod
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
@@ -32,6 +34,8 @@ class InteractiveAuthorizationHandlerTest {
 
     private val endpoint = "https://issuer.example.com/iar"
     private val credentialConfigId = "cred-config-id"
+
+    private val mapSlot = slot<Map<String, String>>()
 
     private val clientMetadata = ClientMetadata(
         clientId = "wallet-client",
@@ -198,6 +202,7 @@ class InteractiveAuthorizationHandlerTest {
             )
         }
     }
+    
 
     @Test
     fun `should throw error when OpenID4VP response parsing fails`() = runTest {
@@ -297,4 +302,52 @@ class InteractiveAuthorizationHandlerTest {
 
         assertEquals("Failed to authorize via interaction: known error", ex.message)
     }
+
+@Test
+fun `should include both OpenID4VP and IAE interaction types in initial IAR request`() = runTest {
+
+    val responseBody = mockPresentationInteractionResponse
+
+    mockkStatic(Base64::class)
+    every { Base64.encodeToString(any<ByteArray>(), any()) } returns "b64"
+
+    every {
+        NetworkManager.sendRequest(
+            url = endpoint,
+            method = HttpMethod.POST,
+            bodyParams = capture(mapSlot),
+            headers = any()
+        )
+    } returns NetworkResponse(responseBody, null)
+
+    val expected = mockk<AuthorizationResponse>()
+
+    val presentationMethod =
+        AuthorizationMethod.PresentationDuringIssuance(
+            selectCredentialsForPresentation = mockk(relaxed = true),
+            signVerifiablePresentation = mockk(relaxed = true)
+        )
+
+    mockkConstructor(PresentationDuringIssuanceAuthorizationMethodService::class)
+
+    coEvery {
+        anyConstructed<PresentationDuringIssuanceAuthorizationMethodService>()
+            .authorizeUser(any())
+    } returns expected
+
+    handler.handle(
+        endpoint = endpoint,
+        clientMetadata = clientMetadata,
+        credentialConfigurationId = credentialConfigId,
+        authorizationMethods = listOf(presentationMethod),
+        pkceSession = pkceSession
+    )
+
+   val interactionTypes = mapSlot.captured["interaction_types_supported"]
+
+   assertEquals(
+    "${InteractionType.OpenId4VpPresentation.value},${InteractionType.OpenId4VpPresentationIAE.value}",
+    interactionTypes
+)
+}
 }

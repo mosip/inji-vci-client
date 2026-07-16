@@ -16,17 +16,13 @@ data class PresentationInteractionResponse(
 ) : InteractionResponse(status, type, authSession) {
 
     override fun validate() {
+        require(
+            type == InteractionType.OpenId4VpPresentation.value ||
+                type == InteractionType.OpenId4VpPresentationIAE.value
+        ) {
+            "Unsupported interaction type: $type. Expected OpenId4VpPresentation or OpenId4VpPresentationIAE."
+        }
 
-     if (
-        type == InteractionType.OpenId4VpPresentation.value ||
-        type == InteractionType.OpenId4VpPresentationIAE.value
-    ) {
-        
-    } else {
-    throw IllegalArgumentException(
-        "Invalid type: expected '${InteractionType.OpenId4VpPresentation.value}' or '${InteractionType.OpenId4VpPresentationIAE.value}'"
-    )
-}
         if (openid4vpRequest.isEmpty()) {
             throw IllegalArgumentException("openid4vpRequest must not be empty")
         }
