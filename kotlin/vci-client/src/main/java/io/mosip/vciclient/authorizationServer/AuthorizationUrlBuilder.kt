@@ -14,7 +14,8 @@ object AuthorizationUrlBuilder {
         state: String,
         codeChallenge: String,
         codeChallengeMethod: CodeChallengeMethod = CodeChallengeMethod.S256,
-        nonce: String
+        nonce: String,
+        dpopJkt: String,
     ): String {
         return buildString {
             append(baseUrl)
@@ -26,6 +27,7 @@ object AuthorizationUrlBuilder {
             append("&code_challenge=").append(encode(codeChallenge))
             append("&code_challenge_method=").append(encode(codeChallengeMethod.value))
             append("&nonce=").append(encode(nonce))
+            append("&dpop_jkt=").append(encode(dpopJkt))
         }
     }
 

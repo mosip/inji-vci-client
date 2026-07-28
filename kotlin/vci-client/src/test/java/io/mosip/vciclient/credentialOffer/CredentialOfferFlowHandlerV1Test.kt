@@ -84,7 +84,8 @@ class CredentialOfferFlowHandlerV1Test {
                 credentialConfigurationId = "UniversityDegreeCredential",
                 getTxCode = null,
                 downloadTimeoutInMillis = 11_000,
-                offer = offer
+                offer = offer,
+                dpopManager = any()
             )
         } returns expectedResponse
 
@@ -128,7 +129,8 @@ class CredentialOfferFlowHandlerV1Test {
                 credentialOffer = offer,
                 downloadTimeOutInMillis = 11_000,
                 jwtProofAlgorithmsSupported = listOf("ES256"),
-                traceabilityId = "trace-1"
+                traceabilityId = "trace-1",
+                dpopManager = any()
             )
         } returns expectedResponse
 
@@ -163,7 +165,7 @@ class CredentialOfferFlowHandlerV1Test {
             issuerMetadataService.fetchIssuerMetadataResult("https://issuer.example.com", "UniversityDegreeCredential")
         } returns issuerMetadataResult
         coEvery {
-            preAuthFlowService.requestCredentials(any(), any(), any(), any(), any(), any(), any(), any())
+            preAuthFlowService.requestCredentials(any(), any(), any(), any(), any(), any(), any(), any(), any())
         } returns emptyResponse
 
         val response = handler.downloadCredentials(

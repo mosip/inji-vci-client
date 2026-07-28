@@ -54,11 +54,12 @@ class PreAuthCodeFlowServiceTest {
             anyConstructed<AuthorizationServerResolver>().resolveForPreAuth(any(), any())
         } returns mockk {
             every { tokenEndpoint } returns "https://mock.token.endpoint"
+            every { dpopSigningAlgValuesSupported } returns null
         }
 
         every {
             anyConstructed<CredentialRequestExecutor>().requestCredentialDraft13(
-                any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
 
@@ -93,7 +94,8 @@ class PreAuthCodeFlowServiceTest {
                 getTokenResponse = any(),
                 tokenEndpoint = any(),
                 preAuthCode = any(),
-                txCode = any()
+                txCode = any(),
+                dpopManager = any()
             )
         } returns TokenResponse(
             accessToken = "mock-access-token",
@@ -165,6 +167,7 @@ class PreAuthCodeFlowServiceTest {
             anyConstructed<AuthorizationServerResolver>().resolveForPreAuth(any(), any())
         } returns mockk {
             every { tokenEndpoint } returns null
+            every { dpopSigningAlgValuesSupported } returns null
         }
         val offer = CredentialOffer(
             credentialIssuer = "https://mock.issuer",
@@ -227,7 +230,8 @@ class PreAuthCodeFlowServiceTest {
                 getTokenResponse = any(),
                 tokenEndpoint = any(),
                 preAuthCode = any(),
-                txCode = any()
+                txCode = any(),
+                dpopManager = any()
             )
         } throws networkException
 

@@ -59,7 +59,8 @@ class TrustedIssuerFlowHandlerTest {
                 getProofs = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = 10_000,
-                jwtProofAlgorithmsSupported = listOf("ES256")
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                dpopManager = any()
             )
         } returns expectedResponse
 
@@ -98,7 +99,8 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = 10_000,
-                jwtProofAlgorithmsSupported = listOf("ES256")
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                dpopManager = any()
             )
         } returns draft13Response
 
@@ -134,7 +136,8 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = any(),
-                jwtProofAlgorithmsSupported = listOf("ES256")
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                dpopManager = any()
             )
         } coAnswers {
             @Suppress("UNCHECKED_CAST")
@@ -181,7 +184,8 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = any(),
-                jwtProofAlgorithmsSupported = listOf("ES256")
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                dpopManager = any()
             )
         } returns draft13Response
 
@@ -203,7 +207,8 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = any(),
-                jwtProofAlgorithmsSupported = listOf("ES256")
+                jwtProofAlgorithmsSupported = listOf("ES256"),
+                dpopManager = any()
             )
         }
     }

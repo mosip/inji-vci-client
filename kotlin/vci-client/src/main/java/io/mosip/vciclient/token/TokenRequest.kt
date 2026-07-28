@@ -10,5 +10,6 @@ data class TokenRequest(
     val txCode: String?,
     val clientId: String?,
     val redirectUri: String?,
-    val codeVerifier: String?
+    val codeVerifier: String?,
+    val dpopProof: String? = null
 )

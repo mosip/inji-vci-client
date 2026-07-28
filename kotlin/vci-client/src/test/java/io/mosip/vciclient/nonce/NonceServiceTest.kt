@@ -1,6 +1,8 @@
 package io.mosip.vciclient.nonce
 
+import com.nimbusds.jwt.SignedJWT
 import io.mosip.vciclient.constants.CredentialFormat
+import io.mosip.vciclient.dpop.DPoPManager
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.token.TokenResponse
@@ -87,6 +89,60 @@ class NonceServiceTest {
             "Failed to download Credential: Failed to parse nonce response.",
             exception.message
         )
+    }
+
+    @Test
+    fun `fetchNonce should seed dpop nonce from DPoP-Nonce response header`() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setHeader("DPoP-Nonce", "dpop-nonce-xyz")
+                .setBody("""{"c_nonce":"nonce-123"}""")
+        )
+        val dpopManager = DPoPManager().apply {
+            initialize("https://as.example.com/token", listOf("ES256"))
+        }
+
+        val nonce = nonceService.fetchNonce(
+            issuerMetadata = issuerMetadata(nonceEndpoint = server.url("/nonce").toString()),
+            dpopManager = dpopManager
+        )
+
+        assertEquals("nonce-123", nonce)
+        val claims = SignedJWT.parse(
+            dpopManager.generateCredentialProof(
+                credentialEndpoint = "https://issuer.example.com/credential",
+                accessToken = "an-access-token"
+            )
+        ).jwtClaimsSet
+        assertEquals("dpop-nonce-xyz", claims.getStringClaim("nonce"))
+    }
+
+    @Test
+    fun `fetchNonce should leave dpop nonce untouched when header is absent`() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"c_nonce":"nonce-123"}""")
+        )
+        val dpopManager = DPoPManager().apply {
+            initialize("https://as.example.com/token", listOf("ES256"))
+        }
+
+        nonceService.fetchNonce(
+            issuerMetadata = issuerMetadata(nonceEndpoint = server.url("/nonce").toString()),
+            dpopManager = dpopManager
+        )
+
+        val claims = SignedJWT.parse(
+            dpopManager.generateCredentialProof(
+                credentialEndpoint = "https://issuer.example.com/credential",
+                accessToken = "an-access-token"
+            )
+        ).jwtClaimsSet
+        assertNull(claims.getStringClaim("nonce"))
     }
 
     @Test

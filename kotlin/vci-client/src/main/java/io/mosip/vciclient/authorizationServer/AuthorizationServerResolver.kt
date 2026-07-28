@@ -39,9 +39,13 @@ class AuthorizationServerResolver {
         credentialIssuer: String,
     ): AuthorizationServerMetadata {
         val authorizationServers = issuerMetadata.authorizationServers
+
         return when {
             authorizationServers?.size == 1 -> {
-                discoverAndValidate(authorizationServers.first(), expectedGrantType)
+                discoverAndValidate(
+                    authorizationServers.first(),
+                    expectedGrantType
+                )
             }
 
             !offerGrantAuthorizationServer.isNullOrBlank() -> {
@@ -62,17 +66,36 @@ class AuthorizationServerResolver {
         authorizationServerUrl: String,
         expectedGrantType: String,
     ): AuthorizationServerMetadata {
-        val authorizationServerMetadata = AuthorizationServerDiscoveryService().discover(authorizationServerUrl)
 
-        if (authorizationServerUrl.isNotBlank() && authorizationServerMetadata.issuer != authorizationServerUrl) {
-            throw AuthorizationServerDiscoveryException("Issuer mismatch: Expected '$authorizationServerUrl', got '${authorizationServerMetadata.issuer}'")
+        val normalizedAuthorizationServerUrl = authorizationServerUrl.trim()
+
+        if (normalizedAuthorizationServerUrl.isEmpty()) {
+            throw AuthorizationServerDiscoveryException(
+                "Authorization server URL cannot be empty."
+            )
         }
 
-        if ((expectedGrantType !in ((authorizationServerMetadata.grantTypesSupported) ?: listOf(
-                GrantType.AUTHORIZATION_CODE.value, GrantType.IMPLICIT.value
-            )) && expectedGrantType != GrantType.PRE_AUTHORIZED.value)
+        val authorizationServerMetadata =
+            AuthorizationServerDiscoveryService().discover(normalizedAuthorizationServerUrl)
+
+        if (authorizationServerMetadata.issuer != normalizedAuthorizationServerUrl) {
+            throw AuthorizationServerDiscoveryException(
+                "Issuer mismatch: Expected '$normalizedAuthorizationServerUrl', got '${authorizationServerMetadata.issuer}'"
+            )
+        }
+
+        if (
+            (expectedGrantType !in (
+                authorizationServerMetadata.grantTypesSupported
+                    ?: listOf(
+                        GrantType.AUTHORIZATION_CODE.value,
+                        GrantType.IMPLICIT.value
+                    )
+                ) && expectedGrantType != GrantType.PRE_AUTHORIZED.value)
         ) {
-            throw AuthorizationServerDiscoveryException("Grant type '$expectedGrantType' not supported by auth server.")
+            throw AuthorizationServerDiscoveryException(
+                "Grant type '$expectedGrantType' not supported by auth server."
+            )
         }
 
         return authorizationServerMetadata
@@ -91,7 +114,8 @@ class AuthorizationServerResolver {
         }
 
         deferreds.firstNotNullOfOrNull { it.await() }
-            ?: throw AuthorizationServerDiscoveryException("None of the authorization servers responded with valid metadata.")
+            ?: throw AuthorizationServerDiscoveryException(
+                "None of the authorization servers responded with valid metadata."
+            )
     }
-
 }

@@ -1,5 +1,6 @@
 package io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.presentationDuringIssuance
 
+import io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.handler.InteractionType
 import com.google.gson.annotations.SerializedName
 import io.mosip.vciclient.authorizationCodeFlow.interactiveAuthorization.response.InteractionResponse
 
@@ -15,9 +16,11 @@ data class PresentationInteractionResponse(
 ) : InteractionResponse(status, type, authSession) {
 
     override fun validate() {
-
-        if (type != "openid4vp_presentation") {
-            throw IllegalArgumentException("Invalid type: expected 'openid4vp_presentation'")
+        require(
+            type == InteractionType.OpenId4VpPresentation.value ||
+                type == InteractionType.OpenId4VpPresentationIAE.value
+        ) {
+            "Unsupported interaction type: $type. Expected OpenId4VpPresentation or OpenId4VpPresentationIAE."
         }
 
         if (openid4vpRequest.isEmpty()) {

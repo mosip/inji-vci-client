@@ -1,12 +1,16 @@
 package io.mosip.vciclient.token
 
+import com.nimbusds.jwt.SignedJWT
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mosip.vciclient.constants.GrantType
 import io.mosip.vciclient.constants.TokenResponseCallback
+import io.mosip.vciclient.dpop.DPoPManager
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -80,6 +84,41 @@ class TokenServiceTest {
                         request.txCode == null
             })
         }
+    }
+
+    @Test
+    fun `getAccessToken attaches a token dpop proof when the dpop manager is initialized`() = runBlocking {
+        val getTokenResponse = mockk<TokenResponseCallback>()
+        coEvery { getTokenResponse(any()) } returns mockTokenResponse
+        val dpopManager = DPoPManager().apply { initialize(tokenEndpoint, listOf("ES256")) }
+
+        tokenService.getAccessToken(
+            getTokenResponse = getTokenResponse,
+            tokenEndpoint = tokenEndpoint,
+            preAuthCode = "pre-auth-code",
+            dpopManager = dpopManager
+        )
+
+        coVerify {
+            getTokenResponse(match { request ->
+                request.dpopProof != null &&
+                    SignedJWT.parse(request.dpopProof).header.type.toString() == "dpop+jwt"
+            })
+        }
+    }
+
+    @Test
+    fun `getAccessToken leaves dpop proof null when the dpop manager is not initialized`() = runBlocking {
+        val getTokenResponse = mockk<TokenResponseCallback>()
+        coEvery { getTokenResponse(any()) } returns mockTokenResponse
+
+        tokenService.getAccessToken(
+            getTokenResponse = getTokenResponse,
+            tokenEndpoint = tokenEndpoint,
+            preAuthCode = "pre-auth-code"
+        )
+
+        coVerify { getTokenResponse(match { request -> request.dpopProof == null }) }
     }
 
     @Test

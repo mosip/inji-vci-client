@@ -118,7 +118,8 @@ class CredentialOfferFlowHandlerTest {
                 any(),
                 any(),
                 any(),
-                offer = any()
+                offer = any(),
+                dpopManager = any()
             )
         } returns mockCredentialResponse
 
@@ -181,7 +182,8 @@ class CredentialOfferFlowHandlerTest {
                 any(),
                 any(),
                 any(),
-                offer = any()
+                offer = any(),
+                dpopManager = any()
             )
         } returns CredentialResponseDraft13(
             credential = JsonNull.INSTANCE,
@@ -318,6 +320,7 @@ class CredentialOfferFlowHandlerTest {
                 any(),
                 any(),
                 any(),
+                any(),
                 any()
             )
         } returns CredentialResponseDraft13(
@@ -378,6 +381,7 @@ class CredentialOfferFlowHandlerTest {
         coEvery { onCheckIssuerTrust.invoke(any(), any()) } returns false
         coEvery {
             anyConstructed<PreAuthCodeFlowService>().requestCredentialsDraft13(
+                any(),
                 any(),
                 any(),
                 any(),
@@ -449,7 +453,8 @@ class CredentialOfferFlowHandlerTest {
                 downloadTimeOutInMillis = any(),
                 jwtProofAlgorithmsSupported = listOf("ES256"),
                 authorizationMethods = listOf(authorizationMethod),
-                traceabilityId = "trace-id"
+                traceabilityId = "trace-id",
+                dpopManager = any()
             )
         } returns mockCredentialResponse
 

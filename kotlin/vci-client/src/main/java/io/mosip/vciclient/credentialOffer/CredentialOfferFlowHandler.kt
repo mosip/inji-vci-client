@@ -13,6 +13,7 @@ import io.mosip.vciclient.constants.TxCodeCallback
 import io.mosip.vciclient.credential.response.CredentialItem
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.credential.response.CredentialResponseDraft13
+import io.mosip.vciclient.dpop.DPoPManager
 import io.mosip.vciclient.exception.CredentialOfferFetchFailedException
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
@@ -35,6 +36,7 @@ class CredentialOfferFlowHandler internal constructor(
         onCheckIssuerTrust: CheckIssuerTrustCallback? = null,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
         traceabilityId: String? = null,
+        dpopManager: DPoPManager = DPoPManager(),
     ): CredentialResponse {
         val result = executeDownloadCredentials(
             credentialOffer = credentialOffer,
@@ -51,7 +53,8 @@ class CredentialOfferFlowHandler internal constructor(
                             credentialConfigurationId = credentialConfigurationId,
                             getTxCode = getTxCode,
                             downloadTimeoutInMillis = downloadTimeoutInMillis,
-                            offer = offer
+                            offer = offer,
+                            dpopManager = dpopManager
                         )
                     } else if (offer.isAuthorizationCodeFlow()) {
                         authorizationCodeFlowService.requestCredentials(
@@ -64,7 +67,8 @@ class CredentialOfferFlowHandler internal constructor(
                             credentialOffer = offer,
                             downloadTimeOutInMillis = downloadTimeoutInMillis,
                             jwtProofAlgorithmsSupported = proofSigningAlgorithms,
-                            traceabilityId = traceabilityId
+                            traceabilityId = traceabilityId,
+                            dpopManager = dpopManager
                         )
                     } else {
                         throw CredentialOfferFetchFailedException("Credential offer does not contain a supported grant type")
@@ -87,7 +91,8 @@ class CredentialOfferFlowHandler internal constructor(
                             credentialConfigurationId = credentialConfigurationId,
                             getTxCode = getTxCode,
                             downloadTimeoutInMillis = downloadTimeoutInMillis,
-                            offer = offer
+                            offer = offer,
+                            dpopManager = dpopManager
                         )
                     } else if (offer.isAuthorizationCodeFlow()) {
                         authorizationCodeFlowService.requestCredentialsDraft13(
@@ -100,7 +105,8 @@ class CredentialOfferFlowHandler internal constructor(
                             credentialOffer = offer,
                             downloadTimeOutInMillis = downloadTimeoutInMillis,
                             jwtProofAlgorithmsSupported = proofSigningAlgorithms,
-                            traceabilityId = traceabilityId
+                            traceabilityId = traceabilityId,
+                            dpopManager = dpopManager
                         )
                     } else {
                         throw CredentialOfferFetchFailedException("Credential offer does not contain a supported grant type")

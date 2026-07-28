@@ -30,6 +30,9 @@ class RedirectToWebAuthorizationMethodService(
 
         val parEndpoint = requestData.pushedAuthorizationRequestEndpoint
         val authUrl = if (!parEndpoint.isNullOrBlank()) {
+            // TODO(PAR+DPoP): dpop_jkt is not yet threaded into the pushed request body.
+            // requestData.dpopJkt is available here but PushedAuthorizationRequestService
+            // has no param for it — needs a follow-up once DPoP+PAR combination is scoped.
             val parResponse = parService.pushAuthorizationRequest(
                 parEndpoint = parEndpoint,
                 clientId = requestData.clientMetadata.clientId,
@@ -56,7 +59,8 @@ class RedirectToWebAuthorizationMethodService(
                 scope = requestData.scope,
                 state = requestData.pkceSession.state,
                 codeChallenge = requestData.pkceSession.codeChallenge,
-                nonce = requestData.pkceSession.nonce
+                nonce = requestData.pkceSession.nonce,
+                dpopJkt = requestData.dpopJkt
             )
         }
         val authorizationResponse = openWebPage(authUrl)

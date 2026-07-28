@@ -159,7 +159,13 @@ class PresentationDuringIssuanceAuthorizationMethodServiceTest {
     @Test
     fun `should successfully authorize and return success response`() = runTest {
         coEvery { mockOvp.constructUnsignedVPToken(any()) } returns listOf(
-            UnsignedVPToken("vc-1", FormatType.LDP_VC, "k1", "ES256", "unsigned".toByteArray())
+            UnsignedVPToken(
+                id = "id1",
+                format = FormatType.LDP_VC,
+                holderKeyReference = "k1",
+                signatureAlgorithm = "ES256",
+                dataToSign = "unsigned".toByteArray()
+            )
         )
 
         coEvery { mockOvp.constructVPResponse(any()) } returns mapOf("vp_token" to "signed")
@@ -178,7 +184,7 @@ class PresentationDuringIssuanceAuthorizationMethodServiceTest {
             signVerifiablePresentation = {
                 listOf(
                     VPTokenSigningResult(
-                        id = "vc-1",
+                        id = "id1",
                         signedData = "signed".toByteArray(),
                     )
                 )
@@ -242,7 +248,7 @@ class PresentationDuringIssuanceAuthorizationMethodServiceTest {
 
         verify(exactly = 1) {
             mockOvp.constructErrorInfo(
-                match { it.message == "response_mode must be 'iar-post' or 'iar-post.jwt'" }
+                match { it.message == "response_mode must be 'iar-post', 'iar-post.jwt', 'iae_post' or 'iae_post.jwt'" }
             )
         }
         coVerify(exactly = 0) { mockOvp.constructUnsignedVPToken(any()) }

@@ -2,6 +2,7 @@ package io.mosip.vciclient.credential.request
 
 import io.mosip.vciclient.credential.response.CredentialResponseDraft13
 import io.mosip.vciclient.proof.CredentialRequestProofs
+import io.mosip.vciclient.dpop.DPoPManager
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.exception.NetworkRequestFailedException
 import io.mosip.vciclient.exception.NetworkRequestTimeoutException
@@ -176,5 +177,145 @@ class CredentialRequestExecutorTest {
         assertTrue(ex.message.contains("HTTP 400"))
         assertTrue(ex.issuerErrorCode == "invalid_proof")
         assertTrue(ex.issuerErrorDescription == "proof is missing")
+    }
+
+    @Test
+    fun `should send dpop authorization and proof when token type is DPoP`() {
+        mockWebServer.enqueue(
+            MockResponse().setBody("""{"credential":"vc"}""").setResponseCode(200)
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON)
+        )
+        val dpopManager = DPoPManager().apply { initialize("https://as/token", listOf("ES256")) }
+
+        CredentialRequestExecutor().requestCredentialDraft13(
+            issuerMetadata = resolvedMeta,
+            credentialConfigurationId = "SampleCredential",
+            proof = mockProof,
+            accessToken = accessToken,
+            tokenType = "DPoP",
+            dpopManager = dpopManager
+        )
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("DPoP $accessToken", recorded.getHeader("Authorization"))
+        assertNotNull(recorded.getHeader("DPoP"))
+    }
+
+    @Test
+    fun `should retry credential request with nonce on use_dpop_nonce challenge`() {
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(401)
+                .addHeader("WWW-Authenticate", """DPoP error="use_dpop_nonce"""")
+                .addHeader("DPoP-Nonce", "rs-nonce")
+        )
+        mockWebServer.enqueue(
+            MockResponse().setBody("""{"credential":"vc"}""").setResponseCode(200)
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON)
+        )
+        val dpopManager = DPoPManager().apply { initialize("https://as/token", listOf("ES256")) }
+
+        val response = CredentialRequestExecutor().requestCredentialDraft13(
+            issuerMetadata = resolvedMeta,
+            credentialConfigurationId = "SampleCredential",
+            proof = mockProof,
+            accessToken = accessToken,
+            tokenType = "DPoP",
+            dpopManager = dpopManager
+        )
+
+        assertNotNull(response)
+        mockWebServer.takeRequest()
+        val retry = mockWebServer.takeRequest()
+        val retryProof = retry.getHeader("DPoP")
+        assertEquals(
+            "rs-nonce",
+            com.nimbusds.jwt.SignedJWT.parse(retryProof).jwtClaimsSet.getStringClaim("nonce")
+        )
+    }
+
+    @Test
+    fun `should carry seeded issuer nonce on first request without a retry`() {
+        mockWebServer.enqueue(
+            MockResponse().setBody("""{"credential":"vc"}""").setResponseCode(200)
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON)
+        )
+        val dpopManager = DPoPManager().apply {
+            initialize("https://as/token", listOf("ES256"))
+            updateNonce("nonce-endpoint-nonce")
+        }
+
+        val response = CredentialRequestExecutor().requestCredentialDraft13(
+            issuerMetadata = resolvedMeta,
+            credentialConfigurationId = "SampleCredential",
+            proof = mockProof,
+            accessToken = accessToken,
+            tokenType = "DPoP",
+            dpopManager = dpopManager
+        )
+
+        assertNotNull(response)
+        assertEquals(1, mockWebServer.requestCount)
+        val recorded = mockWebServer.takeRequest()
+        assertEquals(
+            "nonce-endpoint-nonce",
+            com.nimbusds.jwt.SignedJWT.parse(recorded.getHeader("DPoP"))
+                .jwtClaimsSet.getStringClaim("nonce")
+        )
+    }
+
+    @Test
+    fun `should store rotated nonce from a successful response`() {
+        mockWebServer.enqueue(
+            MockResponse().setBody("""{"credential":"vc"}""").setResponseCode(200)
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .addHeader("DPoP-Nonce", "rotated-nonce")
+        )
+        val dpopManager = DPoPManager().apply { initialize("https://as/token", listOf("ES256")) }
+
+        CredentialRequestExecutor().requestCredentialDraft13(
+            issuerMetadata = resolvedMeta,
+            credentialConfigurationId = "SampleCredential",
+            proof = mockProof,
+            accessToken = accessToken,
+            tokenType = "DPoP",
+            dpopManager = dpopManager
+        )
+
+        val nextProof = dpopManager.generateCredentialProof(
+            credentialEndpoint = resolvedMeta.credentialEndpoint,
+            accessToken = accessToken
+        )
+        assertEquals(
+            "rotated-nonce",
+            com.nimbusds.jwt.SignedJWT.parse(nextProof).jwtClaimsSet.getStringClaim("nonce")
+        )
+    }
+
+    @Test
+    fun `should fall back to bearer when 401 challenge has no dpop scheme`() {
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(401)
+                .addHeader("WWW-Authenticate", """Bearer realm="issuer", error="invalid_token"""")
+        )
+        mockWebServer.enqueue(
+            MockResponse().setBody("""{"credential":"vc"}""").setResponseCode(200)
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON)
+        )
+        val dpopManager = DPoPManager().apply { initialize("https://as/token", listOf("ES256")) }
+
+        val response = CredentialRequestExecutor().requestCredentialDraft13(
+            issuerMetadata = resolvedMeta,
+            credentialConfigurationId = "SampleCredential",
+            proof = mockProof,
+            accessToken = accessToken,
+            tokenType = "DPoP",
+            dpopManager = dpopManager
+        )
+
+        assertNotNull(response)
+        mockWebServer.takeRequest()
+        val retry = mockWebServer.takeRequest()
+        assertEquals("Bearer $accessToken", retry.getHeader("Authorization"))
+        assertNull(retry.getHeader("DPoP"))
     }
 }

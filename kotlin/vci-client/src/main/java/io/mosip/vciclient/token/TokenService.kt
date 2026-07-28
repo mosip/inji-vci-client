@@ -2,6 +2,7 @@ package io.mosip.vciclient.token
 
 import io.mosip.vciclient.constants.GrantType
 import io.mosip.vciclient.constants.TokenResponseCallback
+import io.mosip.vciclient.dpop.DPoPManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -11,12 +12,14 @@ class TokenService {
         tokenEndpoint: String,
         preAuthCode: String,
         txCode: String? = null,
+        dpopManager: DPoPManager = DPoPManager(),
     ): TokenResponse = obtainAccessToken(
         grantType = GrantType.PRE_AUTHORIZED,
         getTokenResponse = getTokenResponse,
         tokenEndpoint = tokenEndpoint,
         preAuthCode = preAuthCode,
-        txCode = txCode
+        txCode = txCode,
+        dpopManager = dpopManager
     )
 
     suspend fun getAccessToken(
@@ -26,6 +29,7 @@ class TokenService {
         clientId: String? = null,
         redirectUri: String? = null,
         codeVerifier: String? = null,
+        dpopManager: DPoPManager = DPoPManager(),
     ): TokenResponse = obtainAccessToken(
         grantType = GrantType.AUTHORIZATION_CODE,
         getTokenResponse = getTokenResponse,
@@ -33,7 +37,8 @@ class TokenService {
         authCode = authCode,
         clientId = clientId,
         redirectUri = redirectUri,
-        codeVerifier = codeVerifier
+        codeVerifier = codeVerifier,
+        dpopManager = dpopManager
     )
 
     private suspend fun obtainAccessToken(
@@ -46,7 +51,9 @@ class TokenService {
         clientId: String? = null,
         redirectUri: String? = null,
         codeVerifier: String? = null,
+        dpopManager: DPoPManager = DPoPManager(),
     ): TokenResponse {
+        val dpopProof = if (dpopManager.isInitialized) dpopManager.generateTokenProof() else null
         val tokenRequest = TokenRequest(
             grantType,
             tokenEndpoint,
@@ -55,7 +62,8 @@ class TokenService {
             txCode,
             clientId,
             redirectUri,
-            codeVerifier
+            codeVerifier,
+            dpopProof
         )
         return withContext(Dispatchers.IO) {
             getTokenResponse(

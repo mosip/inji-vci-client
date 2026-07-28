@@ -102,7 +102,7 @@ class VCIClientTest {
     fun `should return credential when trusted issuer flow succeeds`() = runBlocking {
         coEvery {
             anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
 
@@ -174,7 +174,7 @@ class VCIClientTest {
     fun `should return credential when credential offer flow succeeds`() = runBlocking {
         coEvery {
             anyConstructed<CredentialOfferFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
             )
         } returns mockCredentialResponse
 
@@ -196,7 +196,7 @@ class VCIClientTest {
     fun `should throw VCIClientException when trusted issuer flow throws`() {
         coEvery {
             anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any()
             )
         } throws Exception("flow error")
 
@@ -219,7 +219,7 @@ class VCIClientTest {
     fun `should preserve existing VCIClientException details from trusted issuer flow`() {
         coEvery {
             anyConstructed<TrustedIssuerFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any()
             )
         } throws VCIClientException(
             code = "VCI-777",
@@ -250,7 +250,7 @@ class VCIClientTest {
     fun `should throw VCIClientException when credential offer flow throws`() {
         coEvery {
             anyConstructed<CredentialOfferFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
             )
         } throws Exception("flow error")
 
@@ -274,7 +274,7 @@ class VCIClientTest {
     fun `should preserve existing VCIClientException details from credential offer flow`() {
         coEvery {
             anyConstructed<CredentialOfferFlowHandler>().downloadCredentials(
-                any(), any(), any(), any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
             )
         } throws VCIClientException(
             code = "VCI-778",
@@ -300,5 +300,29 @@ class VCIClientTest {
         assertEquals("VCI-778", exception.code)
         assertEquals("access_denied", exception.issuerErrorCode)
         assertEquals("issuer blocked", exception.issuerErrorDescription)
+    }
+
+    @Test
+    fun `generateTokenDPoPProof throws when there is no active flow`() {
+        val exception = assertThrows<VCIClientException> {
+            VCIClient("trace-id").generateTokenDPoPProof("nonce")
+        }
+        assertEquals("VCI-011", exception.code)
+    }
+
+    @Test
+    fun `generateTokenDPoPProof returns a valid dpop proof when a flow is active`() {
+        val client = VCIClient("trace-id")
+        val dpopManagerField = VCIClient::class.java.getDeclaredField("dpopManager")
+        dpopManagerField.isAccessible = true
+        val dpopManager = dpopManagerField.get(client) as io.mosip.vciclient.dpop.DPoPManager
+        dpopManager.initialize("https://as.example.com/token", listOf("ES256"))
+
+        val proof = client.generateTokenDPoPProof("test-nonce")
+
+        val jwt = com.nimbusds.jwt.SignedJWT.parse(proof)
+        assertEquals("dpop+jwt", jwt.header.type.toString())
+        assertEquals("test-nonce", jwt.jwtClaimsSet.getStringClaim("nonce"))
+        assertEquals("POST", jwt.jwtClaimsSet.getStringClaim("htm"))
     }
 }

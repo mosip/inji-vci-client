@@ -2,6 +2,7 @@ package io.mosip.vciclient.networkManager
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.Request
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -31,8 +32,8 @@ class NetworkManagerTest {
     fun `should return response for successful GET request`() {
         val expectedBody = "{\"success\":true}"
         server.enqueue(MockResponse().setResponseCode(200).setBody(expectedBody))
-        val url = server.url("/test").toString()
-        val response = NetworkManager.sendRequest(url, HttpMethod.GET, headers = mapOf())
+        val request = Request.Builder().url(server.url("/test")).get().build()
+        val response = NetworkManager.sendRequest(request)
         assertEquals(expectedBody, response.body)
     }
 
@@ -47,8 +48,8 @@ class NetworkManagerTest {
     @Test
     fun `should handle empty response body`() {
         server.enqueue(MockResponse().setResponseCode(200).setBody(""))
-        val url = server.url("/empty").toString()
-        val response = NetworkManager.sendRequest(url, HttpMethod.GET, headers = mapOf())
+        val request = Request.Builder().url(server.url("/empty")).get().build()
+        val response = NetworkManager.sendRequest(request)
         assertEquals("", response.body)
     }
 
@@ -61,7 +62,7 @@ class NetworkManagerTest {
         )
 
         val exception = assertFailsWith<NetworkRequestFailedException> {
-            NetworkManager.sendRequest(server.url("/error").toString(), HttpMethod.GET, headers = mapOf())
+            NetworkManager.sendRequest(Request.Builder().url(server.url("/error")).get().build())
         }
 
         assertEquals("invalid_request", exception.issuerErrorCode)
@@ -77,7 +78,7 @@ class NetworkManagerTest {
         )
 
         val exception = assertFailsWith<NetworkRequestFailedException> {
-            NetworkManager.sendRequest(server.url("/error").toString(), HttpMethod.GET, headers = mapOf())
+            NetworkManager.sendRequest(Request.Builder().url(server.url("/error")).get().build())
         }
 
         assertNull(exception.issuerErrorCode)
@@ -95,13 +96,22 @@ class NetworkManagerTest {
 
         val exception = assertFailsWith<NetworkRequestTimeoutException> {
             NetworkManager.sendRequest(
-                server.url("/timeout").toString(),
-                HttpMethod.GET,
-                headers = mapOf(),
+                request = Request.Builder().url(server.url("/timeout")).get().build(),
                 timeoutMillis = 200
             )
         }
 
-        assertTrue(exception.message?.isNotBlank() == true)
+        assertTrue(exception.message.isNotBlank())
+    }
+
+    @Test
+    fun `should reject plaintext http for non-loopback hosts`() {
+        val request = Request.Builder().url("http://issuer.example.com/credential").build()
+
+        val exception = assertFailsWith<NetworkRequestFailedException> {
+            NetworkManager.sendRequest(request = request)
+        }
+
+        assertTrue(exception.message.contains("Plaintext HTTP endpoints are not allowed"))
     }
 }

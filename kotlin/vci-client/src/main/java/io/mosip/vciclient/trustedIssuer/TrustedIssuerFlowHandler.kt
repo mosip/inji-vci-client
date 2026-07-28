@@ -10,6 +10,7 @@ import io.mosip.vciclient.constants.ProofsCallback
 import io.mosip.vciclient.constants.TokenResponseCallback
 import io.mosip.vciclient.credential.response.CredentialItem
 import io.mosip.vciclient.credential.response.CredentialResponse
+import io.mosip.vciclient.dpop.DPoPManager
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
@@ -26,6 +27,7 @@ class TrustedIssuerFlowHandler internal constructor(
         getProofs: ProofsCallback,
         authorizationMethods: List<AuthorizationMethod>,
         downloadTimeoutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
+        dpopManager: DPoPManager = DPoPManager(),
     ): CredentialResponse {
         val issuerMetadata = loadIssuerMetadata(credentialIssuer, credentialConfigurationId)
         val proofSigningAlgorithms = issuerMetadata.extractJwtProofSigningAlgorithms(
@@ -41,7 +43,8 @@ class TrustedIssuerFlowHandler internal constructor(
                 getProofs = getProofs,
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = downloadTimeoutInMillis,
-                jwtProofAlgorithmsSupported = proofSigningAlgorithms
+                jwtProofAlgorithmsSupported = proofSigningAlgorithms,
+                dpopManager = dpopManager
             )
 
             OID4VCIVersion.DRAFT13 -> {
@@ -58,7 +61,8 @@ class TrustedIssuerFlowHandler internal constructor(
                     getProofJwt = proofJwtCallback,
                     authorizationMethods = authorizationMethods,
                     downloadTimeOutInMillis = downloadTimeoutInMillis,
-                    jwtProofAlgorithmsSupported = proofSigningAlgorithms
+                    jwtProofAlgorithmsSupported = proofSigningAlgorithms,
+                    dpopManager = dpopManager
                 )
                 CredentialResponse(
                     credentials = listOf(CredentialItem(draft13Response.credential)),

@@ -14,6 +14,7 @@ import java.util.logging.Logger
 
 private const val ERROR_CODE = "error"
 private const val ERROR_DESCRIPTION = "error_description"
+private val LOOPBACK_HOSTS = setOf("localhost", "127.0.0.1", "::1", "0:0:0:0:0:0:0:1")
 
 object NetworkManager {
 
@@ -33,6 +34,13 @@ object NetworkManager {
         timeoutMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): NetworkResponse {
 
+        val requestUrl = request.url
+        if (!requestUrl.isHttps && requestUrl.host.lowercase() !in LOOPBACK_HOSTS) {
+            throw NetworkRequestFailedException(
+                message = "Plaintext HTTP endpoints are not allowed; use HTTPS for: $requestUrl"
+            )
+        }
+
         try {
             val client = getClient(timeoutMillis)
 
@@ -46,6 +54,8 @@ object NetworkManager {
 
                     throw NetworkRequestFailedException(
                         message = "HTTP ${response.code}",
+                        httpStatusCode = response.code,
+                        headers = response.headers,
                         issuerErrorCode = issuerErrorCode,
                         issuerErrorDescription = issuerErrorDescription
                     )

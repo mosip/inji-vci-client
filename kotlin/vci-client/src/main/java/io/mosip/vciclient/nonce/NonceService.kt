@@ -6,6 +6,8 @@ import io.mosip.vciclient.constants.Constants.ACCEPT
 import io.mosip.vciclient.constants.Constants.APPLICATION_JSON
 import io.mosip.vciclient.constants.Constants.CONTENT_TYPE
 import io.mosip.vciclient.constants.Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS
+import io.mosip.vciclient.constants.Constants.DPOP_NONCE_HEADER
+import io.mosip.vciclient.dpop.DPoPManager
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.networkManager.NetworkManager
@@ -32,6 +34,7 @@ class NonceService(
     suspend fun fetchNonce(
         issuerMetadata: IssuerMetadata,
         timeoutInMillis: Long = DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
+        dpopManager: DPoPManager? = null,
     ): String? {
         val nonceEndpoint = issuerMetadata.nonceEndpoint
         if (nonceEndpoint.isNullOrEmpty()) {
@@ -51,6 +54,8 @@ class NonceService(
                 timeoutMillis = timeoutInMillis
             )
         }
+
+        dpopManager?.updateNonce(response.headers?.get(DPOP_NONCE_HEADER))
 
         val nonceResponse = JsonUtils.deserialize(response.body, NonceResponse::class.java)
             ?: throw DownloadFailedException("Failed to parse nonce response.")

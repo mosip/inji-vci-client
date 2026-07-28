@@ -53,6 +53,8 @@ dependencies {
     implementation("io.fusionauth:fusionauth-jwt:5.3.2")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78")
+    implementation("com.google.crypto.tink:tink:1.7.0")
 
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("io.mockk:mockk:1.13.10")
@@ -60,7 +62,7 @@ dependencies {
     testImplementation("org.json:json:20231013")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     implementation("com.squareup.okio:okio:3.6.0")
-    implementation("io.inji:inji-openid4vp-aar:1.0.0-SNAPSHOT")
+    implementation("io.inji:inji-openid4vp-aar:1.0.0-alpha.2-SNAPSHOT")
     testImplementation(kotlin("test"))
 }
 
