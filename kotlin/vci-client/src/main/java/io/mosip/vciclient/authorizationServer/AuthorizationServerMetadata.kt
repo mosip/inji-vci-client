@@ -21,15 +21,9 @@ data class AuthorizationServerMetadata(
     @SerializedName("pushed_authorization_request_endpoint")
     val pushedAuthorizationRequestEndpoint: String? = null,
 
-    @SerializedName("require_pushed_authorization_requests")
-    val requirePushedAuthorizationRequests: Boolean? = null,
-
     @SerializedName("dpop_signing_alg_values_supported")
     val dpopSigningAlgValuesSupported: List<String>? = null,
 
     @SerializedName("require_interactive_authorization_request")
-    val requireInteractiveAuthorizationRequest: Boolean? = null,
-
-    @SerializedName("token_endpoint_auth_methods_supported")
-    val tokenEndpointAuthMethodsSupported: List<String>? = null
+    val requireInteractiveAuthorizationRequest: Boolean? = null
 )

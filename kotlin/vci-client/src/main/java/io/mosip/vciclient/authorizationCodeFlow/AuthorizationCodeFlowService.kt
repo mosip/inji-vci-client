@@ -422,11 +422,7 @@ private suspend fun obtainAuthorizationCodeViaInteractiveAuthorizationEndpoint(
                 scope = issuerMetadata.scope,
                 dpopJkt = dpopManager.jwkThumbprint(),
                 pushedAuthorizationRequestEndpoint =
-                    authorizationServerMetadata.pushedAuthorizationRequestEndpoint,
-                tokenEndpointAuthMethodsSupported =
-                    authorizationServerMetadata.tokenEndpointAuthMethodsSupported,
-                requirePushedAuthorizationRequests =
-                    authorizationServerMetadata.requirePushedAuthorizationRequests
+                    authorizationServerMetadata.pushedAuthorizationRequestEndpoint
             )
 
             val response = try {
