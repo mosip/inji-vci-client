@@ -333,9 +333,30 @@ class RedirectToWebAuthorizationMethodServiceTest {
     }
 
     @Test
-    fun `should fall back to standard authorization request when PAR is explicitly not required`() =
+    fun `should call PAR when PAR endpoint present even if requirePushedAuthorizationRequests is false`() =
         runTest {
+            every {
+                AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(
+                    any(),
+                    any(),
+                    any()
+                )
+            } returns "https://auth.example.com/authorize?client_id=client-id&request_uri=urn:req:abc"
+
             val parService = mockk<PushedAuthorizationRequestService>()
+            coEvery {
+                parService.pushAuthorizationRequest(
+                    parEndpoint = any(),
+                    clientId = any(),
+                    redirectUri = any(),
+                    codeChallenge = any(),
+                    state = any(),
+                    nonce = any(),
+                    scope = any(),
+                    dpopJkt = any()
+                )
+            } returns PushedAuthorizationResponse("urn:req:abc", 90)
+
             coEvery { openWebPage.invoke(any()) } returns mapOf("code" to "auth-code-123")
 
             val service = RedirectToWebAuthorizationMethodService(openWebPage, parService)
@@ -349,19 +370,19 @@ class RedirectToWebAuthorizationMethodServiceTest {
             assertEquals("success", response.status)
             assertEquals("auth-code-123", response.authorizationCode)
 
-            coVerify(exactly = 0) {
+            coVerify(exactly = 1) {
                 parService.pushAuthorizationRequest(
-                    parEndpoint = any(),
-                    clientId = any(),
-                    redirectUri = any(),
-                    codeChallenge = any(),
-                    state = any(),
-                    nonce = any(),
-                    scope = any(),
-                    dpopJkt = any()
+                    parEndpoint = "https://as.example.com/as/par",
+                    clientId = "client-id",
+                    redirectUri = "app://callback",
+                    codeChallenge = "challenge",
+                    state = "state",
+                    nonce = "nonce",
+                    scope = "openid",
+                    dpopJkt = "dpop"
                 )
             }
-            io.mockk.verify(exactly = 1) {
+            io.mockk.verify(exactly = 0) {
                 AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
                     any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
                 )

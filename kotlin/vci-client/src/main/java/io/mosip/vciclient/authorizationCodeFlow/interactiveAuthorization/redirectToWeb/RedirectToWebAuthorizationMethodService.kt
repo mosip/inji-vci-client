@@ -29,11 +29,8 @@ class RedirectToWebAuthorizationMethodService(
         }
 
         val parEndpoint = requestData.pushedAuthorizationRequestEndpoint
-        val isParRequired = requestData.requirePushedAuthorizationRequests
 
-        val authUrl = if (!parEndpoint.isNullOrBlank() && isParRequired == true) {
-            buildAuthorizationUrlViaPushedRequest(requestData, parEndpoint)
-        } else if (!parEndpoint.isNullOrBlank() && isParRequired == null) {
+        val authUrl = if (!parEndpoint.isNullOrBlank()) {
             buildAuthorizationUrlViaPushedRequest(requestData, parEndpoint)
         } else {
             buildStandardAuthorizationUrl(requestData)
