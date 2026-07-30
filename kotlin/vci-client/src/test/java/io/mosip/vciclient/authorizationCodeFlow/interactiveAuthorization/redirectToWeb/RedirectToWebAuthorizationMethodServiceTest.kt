@@ -13,6 +13,7 @@ import io.mosip.vciclient.authorizationServer.PushedAuthorizationRequestService
 import io.mosip.vciclient.authorizationServer.PushedAuthorizationResponse
 import io.mosip.vciclient.constants.OpenWebPageCallback
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
+import io.mosip.vciclient.exception.PushedAuthorizationRequestException
 import io.mosip.vciclient.pkce.PKCESessionManager
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
 import kotlinx.coroutines.test.runTest
@@ -183,12 +184,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
     }
 
     @Test
-    fun `should call PAR whenever PAR endpoint is present regardless of token auth methods advertised`() =
+    fun `should throw and not open web page when PAR response has no request_uri`() =
         runTest {
-            every {
-                AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(any(), any(), any())
-            } returns "https://auth.example.com/authorize?client_id=client-id&request_uri=urn:req:abc"
-
             val parService = mockk<PushedAuthorizationRequestService>()
             coEvery {
                 parService.pushAuthorizationRequest(
@@ -201,33 +198,18 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     scope = any(),
                     dpopJkt = any()
                 )
-            } returns PushedAuthorizationResponse("urn:req:abc", 90)
-
-            coEvery { openWebPage.invoke(any()) } returns mapOf("code" to "auth-code-123")
+            } returns PushedAuthorizationResponse(null, 90)
 
             val service = RedirectToWebAuthorizationMethodService(openWebPage, parService)
-            val response = service.authorizeUser(parRequestWithoutPublicClient())
 
-            assertEquals("success", response.status)
-            assertEquals("auth-code-123", response.authorizationCode)
+            val ex = assertThrows<PushedAuthorizationRequestException> {
+                service.authorizeUser(parRequest())
+            }
+            assertTrue {
+                ex.message.contains("did not contain a request_uri")
+            }
 
-            coVerify(exactly = 1) {
-                parService.pushAuthorizationRequest(
-                    parEndpoint = "https://as.example.com/as/par",
-                    clientId = "client-id",
-                    redirectUri = "app://callback",
-                    codeChallenge = "challenge",
-                    state = "state",
-                    nonce = "nonce",
-                    scope = "openid",
-                    dpopJkt = "dpop"
-                )
-            }
-            io.mockk.verify(exactly = 1) {
-                AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(
-                    "https://auth.example.com", "client-id", "urn:req:abc"
-                )
-            }
+            coVerify(exactly = 0) { openWebPage.invoke(any()) }
         }
 
     @Test
@@ -457,26 +439,6 @@ class RedirectToWebAuthorizationMethodServiceTest {
             pushedAuthorizationRequestEndpoint = "https://as.example.com/as/par",
             tokenEndpointAuthMethodsSupported = listOf("none"),
             requirePushedAuthorizationRequests = true
-        )
-    }
-
-    private fun parRequestWithoutPublicClient(): ImplicitAuthorizationRequestData {
-        return ImplicitAuthorizationRequestData(
-            authorizeUrl = "https://auth.example.com",
-            clientMetadata = ClientMetadata(
-                clientId = "client-id",
-                redirectUri = "app://callback"
-            ),
-            pkceSession = PKCESessionManager.PKCESession(
-                codeVerifier = "verifier",
-                codeChallenge = "challenge",
-                state = "state",
-                nonce = "nonce"
-            ),
-            scope = "openid",
-            dpopJkt = "dpop",
-            pushedAuthorizationRequestEndpoint = "https://as.example.com/as/par",
-            tokenEndpointAuthMethodsSupported = listOf("private_key_jwt")
         )
     }
 
