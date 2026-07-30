@@ -29,39 +29,14 @@ class RedirectToWebAuthorizationMethodService(
         }
 
         val parEndpoint = requestData.pushedAuthorizationRequestEndpoint
-        val authUrl = if (!parEndpoint.isNullOrBlank()) {
-            // TODO(PAR+DPoP): dpop_jkt is not yet threaded into the pushed request body.
-            // requestData.dpopJkt is available here but PushedAuthorizationRequestService
-            // has no param for it — needs a follow-up once DPoP+PAR combination is scoped.
-            val parResponse = parService.pushAuthorizationRequest(
-                parEndpoint = parEndpoint,
-                clientId = requestData.clientMetadata.clientId,
-                redirectUri = requestData.clientMetadata.redirectUri,
-                codeChallenge = requestData.pkceSession.codeChallenge,
-                state = requestData.pkceSession.state,
-                nonce = requestData.pkceSession.nonce,
-                scope = requestData.scope
-            )
-            val requestUri = parResponse.requestUri
-                ?: throw PushedAuthorizationRequestException(
-                    "PAR response from $parEndpoint did not contain a request_uri"
-                )
-            AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(
-                baseUrl = requestData.authorizeUrl,
-                clientId = requestData.clientMetadata.clientId,
-                requestUri = requestUri
-            )
+        val isParRequired = requestData.requirePushedAuthorizationRequests
+
+        val authUrl = if (!parEndpoint.isNullOrBlank() && isParRequired == true) {
+            buildAuthorizationUrlViaPushedRequest(requestData, parEndpoint)
+        } else if (!parEndpoint.isNullOrBlank() && isParRequired == null) {
+            buildAuthorizationUrlViaPushedRequest(requestData, parEndpoint)
         } else {
-            AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
-                baseUrl = requestData.authorizeUrl,
-                clientId = requestData.clientMetadata.clientId,
-                redirectUri = requestData.clientMetadata.redirectUri,
-                scope = requestData.scope,
-                state = requestData.pkceSession.state,
-                codeChallenge = requestData.pkceSession.codeChallenge,
-                nonce = requestData.pkceSession.nonce,
-                dpopJkt = requestData.dpopJkt
-            )
+            buildStandardAuthorizationUrl(requestData)
         }
         val authorizationResponse = openWebPage(authUrl)
 
@@ -89,5 +64,43 @@ class RedirectToWebAuthorizationMethodService(
         )
     }
 
+    private suspend fun buildAuthorizationUrlViaPushedRequest(
+        requestData: ImplicitAuthorizationRequestData,
+        parEndpoint: String,
+    ): String {
+        val parResponse = parService.pushAuthorizationRequest(
+            parEndpoint = parEndpoint,
+            clientId = requestData.clientMetadata.clientId,
+            redirectUri = requestData.clientMetadata.redirectUri,
+            codeChallenge = requestData.pkceSession.codeChallenge,
+            state = requestData.pkceSession.state,
+            nonce = requestData.pkceSession.nonce,
+            scope = requestData.scope
+        )
+        val requestUri = parResponse.requestUri
+            ?: throw PushedAuthorizationRequestException(
+                "PAR response from $parEndpoint did not contain a request_uri"
+            )
+        return AuthorizationUrlBuilder.buildAuthorizationRequestUrlWithRequestUri(
+            baseUrl = requestData.authorizeUrl,
+            clientId = requestData.clientMetadata.clientId,
+            requestUri = requestUri
+        )
+    }
+
+    private fun buildStandardAuthorizationUrl(
+        requestData: ImplicitAuthorizationRequestData,
+    ): String {
+        return AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
+            baseUrl = requestData.authorizeUrl,
+            clientId = requestData.clientMetadata.clientId,
+            redirectUri = requestData.clientMetadata.redirectUri,
+            scope = requestData.scope,
+            state = requestData.pkceSession.state,
+            codeChallenge = requestData.pkceSession.codeChallenge,
+            nonce = requestData.pkceSession.nonce,
+            dpopJkt = requestData.dpopJkt
+        )
+    }
 }
 

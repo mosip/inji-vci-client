@@ -11,4 +11,6 @@ data class ImplicitAuthorizationRequestData(
     val scope: String,
     val dpopJkt: String,
     val pushedAuthorizationRequestEndpoint: String? = null,
+    val tokenEndpointAuthMethodsSupported: List<String>? = null,
+    val requirePushedAuthorizationRequests: Boolean? = null,
 ) : AuthorizationRequestData()

@@ -31,8 +31,6 @@ class PushedAuthorizationRequestService {
         timeoutMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
     ): PushedAuthorizationResponse = withContext(Dispatchers.IO) {
         val params = mutableMapOf<String, String>()
-        // Client authentication params are applied first so the core authorization
-        // request params below always take precedence and cannot be overwritten.
         params.putAll(clientAuthParams)
         params["response_type"] = responseType.value
         params["client_id"] = clientId
