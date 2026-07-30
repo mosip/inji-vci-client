@@ -150,7 +150,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                 codeChallenge = any(),
                 state = any(),
                 nonce = any(),
-                scope = any()
+                scope = any(),
+                dpopJkt = any()
             )
         } returns PushedAuthorizationResponse("urn:req:abc", 90)
 
@@ -170,7 +171,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                 codeChallenge = "challenge",
                 state = "state",
                 nonce = "nonce",
-                scope = "openid"
+                scope = "openid",
+                dpopJkt = "dpop"
             )
         }
         io.mockk.verify(exactly = 1) {
@@ -196,7 +198,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = any(),
                     state = any(),
                     nonce = any(),
-                    scope = any()
+                    scope = any(),
+                    dpopJkt = any()
                 )
             } returns PushedAuthorizationResponse("urn:req:abc", 90)
 
@@ -216,7 +219,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = "challenge",
                     state = "state",
                     nonce = "nonce",
-                    scope = "openid"
+                    scope = "openid",
+                    dpopJkt = "dpop"
                 )
             }
             io.mockk.verify(exactly = 1) {
@@ -242,7 +246,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = any(),
                     state = any(),
                     nonce = any(),
-                    scope = any()
+                    scope = any(),
+                    dpopJkt = any()
                 )
             } returns PushedAuthorizationResponse("urn:req:abc", 90)
 
@@ -264,7 +269,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = "challenge",
                     state = "state",
                     nonce = "nonce",
-                    scope = "openid"
+                    scope = "openid",
+                    dpopJkt = "dpop"
                 )
             }
         }
@@ -285,7 +291,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = any(),
                     state = any(),
                     nonce = any(),
-                    scope = any()
+                    scope = any(),
+                    dpopJkt = any()
                 )
             } returns PushedAuthorizationResponse("urn:req:abc", 90)
 
@@ -307,7 +314,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = any(),
                     state = any(),
                     nonce = any(),
-                    scope = any()
+                    scope = any(),
+                    dpopJkt = any()
                 )
             }
         }
@@ -331,7 +339,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                 codeChallenge = any(),
                 state = any(),
                 nonce = any(),
-                scope = any()
+                scope = any(),
+                dpopJkt = any()
             )
         }
         io.mockk.verify(exactly = 1) {
@@ -366,7 +375,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = any(),
                     state = any(),
                     nonce = any(),
-                    scope = any()
+                    scope = any(),
+                    dpopJkt = any()
                 )
             }
             io.mockk.verify(exactly = 1) {
@@ -392,7 +402,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = any(),
                     state = any(),
                     nonce = any(),
-                    scope = any()
+                    scope = any(),
+                    dpopJkt = any()
                 )
             } returns PushedAuthorizationResponse("urn:req:abc", 90)
 
@@ -417,7 +428,8 @@ class RedirectToWebAuthorizationMethodServiceTest {
                     codeChallenge = "challenge",
                     state = "state",
                     nonce = "nonce",
-                    scope = "openid"
+                    scope = "openid",
+                    dpopJkt = "dpop"
                 )
             }
             io.mockk.verify(exactly = 1) {

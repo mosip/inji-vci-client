@@ -117,6 +117,45 @@ class PushedAuthorizationRequestServiceTest {
     }
 
     @Test
+    fun `should send dpop_jkt in the body when provided`() = runBlocking {
+        val bodySlot = slot<Map<String, String>>()
+        stubSuccessNetwork(bodySlot)
+        stubDeserialize(PushedAuthorizationResponse("urn:request_uri:abc"))
+
+        PushedAuthorizationRequestService().pushAuthorizationRequest(
+            parEndpoint = parEndpoint,
+            clientId = "client-id",
+            redirectUri = "app://callback",
+            codeChallenge = "challenge",
+            state = "state-123",
+            nonce = "nonce-123",
+            scope = "openid",
+            dpopJkt = "jkt-thumbprint"
+        )
+
+        assertEquals("jkt-thumbprint", bodySlot.captured["dpop_jkt"])
+    }
+
+    @Test
+    fun `should omit dpop_jkt from the body when not provided`() = runBlocking {
+        val bodySlot = slot<Map<String, String>>()
+        stubSuccessNetwork(bodySlot)
+        stubDeserialize(PushedAuthorizationResponse("urn:request_uri:abc"))
+
+        PushedAuthorizationRequestService().pushAuthorizationRequest(
+            parEndpoint = parEndpoint,
+            clientId = "client-id",
+            redirectUri = "app://callback",
+            codeChallenge = "challenge",
+            state = "state-123",
+            nonce = "nonce-123",
+            scope = "openid"
+        )
+
+        assertFalse(bodySlot.captured.containsKey("dpop_jkt"))
+    }
+
+    @Test
     fun `should merge clientAuthParams into the body`() = runBlocking {
         val bodySlot = slot<Map<String, String>>()
         stubSuccessNetwork(bodySlot)

@@ -75,7 +75,8 @@ class RedirectToWebAuthorizationMethodService(
             codeChallenge = requestData.pkceSession.codeChallenge,
             state = requestData.pkceSession.state,
             nonce = requestData.pkceSession.nonce,
-            scope = requestData.scope
+            scope = requestData.scope,
+            dpopJkt = requestData.dpopJkt
         )
         val requestUri = parResponse.requestUri
             ?: throw PushedAuthorizationRequestException(

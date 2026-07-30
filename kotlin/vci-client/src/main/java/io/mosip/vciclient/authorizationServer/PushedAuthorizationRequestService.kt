@@ -25,6 +25,7 @@ class PushedAuthorizationRequestService {
         state: String,
         nonce: String,
         scope: String? = null,
+        dpopJkt: String? = null,
         codeChallengeMethod: CodeChallengeMethod = CodeChallengeMethod.S256,
         responseType: AuthorizationResponseType = AuthorizationResponseType.CODE,
         clientAuthParams: Map<String, String> = emptyMap(),
@@ -41,6 +42,9 @@ class PushedAuthorizationRequestService {
         params["nonce"] = nonce
         if (!scope.isNullOrBlank()) {
             params["scope"] = scope
+        }
+        if (!dpopJkt.isNullOrBlank()) {
+            params["dpop_jkt"] = dpopJkt
         }
 
         logger.info("Pushing authorization request to PAR endpoint: $parEndpoint")
