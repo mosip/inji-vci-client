@@ -44,7 +44,7 @@ The callback for selecting credentials has been updated:
 
 | Aspect      | OVP 0.7.0                                                | OVP 1.0.0                                                  | Notes                                                                                                           |
 |-------------|----------------------------------------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| Output type | `Map<String, Map<FormatType, AnyCodable>>`               | `Map<String, Array<Credential>>`                           | Changed from format-grouped structure to credential array indexed by input descriptor ID or credential query ID |
+| Output type | `Map<String, Map<FormatType, Any>>`                      | `Map<String, List<Credential>>`                            | Changed from format-grouped structure to credential list indexed by input descriptor ID or credential query ID  |
 | Semantic    | Map of input descriptor ID to format-grouped credentials | Map of input descriptor ID to list of selected credentials | Simpler structure for credential selection                                                                      |
 
 ##### 3. `SignVerifiablePresentationCallback` Signature Change
@@ -53,16 +53,11 @@ Callback for signing verifiable presentations has been updated:
 
 | Aspect      | OVP 0.7.0                       | OVP 1.0.0                     | Notes                                                                                                                                                                  |
 |-------------|---------------------------------|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Input type  | `Array<UnsignedVPTokenV2>`      | `Array<UnsignedVPToken>`      | Versioning simplified by removing V2 suffix. New version includes an `id` field to link unsigned VP tokens with their corresponding signed results during preparation. |
-| Output type | `Array<VPTokenSigningResultV2>` | `Array<VPTokenSigningResult>` | Versioning simplified by removing V2 suffix. New version includes an `id` field to link unsigned VP tokens with their corresponding signed results during preparation. |
+| Input type  | `List<UnsignedVPTokenV2>`       | `List<UnsignedVPToken>`       | Versioning simplified by removing V2 suffix. New version includes an `id` field to link unsigned VP tokens with their corresponding signed results during preparation.  |
+| Output type | `List<VPTokenSigningResultV2>`  | `List<VPTokenSigningResult>`  | Versioning simplified by removing V2 suffix. New version includes an `id` field to link unsigned VP tokens with their corresponding signed results during preparation.  |
 
 
-- New canonicalization input parameter for JSON-LD data processing
-- **Required** when presenting credentials of format `ldp_vc`
-- Optional for other credential formats
-- Allows Kotlin consumers to provide custom JSON-LD canonicalization logic
-
-##### 5. Optional `openid4vpWalletConfig`
+##### 4. Optional `openid4vpWalletConfig`
 
 * Introduces a new optional parameter for wallet-specific OpenID4VP configuration.
 * This configuration will be passed to the Inji OpenID4VP library, where it is used to control the wallet's behavior during OpenID4VP transactions and to customize the wallet metadata communicated to the verifier.
@@ -121,16 +116,15 @@ Version detection and routing are handled automatically by the OVP library, simi
 1. Update all calls to `presentationDuringIssuance` to use new callback signatures
 2. Remove any `ldpVpSignatureSuite` parameter passing
 3. Update callback implementations:
-   - `SelectCredentialsForPresentationCallback`: Return `Map<String, Array<Credential>>` instead of format-grouped map
-   - `SignVerifiablePresentationCallback`: Accept `Array<UnsignedVPToken>` and return `Array<VPTokenSigningResult>` (without V2 suffix)
-5. Optionally provide wallet's OpenID4VP related configuration via `openid4vpWalletConfig`
+   - `SelectCredentialsForPresentationCallback`: Return `Map<String, List<Credential>>` instead of format-grouped map
+   - `SignVerifiablePresentationCallback`: Accept `List<UnsignedVPToken>` and return `List<VPTokenSigningResult>` (without V2 suffix)
+4. Optionally provide wallet's OpenID4VP related configuration via `openid4vpWalletConfig`
 
 ## Implementation Notes
 
 Primary files involved in PDI and OVP 1.0.0 support:
 
 - `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/AuthorizationMethod.kt`
-- `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/InteractiveAuthorization/PresentationDuringIssuance/PresentationDuringIssuanceAuthorizationMethodService.kt`
-- `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/InteractiveAuthorization/PresentationDuringIssuance/PresentationDuringIssuanceRequestData.kt`
-- `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/InteractiveAuthorization/PresentationDuringIssuance/PresentationInteractionResponse.kt`
-- `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/InteractiveAuthorization/PresentationDuringIssuance/OpenID4VP/OpenID4VPInteraction.kt`
+- `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/interactiveAuthorization/presentationDuringIssuance/PresentationDuringIssuanceAuthorizationMethodService.kt`
+- `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/interactiveAuthorization/presentationDuringIssuance/PresentationDuringIssuanceRequestData.kt`
+- `kotlin/vci-client/src/main/java/io/mosip/vciclient/authorizationCodeFlow/interactiveAuthorization/presentationDuringIssuance/PresentationInteractionResponse.kt`

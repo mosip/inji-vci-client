@@ -37,7 +37,6 @@ Supporting public types:
 
 - `CredentialRequestProofs`
 - `CredentialResponse`
-- `CredentialResponseDraft13`
 - `OID4VCIVersion`
 
 Removed from the public surface (1.0.0):
@@ -73,7 +72,8 @@ public typealias ProofsCallback = suspend (
 
 Current `CredentialRequestProofs` supports:
 
-- `jwt: List<String>?`
+- proofType: `jwt`
+- proofs: `List<String>`
 
 This is intentionally plural at the wire boundary even though the current Draft-13 bridge still extracts the first JWT when talking to an older issuer.
 
