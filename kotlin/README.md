@@ -1,13 +1,54 @@
 # INJI VCI Client
 
-The **Inji VCI Client** is a Kotlin-based library built to simplify credential issuance via [OpenID for Verifiable Credential Issuance (OID4VCI)](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) protocol.
-It supports **Issuer Initiated (Credential Offer)** and **Wallet Initiated (Trusted Issuer)** flows, with secure proof handling, PKCE support, and custom error handling.
+The **Inji VCI Client Kotlin** is a Kotlin library that simplifies credential issuance via the [OpenID for Verifiable Credential Issuance (OID4VCI)](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) protocol. It handles the full credential download lifecycle — issuer discovery, authorization, proof construction, and credential retrieval — so your wallet can focus on user experience and key management.
 
 ---
 
-## Specifications supported
+## Table of Contents
 
-The implementation follows
+- [Overview](#overview)
+- [Specifications Supported](#specifications-supported)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#-installation)
+- [Getting Started](#getting-started)
+- [API Overview](#-api-overview)
+- [Security Support](#-security-support)
+- [Error Handling](#-error-handling)
+- [Testing](#-testing)
+- [Example App](#example-app)
+- [Migration Guide](#migration-guide)
+- [Documentation](#documentation)
+- [Library Implementations](#library-implementations-available-in)
+- [Glossary](#glossary)
+
+---
+
+## Overview
+
+The VCI Client library is a ready-to-integrate wallet-side solution for credential issuance. It takes care of the complexity behind OID4VCI — including issuer metadata discovery, PKCE-managed authorization, proof JWT construction, and credential download — enabling faster integration with less engineering effort.
+
+**Key Responsibilities:**
+
+* **VCI Client Library**
+
+   * Handles OID4VCI protocol workflows and compliance
+   * Manages PKCE session, authorization server discovery, and token exchange
+   * Supports both OID4VCI 1.0 and draft 13 issuers transparently
+
+* **Library Consumer (Wallet App)**
+
+   * Owns user consent and credential rendering
+   * Performs cryptographic proof signing
+   * Implements authorization callbacks (web redirect / Presentation During Issuance)
+
+> Consumer of this library is responsible for processing and rendering the credential after it is downloaded.
+
+---
+
+## Specifications Supported
+
+The implementation follows:
 - OpenID for Verifiable Credential Issuance 1.0
 - OpenID for Verifiable Credential Issuance draft 13 compatibility for issuers that still expose the older metadata and request/response format
 
@@ -15,49 +56,92 @@ The implementation follows
 
 - Request credentials from OID4VCI-compliant credential issuers
 - Supports both:
-  - Issuer Initiated Flow (Credential Offer Flow).
-  - Wallet Initiated Flow (Trusted Issuer Flow).
+    - Issuer Initiated Flow (Credential Offer Flow).
+    - Wallet Initiated Flow (Trusted Issuer Flow).
 - Authorization server discovery for both flows
 - PKCE-compliant OAuth 2.0 Authorization Code flow (RFC 7636)
-  - PKCE session is managed internally by the library
+    - PKCE session is managed internally by the library
 - Well-defined **exception handling** with `VCI-XXX` error codes (see more on [this](#-error-handling))
 - Support for multiple Credential formats:
-  - `ldp_vc`
-  - `mso_mdoc`
-  - `vc+sd-jwt` / `dc+sd-jwt`
+    - `ldp_vc`
+    - `mso_mdoc`
+    - `vc+sd-jwt` / `dc+sd-jwt`
 
-[//]: # (The reference for PDI is intentionally pointing to the common doc folder in the root of the repository, as the PDI support and its documentation are common for both the Kotlin and Swift libraries.)
-- Presentation During Issuance (PDI) support for both download flows (For more details on PDI support, please refer to the [Presentation During Issuance documentation](../doc/presentation-during-issuance-support.md))
+[//]: # (The reference for PDI  is intentionally pointing to kotlin library master branch to be release agnostic, as the PDI support is available for both kotlin and kotlin libraries. The documentation for PDI support is also common for both libraries, hence it is placed in the common doc folder in the root of the repository.)
+- Presentation During Issuance (PDI) support for both download flows (For more details on PDI support, please refer to the [Presentation During Issuance documentation](https://github.com/inji/inji-vci-client/tree/master/docs/presentation-during-issuance-support.md))
 
-> Consumer of this library is responsible for processing and rendering the credential after it is downloaded.
+## Requirements
 
-## Library implementations available in:
-This library is officially supported and available in both Kotlin and Swift, ensuring seamless integration across Android and iOS platforms. The references for both implementations are provided below:
-
-* [Kotlin](.)
-* [Swift](https://github.com/inji/inji-vci-client-ios-swift)
+- **Kotlin:** 1.9.23
+- **Java compatibility:**
+    - Java 17 (`sourceCompatibility`/`targetCompatibility` 17, `jvmTarget` 17)
+- **Android SDK compatibility:**
+    - `minSdk` 23, `compileSdk` 34
 
 ---
 
 ## 📦 Installation
 
-Add the following dependency to your `build.gradle` to include the library from **Maven Central**:
+Add the following dependency:
 
-```groovy
-implementation "io.inji:inji-vci-client:1.0.0"
+```kotlin
+implementation("io.inji:inji-vci-client:1.0.0")
 ```
 
-## What's New in 1.0.0
+---
 
-Version `1.0.0` adds support for the final **OpenID for Verifiable Credential Issuance 1.0** specification while retaining backward compatibility with OID4VCI draft 13. The highlights below cover everything added since `0.7.0`:
+## Getting Started
 
-- **OID4VCI 1.0 support with retained draft 13 support** - The library auto-detects the spec version of the issuer from its metadata and builds the credential request accordingly, so a single integration works against both 1.0 and draft 13 issuers.
-- **Credential download methods renamed (and now return multiple credentials)** - `fetchCredentialUsingCredentialOffer` and `fetchCredentialFromTrustedIssuer` are now `fetchCredentialsUsingCredentialOffer` and `fetchCredentialsFromTrustedIssuer`.
-- **New `getProofs` callback** - The single-proof `getProofJwt` callback is replaced by `getProofs`, which returns a `CredentialRequestProofs` object and allows supplying one or more proofs in a single credential request, as per OID4VCI 1.0.
-- **`CredentialResponse` now exposes a `credentials` list** - Instead of a single `credential` field, the response carries a `credentials` list (`List<CredentialItem>`), aligning with the OID4VCI 1.0 credential response structure.
-- **Legacy APIs removed** - `requestCredentialByCredentialOffer`, `requestCredentialFromTrustedIssuer`, and `requestCredential` (along with the `IssuerMetaData` DTO) have been removed. Migrate to the `fetchCredentials*` methods.
-- **Structured error handling** - `VCIClientException` now carries `issuerErrorCode` and `issuerErrorDescription` alongside `code` and `message`, and `code` resolves to the root error code across the cause chain, so consumers can distinguish library failures from issuer/authorization-server error payloads (see [Error Handling](#-error-handling)).
-- **Issuer identity validation** - Issuer metadata fetches now validate that the `credential_issuer` returned by the well-known endpoint matches the requested issuer, per [OID4VCI Section 13.5](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-13.html#section-13.5).
+### Typical Workflow
+
+```text
+1. Initialise → VCIClient(traceabilityId)
+2. Discover   → getIssuerMetadata() / getCredentialConfigurationsSupported()
+3. Download   → fetchCredentialsUsingCredentialOffer()   [issuer-initiated]
+              → fetchCredentialsFromTrustedIssuer()      [wallet-initiated]
+4. Render     → read credentialResponse.credentials?.orEmpty() (List<CredentialItem>?)
+```
+
+### Quick Start Example
+
+```kotlin
+import io.mosip.vciclient.VCIClient
+
+val vciClient = VCIClient(traceabilityId = "wallet-app-101")
+
+val credentialResponse = vciClient.fetchCredentialsUsingCredentialOffer(
+    credentialOffer = deepLinkOrCredentialOfferURI,
+    clientMetadata = ClientMetadata(clientId = "my-wallet", redirectUri = "https://my-wallet.example/callback"),
+    getTxCode = { inputMode, description, length -> "sampleTxCode" },
+    authorizations = listOf(
+        AuthorizationMethod.redirectToWeb(openWebPage = { url -> openBrowserAndReturnParams(url) })
+    ),
+    getTokenResponse = { tokenRequest -> // Exchange authorization grant for access token
+        return TokenResponse(accessToken = "...", cNonce = "...", tokenType = "Bearer", expiresIn = 3600, cNonceExpiresIn = 3600)
+    },
+    getProofs = { credentialIssuer, nonce, proofSigningAlgorithmsSupported -> // Sign proof JWT and wrap it
+        return CredentialRequestProofs(proofs = listOf(buildAndSignProofJwt(nonce = nonce, issuer = credentialIssuer)))
+    }
+)
+
+// credentialResponse.credentials is List<CredentialItem>?
+for (item in credentialResponse.credentials?.orEmpty()) {
+    renderCredential(item.credential) // item.credential is JsonElement?
+}
+```
+
+> **Note:** The crypto implementations like signing the proof JWT are kept in your wallet app. The library handles OID4VCI protocol mechanics.
+
+### Core Methods
+
+| Method | Purpose | Returns |
+|--------|---------|---------|
+| `getIssuerMetadata(credentialIssuer = ...)` | Fetches raw issuer well-known metadata | `Map<String, Any>` |
+| `getCredentialConfigurationsSupported(credentialIssuer = ...)` | Fetches supported credential configurations | `Map<String, Any>` |
+| `fetchCredentialsUsingCredentialOffer(...)` | Downloads credentials via issuer-initiated (credential offer) flow | `CredentialResponse` |
+| `fetchCredentialsFromTrustedIssuer(...)` | Downloads credentials via wallet-initiated (trusted issuer) flow | `CredentialResponse` |
+
+---
 
 ## 🏗️ Construction of VCIClient instance
 
@@ -65,7 +149,7 @@ Version `1.0.0` adds support for the final **OpenID for Verifiable Credential Is
 
 ```kotlin
 val traceabilityId = "sample-trace-id"
-val vciClient = VCIClient(traceabilityId)
+val vciClient = VCIClient(traceabilityId = traceabilityId)
 ```
 
 #### Parameters
@@ -88,21 +172,19 @@ Retrieve the issuer metadata from the credential issuer's well-known endpoint.
 
 #### Returns
 
-`IssuerMetadata` object containing details like `credential_endpoint`, `credential_issuer`, and other IssuerMetadata information from the well-known endpoint of Credential Issuer, which can be used by the consumer to display Issuer information, etc.
+`Map<String, Any>` dictionary containing details like `credential_endpoint`, `credential_issuer`, and other issuer metadata from the well-known endpoint of Credential Issuer, which can be used by the consumer to display Issuer information, etc.
 
 > Note: This method does not parse the metadata, it simply returns the raw Network response of well-known endpoint as a `Map<String, Any>`.
 
 #### Example Usage
 
 ```kotlin
-val issuerMetadata : Map<String, Any> = VCIClient(traceabilityId).getIssuerMetadata(
-    credentialIssuer = "https://example.com/issuer"
-)
-
-//The response looks similar to this
+val issuerMetadata: Map<String, Any> = vciClient.getIssuerMetadata(credentialIssuer = "https://example.com/issuer")
+    
+//the response looks similar to this
 mapOf(
-  "credential_issuer" to "https://example.com/issuer",
-  "credential_endpoint" to "https://example.com/issuer/credential",
+    "credential_issuer" to "https://example.com/issuer",
+    "credential_endpoint" to "https://example.com/issuer/credential"
 )
 ```
 
@@ -126,26 +208,40 @@ credential types, etc.
 #### Example Usage
 
 ```kotlin
-val credentialConfigurationsSupported : Map<String, Any> = VCIClient(traceabilityId).getCredentialConfigurationsSupported(
+val credentialConfigurationsSupported : Map<String, Any> = vciClient.getCredentialConfigurationsSupported(
     credentialIssuer = "https://example.com/issuer"
 )
 
 //The response looks similar to this
 mapOf(
-  "credentialConfigId-1" to mapOf(
-    "format" to "ldp_vc",
-    "credential_definition" to mapOf(
-        "type" to listOf("VerifiableCredential", "ExampleCredential")
+    "credentialConfigId-1" to mapOf(
+        "format" to "ldp_vc",
+        "credential_definition" to mapOf(
+            "type" to listOf("VerifiableCredential", "ExampleCredential")
+        )
+    ),
+    "credentialConfigId-2" to mapOf(
+        "format" to "mso_mdoc",
+        "doctype" to "org.iso.18013.5.1.mDL"
+    ),
+    "credentialConfigId-3" to mapOf(
+        "format" to "jwt_vc_json",
+        "credential_definition" to mapOf(
+            "type" to listOf("VerifiableCredential", "ExampleJwtCredential")
+        ),
+        "scope" to "ExampleJwtCredential"
     )
-  ),
-  "credentialConfigId-2" to mapOf(
-    "format" to "mso_mdoc",
-    "doctype" to "org.iso.18013.5.1.mDL"
-  )
 )
 ```
 
 ### 3. Request Credential
+
+Version `1.0.0` exposes two public credential download APIs:
+
+- `fetchCredentialsUsingCredentialOffer(...)` for issuer-initiated flows
+- `fetchCredentialsFromTrustedIssuer(...)` for wallet-initiated flows
+
+Both methods use the OpenID4VCI 1.0-facing proof callback and return a normalized plural response. When an issuer still behaves like Draft-13, the library keeps the compatibility routing internal and still returns the 1.0 response shape.
 
 ### 3.1 Request Credential using Credential Offer
 
@@ -155,217 +251,159 @@ mapOf(
 - This method allows you to fetch credential(s) using a credential offer, which can be either an embedded JSON or a URI pointing to the credential offer.
 - It supports both **Pre-Authorization** and **Authorization** flows.
 - The library handles the PKCE flow internally.
-- User-trust based credential download supported through onCheckIssuerTrust callback.
+- User-trust based credential download supported through `onCheckIssuerTrust` callback.
 - This method is the recommended way to request credential using credential offer.
 
 ##### Parameters
 
-| Name                    | Type                     | Required | Default Value | Description                                                                                                                                                            |
-|-------------------------|--------------------------|----------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| credentialOffer         | String                   | Yes      | N/A           | Credential offer as embedded JSON or `credential_offer_uri`                                                                                                            |
-| clientMetadata          | ClientMetadata           | Yes      | N/A           | Contains client ID and redirect URI                                                                                                                                    |
-| getTxCode               | TxCodeCallback           | No       | N/A           | Optional callback function for TX Code (for Pre-Auth flows)                                                                                                            |
-| authorizations          | List<AuthorizationMethod>| Yes      | N/A           | Callback functions list to handle authorization and return the resultant authorization response (for Authorization flows) [see authorization details](#authorizations) |
-| getTokenResponse        | TokenResponseCallback    | Yes      | N/A           | Callback function to exchange Authorization Grant with Access Token response                                                                                           |
-| getProofs               | ProofsCallback           | Yes      | N/A           | Callback function to prepare the proof(s) for the Credential Request, returning a `CredentialRequestProofs`                                                            |
-| onCheckIssuerTrust      | CheckIssuerTrustCallback | No       | null          | Callback function to get user trust with the Credential Issuer                                                                                                         |
-| downloadTimeoutInMillis | Long                     | No       | 10000         | Download timeout set for Credential Request call with Credential Issuer (defaults to 10000 ms)                                                                         |
+| Name                    | Type                          | Required | Default Value | Description                                                                                                                                                            |
+|-------------------------|-------------------------------|----------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| credentialOffer         | String                        | Yes      | N/A           | Credential offer as embedded JSON or `credential_offer_uri`                                                                                                            |
+| clientMetadata          | ClientMetadata                | Yes      | N/A           | Contains client ID and redirect URI                                                                                                                                    |
+| getTxCode               | TxCodeCallback                | No       | N/A           | Optional callback for TX Code in pre-authorized flows                                                                                                                  |
+| authorizationMethods    | List<AuthorizationMethod>     | Yes      | N/A           | Supported authorization callbacks for interactive flows [see authorization details](#authorizations)                                                                   |
+| getTokenResponse        | TokenResponseCallback         | Yes      | N/A           | Callback that exchanges the authorization grant for an access token                                                                                                    |
+| getProofs               | ProofsCallback                | Yes      | N/A           | Callback that prepares the proof set for the credential request, returning a `CredentialRequestProofs`                                                                 |
+| onCheckIssuerTrust      | CheckIssuerTrustCallback      | No       | nil           | Optional callback to confirm that the issuer is trusted                                                                                                                |
+| downloadTimeoutInMillis | Int64                         | No       | 10000         | Timeout for the credential request to the issuer                                                                                                                       |
 
 ##### Returns
 
 An instance of `CredentialResponse` containing:
 
-| Name                      | Type                  | Description                                                                                                  |
-|---------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------|
-| credentials               | List<CredentialItem>  | The credential(s) downloaded from the Issuer. Each `CredentialItem` exposes a `credential` (`JsonElement`)   |
-| credentialConfigurationId | String                | The identifier of the respective supported credential from well-known response                               |
-| credentialIssuer          | String                | URI of the Credential Issuer                                                                                  |
+| Name                      | Type             | Description                                                                                                |
+|---------------------------|------------------|------------------------------------------------------------------------------------------------------------|
+| credentials               | List<CredentialItem>? | The credential(s) downloaded from the Issuer. Each `CredentialItem` exposes a `credential` (`JsonElement?`) |
+| credentialConfigurationId | String?          | The identifier of the respective supported credential from well-known response                             |
+| credentialIssuer          | String?          | URI of the Credential Issuer                                                                               |
 
 ##### Example usage
 
 ```kotlin
-val credentialResponse: CredentialResponse = vciClient.fetchCredentialsUsingCredentialOffer(
-  credentialOffer = "openid-credential-offer://?credential_offer_uri=https%3A%2F%2Fsample-issuer.com%2Fcredential-offer",
-  clientMetadata = ClientMetadata(clientId = "sample-client-id", redirectUri = "https://sample-wallet.com/callback"),
-  getTxCode = object : TxCodeCallback {
-    override suspend fun invoke(p1: String?, p2: String?, p3: Int?): String {
-      // Handle the transaction code retrieval logic here
-      val txCode = "sampleTxCode"
-      return txCode
-    }
-  },
-  authorizations = listOf(
-      // Presentation During Issuance flow for authorization
-      AuthorizationMethod.PresentationDuringIssuance(
-          selectCredentialsForPresentation = selectCredentialsForPresentationCallback(),
-          signVerifiablePresentation = signVerifiablePresentationCallback()
-      ),
-      // Redirect to Web flow for Web view authorization
-      AuthorizationMethod.RedirectToWeb(openWebPage = openWebPageCallback())
-  ),
-  getTokenResponse = object : TokenResponseCallback {
-    override suspend fun invoke(tokenRequest: TokenRequest): TokenResponse {
-      // Handle the token response retrieval logic here
-      //Exchange authorization code for access token
-      return TokenResponse(
-        accessToken = "sampleAccessToken",
-        cNonce = "sampleNonce",
-        tokenType = "Bearer",
-        expiresIn = 3600,
-        cNonceExpiresIn = 3600,
-      )
-    }
-  },
-  getProofs = object : ProofsCallback {
-    override suspend fun invoke(
-      credentialIssuer: String,
-      nonce: String?,
-      proofSigningAlgorithmsSupported: List<String>
-    ): CredentialRequestProofs {
-      // Prepare and sign one or more proof JWTs with the private key as per the proofSigningAlgorithmsSupported
-      return CredentialRequestProofs(proofs = listOf("sampleProofJwt"))
-    }
-  },
-  onCheckIssuerTrust = object : CheckIssuerTrustCallback {
-    override suspend fun invoke(
-      credentialIssuer: String,
-      issuerDisplay: List<Map<String, Any>>
-    ): Boolean {
-      // Handle the issuer trust check logic here
-      return true // Assume the issuer is trusted for this example
-    }
-  },
-  downloadTimeoutInMillis = 10000
+val credentialResponse = vciClient.fetchCredentialsUsingCredentialOffer(
+    credentialOffer = "openid-credential-offer://?credential_offer_uri=https%3A%2F%2Fsample-issuer.com%2Fcredential-offer",
+    clientMetadata = ClientMetadata(clientId = "sample-client-id", redirectUri = "https://sample-wallet.com/callback"),
+    getTxCode = { inputMode, description, length -> "sampleTxCode"
+    },
+    authorizations = listOf(
+        AuthorizationMethod.presentationDuringIssuance(
+            selectCredentialsForPresentation = selectCredentialsForPresentationCallback(),
+            signVerifiablePresentation = signVerifiablePresentationCallback()
+        ),
+        AuthorizationMethod.redirectToWeb(openWebPage = openWebPageCallback())
+    ),
+    getTokenResponse = { tokenRequest -> TokenResponse(
+            accessToken = "sampleAccessToken",
+            cNonce = "sampleNonce",
+            tokenType = "Bearer",
+            expiresIn = 3600,
+            cNonceExpiresIn = 3600
+        )
+    },
+    getProofs = { credentialIssuer, nonce, proofSigningAlgorithmsSupported -> CredentialRequestProofs(proofs = listOf("sampleProofJwt"))
+    },
+    onCheckIssuerTrust = { credentialIssuer, issuerDisplay -> true
+    },
+    downloadTimeoutInMillis = 10_000
 )
 
-//Consider the credential is a Driver's license credential (credential format `mso_mdoc`)
-val credentialResponse = vciClient.fetchCredentialsUsingCredentialOffer(credentialOffer, clientMetadata, getTxCode, authorizations, getTokenResponse, getProofs, onCheckIssuerTrust, downloadTimeoutInMillis)
-credentialResponse.credentials // List<CredentialItem>; each item's `credential` is a JsonElement. eg - JsonPrimitive("omdk...t")
-credentialResponse.credentialConfigurationId // eg - "DriversLicense"
-credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
+credentialResponse.credentials?.orEmpty() // List<CredentialItem>?; each item's `credential` is a JsonElement?
+credentialResponse.credentialConfigurationId // String?
+credentialResponse.credentialIssuer // String?
 ```
-
-#### requestCredentialByCredentialOffer (removed in 1.0)
-
-> ⚠️ **Removed in 1.0**: `requestCredentialByCredentialOffer` (deprecated since `0.7.0`) has been removed. Use [`fetchCredentialsUsingCredentialOffer`](#fetchcredentialsusingcredentialoffer) instead, which supports both Pre-Authorization and Authorization flows along with the different authorization methods (Redirect to Web / Presentation During Issuance).
 
 ### 3.2 Request Credential from Trusted Issuer
 
 #### fetchCredentialsFromTrustedIssuer
+
 - Method: `fetchCredentialsFromTrustedIssuer`
 - It supports **Authorization** flow.
 - The library handles the PKCE flow internally.
 
 #### Parameters
 
-| Name                      | Type                  | Required | Default Value | Description                                                                                                                                                                               |
-|---------------------------|-----------------------|----------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| credentialIssuer          | String                | Yes      | N/A           | URI of the Credential Issuer                                                                                                                                                              |
-| credentialConfigurationId | String                | Yes      | N/A           | Identifier of the respective supported credential from well-known response                                                                                                                |
-| clientMetadata            | ClientMetadata        | Yes      | N/A           | Contains client ID and redirect URI                                                                                                                                                       |
-| getTokenResponse          | TokenResponseCallback | Yes      | N/A           | Callback function to exchange Authorization Grant with Access Token response                                                                                                              |
-| authorizations            | List<AuthorizationMethod> | Yes  | N/A           | Callback functions list to handle authorization and return the resultant authorization response (for Authorization flows) [see authorization details](#authorizations)                     |
-| getProofs                 | ProofsCallback        | Yes      | N/A           | Callback function to prepare the proof(s) for the Credential Request, returning a `CredentialRequestProofs`                                                                               |
-| downloadTimeoutInMillis   | Long                  | No       | 10000         | Download timeout set for Credential Request call with Credential Issuer (defaults to 10000 ms)                                                                                            |
+| Name                      | Type                       | Required | Default Value | Description                                                                                                                                                            |
+|---------------------------|----------------------------|----------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| credentialIssuer          | String                     | Yes      | N/A           | URI of the credential issuer                                                                                                                                           |
+| credentialConfigurationId | String                     | Yes      | N/A           | Identifier of the supported credential configuration                                                                                                                  |
+| clientMetadata            | ClientMetadata             | Yes      | N/A           | Contains client ID and redirect URI                                                                                                                                    |
+| authorizationMethods      | List<AuthorizationMethod> | Yes      | N/A           | Supported authorization callbacks for interactive flows [see authorization details](#authorizations)                                                                   |
+| getTokenResponse          | TokenResponseCallback      | Yes      | N/A           | Callback that exchanges the authorization grant for an access token                                                                                                    |
+| getProofs                 | ProofsCallback             | Yes      | N/A           | Callback that prepares the proof set for the credential request, returning a `CredentialRequestProofs`                                                                 |
+| downloadTimeoutInMillis   | Int64                      | No       | 10000         | Timeout for the credential request to the issuer                                                                                                                       |
 
 #### Returns
 
 An instance of `CredentialResponse` containing:
 
-| Name                      | Type                  | Description                                                                                                  |
-|---------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------|
-| credentials               | List<CredentialItem>  | The credential(s) downloaded from the Issuer. Each `CredentialItem` exposes a `credential` (`JsonElement`)   |
-| credentialConfigurationId | String                | The identifier of the respective supported credential from well-known response                               |
-| credentialIssuer          | String                | URI of the Credential Issuer                                                                                  |
+| Name                      | Type             | Description                                                                                                |
+|---------------------------|------------------|------------------------------------------------------------------------------------------------------------|
+| credentials               | List<CredentialItem>? | The credential(s) downloaded from the Issuer. Each `CredentialItem` exposes a `credential` (`JsonElement?`) |
+| credentialConfigurationId | String?          | The identifier of the respective supported credential from well-known response                             |
+| credentialIssuer          | String?          | URI of the Credential Issuer                                                                               |
 
 #### Example usage
 
 ```kotlin
-val credentialResponse: CredentialResponse = vciClient.fetchCredentialsFromTrustedIssuer(
-  credentialIssuer = "https://sample-issuer.com",
-  credentialConfigurationId = "DriversLicense",
-  clientMetadata = ClientMetadata(
-    clientId = "sample-client-id",
-    redirectUri = "https://sample-wallet.com/callback"
-  ),
-  getTokenResponse = object : TokenResponseCallback {
-    override suspend fun invoke(tokenRequest: TokenRequest): TokenResponse {
-      // Handle the token response retrieval logic here
-      //Exchange authorization code for access token
-      return TokenResponse(
-        accessToken = "sampleAccessToken",
-        cNonce = "sampleNonce",
-        tokenType = "Bearer",
-        expiresIn = 3600,
-        cNonceExpiresIn = 3600,
-      )
-    }
-  },
-  authorizations = listOf(
-    // Presentation During Issuance flow for authorization
-    AuthorizationMethod.PresentationDuringIssuance(
-        selectCredentialsForPresentation = selectCredentialsForPresentationCallback(),
-        signVerifiablePresentation = signVerifiablePresentationCallback()
+val credentialResponse = vciClient.fetchCredentialsFromTrustedIssuer(
+    credentialIssuer = "https://sample-issuer.com",
+    credentialConfigurationId = "DriversLicense",
+    clientMetadata = ClientMetadata(
+        clientId = "sample-client-id",
+        redirectUri = "https://sample-wallet.com/callback"
     ),
-    // Redirect to Web flow for Web view authorization
-    AuthorizationMethod.RedirectToWeb(openWebPage = openWebPageCallback())
-  ),
-  getProofs = object : ProofsCallback {
-    override suspend fun invoke(
-      credentialIssuer: String,
-      nonce: String?,
-      proofSigningAlgorithmsSupported: List<String>
-    ): CredentialRequestProofs {
-      // Prepare and sign one or more proof JWTs with the private key as per the proofSigningAlgorithmsSupported
-      return CredentialRequestProofs(proofs = listOf("sampleProofJwt"))
-    }
-  },
-  downloadTimeoutInMillis = 10000
+    authorizations = listOf(
+        AuthorizationMethod.presentationDuringIssuance(
+            selectCredentialsForPresentation = selectCredentialsForPresentationCallback(),
+            signVerifiablePresentation = signVerifiablePresentationCallback()
+        ),
+        AuthorizationMethod.redirectToWeb(openWebPage = openWebPageCallback())
+    ),
+    getTokenResponse = { tokenRequest -> TokenResponse(
+            accessToken = "sampleAccessToken",
+            cNonce = "sampleNonce",
+            tokenType = "Bearer",
+            expiresIn = 3600,
+            cNonceExpiresIn = 3600
+        )
+    },
+    getProofs = { credentialIssuer, nonce, proofSigningAlgorithmsSupported -> CredentialRequestProofs(proofs = listOf("sampleProofJwt"))
+    },
+    downloadTimeoutInMillis = 10_000
 )
 
-//Consider the credential is a Driver's license credential (credential format `mso_mdoc`)
-val mdocCredentialResponse = vciClient.fetchCredentialsFromTrustedIssuer(credentialIssuer, credentialConfigurationId, clientMetadata, getTokenResponse, authorizations, getProofs, downloadTimeoutInMillis)
-credentialResponse.credentials // List<CredentialItem>; each item's `credential` is a JsonElement. eg - JsonPrimitive("omdk...t")
-credentialResponse.credentialConfigurationId // eg - "DriversLicense"
-credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
+credentialResponse.credentials?.orEmpty() // List<CredentialItem>?; each item's `credential` is a JsonElement?
+credentialResponse.credentialConfigurationId // String?
+credentialResponse.credentialIssuer // String?
 ```
 
-#### requestCredentialFromTrustedIssuer (removed in 1.0)
-
-> ⚠️ **Removed in 1.0**: `requestCredentialFromTrustedIssuer` (deprecated since `0.7.0`) has been removed. Use [`fetchCredentialsFromTrustedIssuer`](#fetchcredentialsfromtrustedissuer) instead, which supports the different authorization methods (Redirect to Web / Presentation During Issuance).
-
 ##### Authorizations
-The `authorizations` parameter is a list of `AuthorizationMethod` objects indicating the supported authorizations of the Wallet for the download flow. Currently, library supports two authorization flows - _Redirect To Web_ and _Presentation During Issuance_. Library exposes the supported authorization flows via class - `AuthorizationMethod`
+
+The `authorizationMethods` parameter is a list of supported wallet authorization flows. The library currently supports two authorization flows - _Redirect To Web_ and _Presentation During Issuance_.
 
 1. Redirect To Web (for Authorization flow)
 
-Redirect the user to the authorization endpoint (authorization server) in a web view or browser, and get the authorization response parameters back after successful authorization.
+Redirect the user to the authorization endpoint in a web view or browser and return the authorization response parameters after successful authorization.
 
 **Parameters :**
 
 | Name        | Type                | Required | Default Value | Description                                                                                                                                                                         |
 |-------------|---------------------|----------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| openWebPage | OpenWebPageCallback | Yes      | N/A           | Callback function to open the authorization endpoint in a web view or browser, and return the authorization response parameters (e.g., code, state) after successful authorization. |
+| openWebPage | OpenWebPageCallback | Yes      | N/A           | Callback that opens the authorization endpoint and returns the authorization response parameters such as `code` and `state`                                                         |
 
 **Example usage**
 ```kotlin
-AuthorizationMethod.RedirectToWeb(
-  openWebPage = object : OpenWebPageCallback {
-    override suspend fun invoke(authorizationEndpoint: String): Map<String, Any> {
-        // Handle the user authorization logic here
-        // Open a web view or browser with the authorizationEndpoint
-        // Return the authorization response parameters (e.g., code, state)
-        val result: Map<String, Any> = openWebViewAndGetResult(authorizationEndpoint)
+AuthorizationMethod.redirectToWeb(
+    openWebPage = { authorizationEndpoint -> val result: Map<String, Any> = openWebViewAndGetResult(authorizationEndpoint)
         return result
     }
-  }
 )
 ```
 > Note: The Redirect to Web flow for an interactive authorization flow is exposed as an experimental API, and is expected to be improved in future releases.
 
 2. Presentation During Issuance
 
-Presentation During Issuance flow allows the Wallet to present a verifiable presentation to the Credential Issuer during the credential download process, which can be used by the issuer to verify certain claims about the user before issuing the credential. The authorization for the download here is presentation of another credential (or a verifiable presentation) instead of user interaction-based authorization as in Redirect To Web flow.
+Presentation During Issuance allows the wallet to present a verifiable presentation to the credential issuer during the issuance flow, which can be used by the issuer to verify certain claims about the user before issuing the credential. The authorization for the download here is presentation of another credential (or a verifiable presentation) instead of user interaction-based authorization as in Redirect To Web flow.
 
 ###### Specification Reference
 
@@ -373,65 +411,47 @@ This implementation follows - [OpenID4VCI v1.1 Specification Commit](https://git
 
 > Note:
 > - While this library primarily implements OpenID4VCI 1.0 and draft 13, the Presentation During Issuance feature follows the v1.1 specification as mentioned above.
-> - For Presentation During Issuance flow, this VCI client library internally uses [inji-openid4vp](https://github.com/inji/inji-openid4vp/tree/master/kotlin) library to construct the VP and handle the presentation exchange with the issuer.
+> - For Presentation During Issuance, this library internally uses [inji-openid4vp](https://github.com/inji/inji-openid4vp) to construct the VP and handle the presentation exchange with the issuer.
+> 
+> The OpenID4VP request is expected to follow either:
+>
+> * the [**Digital Credentials Query Language (DCQL)**](https://openid.github.io/OpenID4VP/openid-4-verifiable-presentations-1_0-wg-draft.html#name-digital-credentials-query-l) request format, as defined in the OpenID4VP specification V1.0, or
+> * the [**DIF Presentation Exchange**](https://openid.net/specs/openid-4-verifiable-presentations-1_0-ID3.html#name-dif-presentation-exchange-2) request format, as defined in the Draft 23 OpenID4VP specification.
+
+
+###### Supported Response Modes
+
+The following response modes are supported:
+
+1. `iar_post`
+2. `iar_post.jwt`
+
 
 **Parameters :**
 
-| Name                             | Type                                     | Required | Default Value    | Description                                                                                                                                                                                                                                                                                                                                                                                            |
-|----------------------------------|------------------------------------------|----------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| selectCredentialsForPresentation | SelectCredentialsForPresentationCallback | Yes      | N/A              | Callback function to select credentials from the wallet to be presented to the issuer during issuance as per the Issuer's request. The callback will be invoked with a VP request (`AuthorizationRequest`); the Wallet uses this to ask the user to select credentials and then returns the selected credentials as a `Map<String, List<Credential>>`                                                  |
-| signVerifiablePresentation       | SignVerifiablePresentationCallback       | Yes      | N/A              | Callback function to sign the data used for Verifiable Presentation construction. The callback will be invoked with a list of `UnsignedVPToken` to be signed, and the wallet needs to sign each with the appropriate key and return a list of `VPTokenSigningResult`.                                                                                                                                  |
-| openid4vpWalletConfig            | WalletConfig                             | No       | `WalletConfig()` | Configuration passed to the underlying [inji-openid4vp](https://github.com/inji/inji-openid4vp/tree/master/kotlin) library (e.g. supported algorithms / formats). Defaults to the library's default `WalletConfig`.                                                                                                                                                                                  |
+| Name                             | Type                                     | Required    | Default Value  | Description                                                                                                                                        |
+|----------------------------------|------------------------------------------|-------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| openid4vpWalletConfig            | WalletConfig                             | No          | WalletConfig() | Wallet's OpenID4VP related configuration                                                                                                           |
+| selectCredentialsForPresentation | SelectCredentialsForPresentationCallback | Yes         | N/A            | Callback to select credentials from the wallet for the issuer's presentation request                                                               |
+| signVerifiablePresentation       | SignVerifiablePresentationCallback       | Yes         | N/A            | Callback to sign the payload used for verifiable presentation construction                                                                         |
+
 
 
 **Example usage**
-
 ```kotlin
-AuthorizationMethod.PresentationDuringIssuance(
-                            selectCredentialsForPresentation = object : SelectCredentialsForPresentationCallback {
-                                    override suspend fun invoke(
-                                        ovpRequest: AuthorizationRequest
-                                    ): Map<String, List<Credential>> {
-                                        // Handle the logic to select credentials from the wallet as per the presentation request
-                                        // Handle the logic for obtaining consent from the user for presenting the credentials to the issuer
-                                        val selectedCredentials: Map<String, List<Credential>> = selectCredentials(ovpRequest)
-                                        return selectedCredentials
-                                    }
-                                },
-                            signVerifiablePresentation = object : SignVerifiablePresentationCallback {
-                                    override suspend fun invoke(
-                                        payload: List<UnsignedVPToken>
-                                    ): List<VPTokenSigningResult> {
-                                        // Handle the logic to sign the data with the appropriate key as per the credential descriptor and signature suite
-                                        // From each UnsignedVPToken, identify the key and algorithm to be used for signing, sign the data, and return the signature result to the library
-                                        val signedData : List<VPTokenSigningResult> = signDataForVP(payload)
-                                        // since the payload is a list of data to be signed for each credential, the result is also a list containing the signature result for each credential, and the library will take care of constructing the VP with the respective proof for each credential accordingly
-                                        // To avoid any confusion, the library will expect the implementation of this callback to return a list of signature results corresponding to each credential in the same order as the payload, and the library will match the signature result with the respective credential based on the order of the payload list.
-                                        return  signedData
-                                    }
-                            }
-                    )
+AuthorizationMethod.presentationDuringIssuance(
+    openid4vpWalletConfig = openid4vpWalletConfig,
+    selectCredentialsForPresentation = { presentationRequest -> val selectedCredentials: Map<String, List<Credential>> = selectCredentials(presentationRequest)
+        return selectedCredentials
+    },
+    signVerifiablePresentation = { payload -> val signedData: List<VPTokenSigningResult> = signDataForVP(payload)
+        return signedData
+    }
+)
 ```
 
 [//]: # (The branch in inji-wallet for pdi docs link is pointed to master intentionally to ensure that the latest documentation is always referred.)
 > For more details on the Presentation During Issuance flow and the expected implementation of the callbacks, please refer to the [inji-wallet Presentation During Issuance documentation](https://github.com/inji/inji-wallet/blob/master/docs/presentation-during-issuance-support.md)
-
-
-### 3.3 requestCredential (removed in 1.0)
-
-> ⚠️ **Removed in 1.0**: The low-level `requestCredential` method (deprecated since `0.4.0`) and its `IssuerMetaData` DTO have been removed. Please migrate to [`fetchCredentialsUsingCredentialOffer()`](#fetchcredentialsusingcredentialoffer) or [`fetchCredentialsFromTrustedIssuer()`](#fetchcredentialsfromtrustedissuer), which fetch the issuer metadata, build the credential request (for OID4VCI 1.0 or draft 13), and download the credential for you.
-
----
-
-## 🚨 Removed APIs
-
-The following methods (and the `IssuerMetaData` DTO they relied on) were deprecated in earlier releases and have been **removed in 1.0**. Please migrate to the suggested alternatives.
-
-| Method Name                        | Deprecated Since | Removed In | Suggested Alternative                                                                                                                                      |
-|------------------------------------|------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| requestCredentialFromTrustedIssuer | 0.7.0            | 1.0.0      | [fetchCredentialsFromTrustedIssuer](#fetchcredentialsfromtrustedissuer)                                                                                    |
-| requestCredentialByCredentialOffer | 0.7.0            | 1.0.0      | [fetchCredentialsUsingCredentialOffer](#fetchcredentialsusingcredentialoffer)                                                                              |
-| requestCredential                  | 0.4.0            | 1.0.0      | [fetchCredentialsUsingCredentialOffer()](#fetchcredentialsusingcredentialoffer) or [fetchCredentialsFromTrustedIssuer()](#fetchcredentialsfromtrustedissuer) |
 
 ---
 
@@ -439,7 +459,7 @@ The following methods (and the `IssuerMetaData` DTO they relied on) were depreca
 
 -  **PKCE (Proof Key for Code Exchange)** handled internally (RFC 7636)
 -  Supports `S256` code challenge method
--  Secure `nonce` binding via proof JWTs
+-  Secure `c_nonce` binding via proof JWTs
 
 ---
 
@@ -458,8 +478,6 @@ They carry structured fields that help consumers identify whether the failure ca
 | `issuerErrorDescription`  | `String?` | The upstream `error_description` value when available. If the response body is not parseable JSON, the raw response body may be propagated here for diagnostics. |
 
 ### Structured error handling
-
-> New in `1.0.0`: if you are upgrading from `0.7.0`, where only `code` and `message` were reliably available, the structured fields below are new.
 
 The error model exposes the following fields so consumers can react precisely to failures:
 
@@ -500,22 +518,22 @@ try {
         credentialOffer = credentialOffer,
         clientMetadata = clientMetadata,
         getTxCode = getTxCode,
-        authorizations = authorizations,
+        authorizations = authorizationMethods,
         getTokenResponse = getTokenResponse,
         getProofs = getProofs
     )
-} catch (e: VCIClientException) {
+} catch (error: VCIClientException) {
     logger.error(
-        "VCI request failed. code=${e.code}, " +
-            "issuerCode=${e.issuerErrorCode}, issuerDescription=${e.issuerErrorDescription}, " +
-            "message=${e.message}"
+        "VCI request failed. code=${error.code}, " +
+        "issuerCode=${error.issuerErrorCode ?: "nil"}, issuerDescription=${error.issuerErrorDescription ?: "nil"}, " +
+        "message=${error.message}"
     )
 
-    when (e.code) {
-        "VCI-007" -> showRetryMessage()
-        "VCI-003" -> triggerTokenRefresh()
-        "VCI-011" -> showAuthorizationFailure()
-        else -> showGenericFailure()
+    when (error.code) {
+    "VCI-007" -> showRetryMessage()
+    "VCI-003" -> triggerTokenRefresh()
+    "VCI-011" -> showAuthorizationFailure()
+    else -> showGenericFailure()
     }
 }
 ```
@@ -533,9 +551,8 @@ try {
 | VCI-007 | `NetworkRequestTimeoutException`        | Network request timed-out                                                                                |
 | VCI-008 | `CredentialOfferFetchFailedException`   | Failed to fetch credential offer                                                                         |
 | VCI-009 | `IssuerMetadataFetchException`          | Failed to fetch issuerMetadata                                                                           |
-| VCI-010 | `VCIClientException`                    | Generic API-boundary wrapper or unknown exception surfaced by `VCIClient` public methods                |
+| VCI-010 | `VCIClientException`                    | Generic API-boundary wrapper or unknown exception surfaced by `VCIClient` public methods                 |
 | VCI-011 | `InteractiveAuthorizationException`     | Failed to perform Interactive authorization (Presentation During Issuance / Redirect to Web interaction) |
-
 
 ---
 
@@ -547,22 +564,24 @@ Mock-based tests are available covering:
 - Proof JWT signing callbacks
 - Token exchange logic
 
-> See `VCIClientTest` for full coverage
-
-## Platform Support
-
-- **Kotlin:** 1.9+
-- **JVM:** Java 17
-- **Android:** minSdk 23, compileSdk 34
-- **Gradle:** 8.0+
-- **AGP (Android Gradle Plugin):** 8.0+
+> See `VCIClientTests` for full coverage
 
 ## Documentation
 
-- Architecture decisions are documented in the [INJI VCI Client ADR directory](../doc/adr).
-- Documentation of the features are available in the [INJI VCI Client docs directory](../doc).
+- Architecture decisions are documented in the [INJI VCI Client ADR directory](https://github.com/inji/inji-vci-client/tree/master/docs/adr).
+- Documentation of the features are available in the [INJI VCI Client docs directory](https://github.com/inji/inji-vci-client/tree/master/docs).
+- The OpenID4VCI 1.0 migration and Draft-13 compatibility design for this Kotlin library is documented in [ADR-0001](../docs/adr/0001-openid4vci-v1-migration.md).
 
-**Note: The iOS (Swift) library is available in the [INJI VCI Client iOS repository](https://github.com/inji/inji-vci-client-ios-swift).**
+**Note: The Android library is available in the [INJI VCI Client repository](https://github.com/inji/inji-vci-client).**
+
+---
+
+## Library Implementations Available In
+
+This library is officially supported and available in both Kotlin and Swift, ensuring seamless integration across Android and iOS platforms:
+
+* [Kotlin](.)
+* [Swift](https://github.com/inji/inji-vci-client-ios-swift)
 
 ---
 
@@ -570,13 +589,34 @@ Mock-based tests are available covering:
 
 A complete sample app demonstrating credential issuance flows, proof JWT signing, and error handling with `VCIClient` is available here:
 
-[Example Android App](./example)
+[Example Android App Repository](./example)
 
 - Shows both **Credential Offer** and **Trusted Issuer** flows
 - Includes best practices for callbacks and UI integration
+- Can be built and run on Android device only
 
 > Use the example app to quickly get started and see the library in action.
 
 ---
-</content>
-</invoke>
+
+## Migration Guide
+
+For information on upgrading between versions, see the [Migration Guide](../docs/migration-guides/MIGRATION_0.7.0_TO_1.0.0.md).
+
+---
+
+## Glossary
+
+* **Credential:** A verifiable piece of information issued by a trusted issuer that can be presented to a verifier.
+* **Verifiable Credential (VC):** A tamper-evident credential with cryptographic proofs of its authenticity and integrity.
+* **Holder / Wallet:** The entity that owns Verifiable Credentials and presents them. This library provides the OID4VCI handling for wallet applications.
+* **Credential Issuer:** A server that issues credentials to wallets following the OID4VCI protocol.
+* **OID4VCI:** OpenID for Verifiable Credential Issuance. A standard protocol for issuing Verifiable Credentials to wallets.
+* **Credential Offer:** A URI or JSON payload sent by the issuer to initiate the credential download flow.
+* **Trusted Issuer:** A wallet-initiated flow where the wallet already knows the issuer and requests a credential directly.
+* **PKCE:** Proof Key for Code Exchange (RFC 7636). A security extension to OAuth 2.0 that prevents authorization code interception.
+* **c_nonce:** A nonce provided by the issuer to be bound into the proof JWT, ensuring the proof is fresh and tied to this issuance session.
+* **Proof JWT:** A signed JWT included in the credential request to prove the wallet controls the key associated with the credential subject.
+* **PDI (Presentation During Issuance):** An authorization flow where the wallet presents an existing credential to the issuer as proof of identity, instead of using a web redirect.
+* **JWT:** JSON Web Token. A digitally signed token format used for secure transmission of claims.
+* **JsonElement:** A Gson JSON element (`com.google.gson.JsonElement`) used to represent the credential payload. Use schema-aware deserialization to map it into typed models where needed.
