@@ -10,6 +10,7 @@ import io.mosip.vciclient.authorizationServer.PushedAuthorizationRequestService
 import io.mosip.vciclient.constants.OpenWebPageCallback
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
 import io.mosip.vciclient.exception.PushedAuthorizationRequestException
+import kotlinx.coroutines.CancellationException
 import java.util.logging.Logger
 
 class RedirectToWebAuthorizationMethodService(
@@ -45,7 +46,9 @@ class RedirectToWebAuthorizationMethodService(
         } else if (!parEndpoint.isNullOrBlank()) {
             try {
                 buildAuthorizationUrlViaPushedRequest(requestData, parEndpoint)
-            } catch (exception: PushedAuthorizationRequestException) {
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
                 logger.warning(
                     "PAR attempt failed at $parEndpoint and PAR is not required by the " +
                             "authorization server, falling back to the standard " +
