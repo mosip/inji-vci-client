@@ -92,6 +92,7 @@ class AuthorizationCodeFlowServiceTest {
             every { dpopSigningAlgValuesSupported } returns null
             every { interactiveAuthorizationEndpoint } returns null
             every { pushedAuthorizationRequestEndpoint } returns null
+            every { requirePushedAuthorizationRequests } returns null
             every { requireInteractiveAuthorizationRequest } returns false
         }
 
@@ -425,6 +426,7 @@ class AuthorizationCodeFlowServiceTest {
             every { dpopSigningAlgValuesSupported } returns null
             every { interactiveAuthorizationEndpoint } returns "https://auth.example.com/interactive"
             every { pushedAuthorizationRequestEndpoint } returns null
+            every { requirePushedAuthorizationRequests } returns null
             every { requireInteractiveAuthorizationRequest } returns false
         }
 

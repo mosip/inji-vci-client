@@ -10,11 +10,14 @@ import io.mosip.vciclient.authorizationServer.PushedAuthorizationRequestService
 import io.mosip.vciclient.constants.OpenWebPageCallback
 import io.mosip.vciclient.exception.InteractiveAuthorizationException
 import io.mosip.vciclient.exception.PushedAuthorizationRequestException
+import java.util.logging.Logger
 
 class RedirectToWebAuthorizationMethodService(
     val openWebPage: OpenWebPageCallback,
     private val parService: PushedAuthorizationRequestService = PushedAuthorizationRequestService(),
 ) : AuthorizationMethodService {
+
+    private val logger = Logger.getLogger(javaClass.simpleName)
 
     override fun type(): String {
         return InteractionType.RedirectToWeb.value
@@ -29,9 +32,27 @@ class RedirectToWebAuthorizationMethodService(
         }
 
         val parEndpoint = requestData.pushedAuthorizationRequestEndpoint
+        val isParRequired = requestData.requirePushedAuthorizationRequests ?: false
 
-        val authUrl = if (!parEndpoint.isNullOrBlank()) {
+        val authUrl = if (isParRequired) {
+            if (parEndpoint.isNullOrBlank()) {
+                throw PushedAuthorizationRequestException(
+                    "Authorization server requires pushed authorization requests " +
+                            "but did not advertise a pushed_authorization_request_endpoint"
+                )
+            }
             buildAuthorizationUrlViaPushedRequest(requestData, parEndpoint)
+        } else if (!parEndpoint.isNullOrBlank()) {
+            try {
+                buildAuthorizationUrlViaPushedRequest(requestData, parEndpoint)
+            } catch (exception: PushedAuthorizationRequestException) {
+                logger.warning(
+                    "PAR attempt failed at $parEndpoint and PAR is not required by the " +
+                            "authorization server, falling back to the standard " +
+                            "authorization request: ${exception.message}"
+                )
+                buildStandardAuthorizationUrl(requestData)
+            }
         } else {
             buildStandardAuthorizationUrl(requestData)
         }
