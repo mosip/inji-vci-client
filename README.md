@@ -20,6 +20,9 @@ The implementation follows
 - Authorization server discovery for both download flows
 - PKCE-compliant OAuth 2.0 Authorization Code flow (RFC 7636)
     - PKCE session is managed internally by the library
+- Pushed Authorization Requests (PAR) support (RFC 9126)
+    - Used automatically when the authorization server advertises a `pushed_authorization_request_endpoint`
+    - Falls back to a standard authorization request if the push fails and PAR is not mandated by the authorization server
 - Well-defined **exception handling** with `VCI-XXX` error codes (see more on [this](./kotlin/README.md#-error-handling))
 - Support for multiple Credential formats:
     - `ldp_vc`
