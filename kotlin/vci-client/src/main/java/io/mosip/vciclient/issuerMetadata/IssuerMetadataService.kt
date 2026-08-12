@@ -1,6 +1,7 @@
 package io.mosip.vciclient.issuerMetadata
 
 import io.mosip.vciclient.common.JsonUtils
+import io.mosip.vciclient.common.WellKnownUrl
 import io.mosip.vciclient.constants.CredentialFormat
 import io.mosip.vciclient.constants.OID4VCIVersion
 import io.mosip.vciclient.exception.IssuerMetadataFetchException
@@ -9,7 +10,6 @@ import io.mosip.vciclient.networkManager.HttpMethod
 import io.mosip.vciclient.networkManager.NetworkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.net.URI
 
 private const val CREDENTIAL_ISSUER_WELL_KNOWN_URI_SUFFIX = "/.well-known/openid-credential-issuer"
 
@@ -140,11 +140,8 @@ class IssuerMetadataService {
         }
     }
 
-    private fun buildWellKnownUrl(credentialIssuer: String): String {
-        val uri = URI(credentialIssuer)
-        val path = uri.path?.trimEnd('/').orEmpty()
-        return "${uri.scheme}://${uri.authority}$CREDENTIAL_ISSUER_WELL_KNOWN_URI_SUFFIX$path"
-    }
+    private fun buildWellKnownUrl(credentialIssuer: String): String =
+        WellKnownUrl.insertSuffix(credentialIssuer, CREDENTIAL_ISSUER_WELL_KNOWN_URI_SUFFIX)
 
     private fun buildDraft13WellKnownUrl(credentialIssuer: String): String {
         val normalizedIssuer = credentialIssuer.trimEnd('/')
