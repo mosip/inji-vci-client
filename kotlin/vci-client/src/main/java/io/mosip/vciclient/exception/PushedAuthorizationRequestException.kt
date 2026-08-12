@@ -3,7 +3,7 @@ package io.mosip.vciclient.exception
 class PushedAuthorizationRequestException : VCIClientException {
 
     constructor(message: String?) : super(
-        code = "VCI-012",
+        code = "VCI-013",
         message = "Failed to push authorization request: $message"
     )
 
@@ -13,7 +13,7 @@ class PushedAuthorizationRequestException : VCIClientException {
         issuerErrorDescription: String? = null,
         cause: Throwable? = null
     ) : super(
-        code = "VCI-012",
+        code = "VCI-013",
         message = "Failed to push authorization request: $message",
         issuerErrorCode = issuerErrorCode,
         issuerErrorDescription = issuerErrorDescription,
