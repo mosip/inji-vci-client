@@ -420,7 +420,11 @@ private suspend fun obtainAuthorizationCodeViaInteractiveAuthorizationEndpoint(
                 clientMetadata = clientMetadata,
                 pkceSession = pkceSession,
                 scope = issuerMetadata.scope,
-                dpopJkt = dpopManager.jwkThumbprint()
+                dpopJkt = dpopManager.jwkThumbprint(),
+                pushedAuthorizationRequestEndpoint =
+                    authorizationServerMetadata.pushedAuthorizationRequestEndpoint,
+                requirePushedAuthorizationRequests =
+                    authorizationServerMetadata.requirePushedAuthorizationRequests
             )
 
             val response = try {

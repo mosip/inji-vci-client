@@ -72,6 +72,9 @@ class AuthorizationCodeFlowServiceTest {
         mockkConstructor(JWTProof::class)
 
         every { anyConstructed<PKCESessionManager>().createSession() } returns pkceSession
+
+        every { credentialOffer.grants } returns null
+
         every {
             anyConstructed<CredentialRequestExecutor>().requestCredentialDraft13(
                 any(), any(), any(), any(), any(), any(), any()
@@ -88,11 +91,13 @@ class AuthorizationCodeFlowServiceTest {
             every { tokenEndpoint } returns "https://token.example.com"
             every { dpopSigningAlgValuesSupported } returns null
             every { interactiveAuthorizationEndpoint } returns null
+            every { pushedAuthorizationRequestEndpoint } returns null
+            every { requirePushedAuthorizationRequests } returns null
             every { requireInteractiveAuthorizationRequest } returns false
         }
 
         every {
-            AuthorizationUrlBuilder.build(
+            AuthorizationUrlBuilder.buildAuthorizationRequestUrl(
                 any(),
                 any(),
                 any(),
@@ -420,7 +425,9 @@ class AuthorizationCodeFlowServiceTest {
             every { tokenEndpoint } returns "https://token.example.com"
             every { dpopSigningAlgValuesSupported } returns null
             every { interactiveAuthorizationEndpoint } returns "https://auth.example.com/interactive"
-             every { requireInteractiveAuthorizationRequest } returns false
+            every { pushedAuthorizationRequestEndpoint } returns null
+            every { requirePushedAuthorizationRequests } returns null
+            every { requireInteractiveAuthorizationRequest } returns false
         }
 
         val mockHandler = mockkClass(InteractiveAuthorizationHandler::class)
