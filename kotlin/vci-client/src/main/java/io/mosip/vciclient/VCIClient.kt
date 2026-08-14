@@ -11,6 +11,7 @@ import io.mosip.vciclient.constants.TxCodeCallback
 import io.mosip.vciclient.credential.response.CredentialResponse
 import io.mosip.vciclient.credentialOffer.CredentialOfferFlowHandler
 import io.mosip.vciclient.dpop.DPoPManager
+import io.mosip.vciclient.exception.DPoPException
 import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
 import io.mosip.vciclient.trustedIssuer.TrustedIssuerFlowHandler
@@ -30,8 +31,16 @@ class VCIClient(val traceabilityId: String) {
     fun generateTokenDPoPProof(dpopNonce: String): String {
         try {
             return dpopManager.generateTokenProof(dpopNonce)
-        } catch (e: IllegalStateException) {
-            throw VCIClientException("VCI-011", "DPoP proof cannot be generated: ${e.message}", cause = e)
+        } catch (e: VCIClientException) {
+            throw VCIClientException(
+                "VCI-010",
+                e.message,
+                cause = e,
+                issuerErrorCode = e.issuerErrorCode,
+                issuerErrorDescription = e.issuerErrorDescription
+            )
+        } catch (e: Exception) {
+            throw DPoPException("DPoP proof cannot be generated: ${e.message}", cause = e)
         }
     }
 

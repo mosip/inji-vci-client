@@ -10,6 +10,7 @@ import com.nimbusds.jose.jwk.OctetKeyPair
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.SignedJWT
+import io.mosip.vciclient.exception.DPoPException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -226,7 +227,23 @@ class DPoPManagerTest {
 
     @Test
     fun `generate proof throws when session is not initialized`() {
-        assertThrows<IllegalStateException> { DPoPManager().generateTokenProof() }
+        val exception = assertThrows<DPoPException> { DPoPManager().generateTokenProof() }
+        assertEquals("VCI-013", exception.code)
+    }
+
+    @Test
+    fun `jwk thumbprint throws when session is not initialized`() {
+        val exception = assertThrows<DPoPException> { DPoPManager().jwkThumbprint() }
+        assertEquals("VCI-013", exception.code)
+    }
+
+    @Test
+    fun `initialize wraps a non dpop failure as a dpop exception`() {
+        val exception = assertThrows<DPoPException> {
+            DPoPManager().initialize("ht tp://as.example.com/token", listOf("ES256"))
+        }
+        assertEquals("VCI-013", exception.code)
+        assertTrue(exception.message.contains("Unexpected error while initializing the DPoP session"))
     }
 
     @Test

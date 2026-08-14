@@ -99,4 +99,51 @@ class VCIClientExceptionTest {
             exception.message
         )
     }
+
+    @Test
+    fun `should construct dpop exception without server details`() {
+        val exception = DPoPException("DPoP session is not initialized for the current flow")
+
+        assertEquals("VCI-013", exception.code)
+        assertNull(exception.issuerErrorCode)
+        assertNull(exception.issuerErrorDescription)
+        assertEquals(
+            "DPoP session is not initialized for the current flow",
+            exception.message
+        )
+    }
+
+    @Test
+    fun `dpop exception retains root code when wrapping a vci exception`() {
+        val exception = DPoPException(
+            message = "Failed to sign DPoP proof: key unusable",
+            cause = InvalidPublicKeyException("unsupported curve")
+        )
+
+        assertEquals("VCI-005", exception.code)
+    }
+
+    @Test
+    fun `should construct illegal argument exception with a default message`() {
+        val exception = IllegalArgumentException(null)
+
+        assertEquals("VCI-012", exception.code)
+        assertNull(exception.issuerErrorCode)
+        assertNull(exception.issuerErrorDescription)
+        assertEquals("An illegal argument was provided.", exception.message)
+    }
+
+    @Test
+    fun `should construct illegal argument exception with server details`() {
+        val exception = IllegalArgumentException(
+            message = "authSession is required",
+            issuerErrorCode = "invalid_request",
+            issuerErrorDescription = "missing authSession"
+        )
+
+        assertEquals("VCI-012", exception.code)
+        assertEquals("invalid_request", exception.issuerErrorCode)
+        assertEquals("missing authSession", exception.issuerErrorDescription)
+        assertEquals("authSession is required", exception.message)
+    }
 }

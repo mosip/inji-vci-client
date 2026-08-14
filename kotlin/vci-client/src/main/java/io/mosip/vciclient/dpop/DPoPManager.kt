@@ -7,6 +7,7 @@ import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import io.mosip.vciclient.constants.Constants
+import io.mosip.vciclient.exception.DPoPException
 import java.net.URI
 import java.security.MessageDigest
 import java.util.Date
@@ -31,8 +32,17 @@ class DPoPManager {
 
     fun initialize(tokenEndpoint: String, authorizationServerSupportedAlgorithms: List<String>?) {
         if (session != null) return
-        val algorithm = DPoPAlgorithm.select(authorizationServerSupportedAlgorithms)
-        session = Session(algorithm.generateKey(), algorithm, normalizeHtu(tokenEndpoint))
+        try {
+            val algorithm = DPoPAlgorithm.select(authorizationServerSupportedAlgorithms)
+            session = Session(algorithm.generateKey(), algorithm, normalizeHtu(tokenEndpoint))
+        } catch (e: DPoPException) {
+            throw e
+        } catch (e: Exception) {
+            throw DPoPException(
+                "Unexpected error while initializing the DPoP session: ${e.message}",
+                cause = e
+            )
+        }
     }
 
     fun reset() {
@@ -44,12 +54,31 @@ class DPoPManager {
         if (!nonce.isNullOrBlank()) issuerNonce = nonce
     }
 
-    fun jwkThumbprint(): String =
-        requireSession().key.toPublicJWK().computeThumbprint().toString()
+    fun jwkThumbprint(): String {
+        try {
+            return requireSession().key.toPublicJWK().computeThumbprint().toString()
+        } catch (e: DPoPException) {
+            throw e
+        } catch (e: Exception) {
+            throw DPoPException(
+                "Unexpected error while computing the DPoP JWK thumbprint: ${e.message}",
+                cause = e
+            )
+        }
+    }
 
     fun generateTokenProof(nonce: String? = null): String {
-        val activeSession = requireSession()
-        return buildProof(activeSession, activeSession.tokenEndpoint, nonce, accessToken = null)
+        try {
+            val activeSession = requireSession()
+            return buildProof(activeSession, activeSession.tokenEndpoint, nonce, accessToken = null)
+        } catch (e: DPoPException) {
+            throw e
+        } catch (e: Exception) {
+            throw DPoPException(
+                "Unexpected error while generating the token DPoP proof: ${e.message}",
+                cause = e
+            )
+        }
     }
 
     fun generateCredentialProof(
@@ -57,9 +86,23 @@ class DPoPManager {
         accessToken: String,
         nonce: String? = null,
     ): String {
-        val activeSession = requireSession()
-        updateNonce(nonce)
-        return buildProof(activeSession, normalizeHtu(credentialEndpoint), issuerNonce, accessToken)
+        try {
+            val activeSession = requireSession()
+            updateNonce(nonce)
+            return buildProof(
+                activeSession,
+                normalizeHtu(credentialEndpoint),
+                issuerNonce,
+                accessToken
+            )
+        } catch (e: DPoPException) {
+            throw e
+        } catch (e: Exception) {
+            throw DPoPException(
+                "Unexpected error while generating the credential DPoP proof: ${e.message}",
+                cause = e
+            )
+        }
     }
 
     private fun buildProof(
@@ -98,7 +141,7 @@ class DPoPManager {
     }
 
     private fun requireSession(): Session = session
-        ?: throw IllegalStateException("DPoP session is not initialized for the current flow")
+        ?: throw DPoPException("DPoP session is not initialized for the current flow")
 
     private fun normalizeHtu(endpoint: String): String {
         val uri = URI(endpoint).normalize()

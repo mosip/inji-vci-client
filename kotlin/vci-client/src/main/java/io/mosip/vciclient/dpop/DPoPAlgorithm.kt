@@ -14,6 +14,7 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
+import io.mosip.vciclient.exception.DPoPException
 import java.util.UUID
 
 private const val RSA_KEY_SIZE = 2048
@@ -74,7 +75,7 @@ internal enum class DPoPAlgorithm(val algorithmName: String, val jwsAlgorithm: J
         fun select(authorizationServerSupported: List<String>?): DPoPAlgorithm {
             if (authorizationServerSupported.isNullOrEmpty()) return DEFAULT
             return preferenceOrder.firstOrNull { it.algorithmName in authorizationServerSupported }
-                ?: throw IllegalArgumentException(
+                ?: throw DPoPException(
                     "No supported DPoP algorithm found. AS supports: $authorizationServerSupported, " +
                     "client supports: ${preferenceOrder.map { it.algorithmName }}"
                 )

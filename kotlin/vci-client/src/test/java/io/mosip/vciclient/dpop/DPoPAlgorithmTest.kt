@@ -1,5 +1,6 @@
 package io.mosip.vciclient.dpop
 
+import io.mosip.vciclient.exception.DPoPException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -53,10 +54,11 @@ class DPoPAlgorithmTest {
 
     @Test
     fun `throws when AS advertises only unsupported algorithms`() {
-        val exception = assertFailsWith<IllegalArgumentException> {
+        val exception = assertFailsWith<DPoPException> {
             DPoPAlgorithm.select(listOf("PS256", "HS256"))
         }
-        assertTrue(exception.message!!.contains("No supported DPoP algorithm found"))
+        assertEquals("VCI-013", exception.code)
+        assertTrue(exception.message.contains("No supported DPoP algorithm found"))
     }
 
     @Test

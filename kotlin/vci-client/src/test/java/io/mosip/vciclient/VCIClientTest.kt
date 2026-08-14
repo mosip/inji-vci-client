@@ -307,7 +307,7 @@ class VCIClientTest {
         val exception = assertThrows<VCIClientException> {
             VCIClient("trace-id").generateTokenDPoPProof("nonce")
         }
-        assertEquals("VCI-011", exception.code)
+        assertEquals("VCI-013", exception.code)
     }
 
     @Test
