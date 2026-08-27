@@ -1,5 +1,7 @@
 package io.mosip.vciclient.credentialOffer
 
+import io.mosip.vciclient.proof.ProofBindingContext
+import io.mosip.vciclient.proof.toProofBindingContext
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationCodeFlowService
 import io.mosip.vciclient.authorizationCodeFlow.AuthorizationMethod
 import io.mosip.vciclient.authorizationCodeFlow.clientMetadata.ClientMetadata
@@ -41,13 +43,13 @@ class CredentialOfferFlowHandler internal constructor(
         val result = executeDownloadCredentials(
             credentialOffer = credentialOffer,
             onCheckIssuerTrust = onCheckIssuerTrust,
-        ) { offer, issuerMetadataResponse, credentialConfigurationId, proofSigningAlgorithms ->
+        ) { offer, issuerMetadataResponse, credentialConfigurationId, proofBindingContext ->
             when (issuerMetadataResponse.issuerMetadata.specVersion) {
                 OID4VCIVersion.V1 -> {
                     if (offer.isPreAuthorizedFlow()) {
                         preAuthFlowService.requestCredentials(
                             issuerMetadata = issuerMetadataResponse.issuerMetadata,
-                            jwtProofSigningAlgorithms = proofSigningAlgorithms,
+                            proofBindingContext = proofBindingContext,
                             getTokenResponse = getTokenResponse,
                             getProofs = getProofs,
                             credentialConfigurationId = credentialConfigurationId,
@@ -66,7 +68,7 @@ class CredentialOfferFlowHandler internal constructor(
                             authorizationMethods = authorizationMethods,
                             credentialOffer = offer,
                             downloadTimeOutInMillis = downloadTimeoutInMillis,
-                            jwtProofAlgorithmsSupported = proofSigningAlgorithms,
+                            proofBindingContext = proofBindingContext,
                             traceabilityId = traceabilityId,
                             dpopManager = dpopManager
                         )
@@ -76,8 +78,8 @@ class CredentialOfferFlowHandler internal constructor(
                 }
 
                 OID4VCIVersion.DRAFT13 -> {
-                    val proofJwtCallback: ProofJwtCallback = { issuer, nonce, algorithms ->
-                        val proofs = getProofs(issuer, nonce, algorithms)
+                    val proofJwtCallback: ProofJwtCallback = { proofRequestMetadata ->
+                        val proofs = getProofs(proofRequestMetadata)
                         proofs.firstProof
                             ?: throw DownloadFailedException("Draft13 issuer requires a single JWT proof")
                     }
@@ -85,7 +87,7 @@ class CredentialOfferFlowHandler internal constructor(
                     val draft13Response = if (offer.isPreAuthorizedFlow()) {
                         preAuthFlowService.requestCredentialsDraft13(
                             issuerMetadata = issuerMetadataResponse.issuerMetadata,
-                            jwtProofSigningAlgorithms = proofSigningAlgorithms,
+                            proofBindingContext = proofBindingContext,
                             getTokenResponse = getTokenResponse,
                             getProofJwt = proofJwtCallback,
                             credentialConfigurationId = credentialConfigurationId,
@@ -104,7 +106,7 @@ class CredentialOfferFlowHandler internal constructor(
                             authorizationMethods = authorizationMethods,
                             credentialOffer = offer,
                             downloadTimeOutInMillis = downloadTimeoutInMillis,
-                            jwtProofAlgorithmsSupported = proofSigningAlgorithms,
+                            proofBindingContext = proofBindingContext,
                             traceabilityId = traceabilityId,
                             dpopManager = dpopManager
                         )
@@ -140,11 +142,11 @@ class CredentialOfferFlowHandler internal constructor(
         val result = executeDownloadCredentials(
             credentialOffer = credentialOffer,
             onCheckIssuerTrust = onCheckIssuerTrust,
-        ) { offer, issuerMetadataResponse, credentialConfigurationId, proofSigningAlgorithms ->
+        ) { offer, issuerMetadataResponse, credentialConfigurationId, proofBindingContext ->
             if (offer.isPreAuthorizedFlow()) {
                 preAuthFlowService.requestCredentialsDraft13(
                     issuerMetadata = issuerMetadataResponse.issuerMetadata,
-                    jwtProofSigningAlgorithms = proofSigningAlgorithms,
+                    proofBindingContext = proofBindingContext,
                     getTokenResponse = getTokenResponse,
                     getProofJwt = getProofJwt,
                     credentialConfigurationId = credentialConfigurationId,
@@ -162,7 +164,7 @@ class CredentialOfferFlowHandler internal constructor(
                     authorizationMethods = authorizationMethods,
                     credentialOffer = offer,
                     downloadTimeOutInMillis = downloadTimeoutInMillis,
-                    jwtProofAlgorithmsSupported = proofSigningAlgorithms,
+                    proofBindingContext = proofBindingContext,
                     traceabilityId = traceabilityId
                 )
             } else {
@@ -178,7 +180,7 @@ class CredentialOfferFlowHandler internal constructor(
     private suspend fun <Response> executeDownloadCredentials(
         credentialOffer: String,
         onCheckIssuerTrust: CheckIssuerTrustCallback?,
-        executeFlow: suspend (CredentialOffer, IssuerMetadataResult, String, List<String>) -> Response,
+        executeFlow: suspend (CredentialOffer, IssuerMetadataResult, String, ProofBindingContext) -> Response,
     ): Response {
         val offer = credentialOfferService.fetchCredentialOffer(credentialOffer)
         if (offer.credentialConfigurationIds.size > 1) {
@@ -204,7 +206,7 @@ class CredentialOfferFlowHandler internal constructor(
             offer,
             issuerMetadataResponse,
             credentialConfigurationId,
-            issuerMetadataResponse.extractJwtProofSigningAlgorithms(credentialConfigurationId)
+            issuerMetadataResponse.toProofBindingContext(credentialConfigurationId)
         )
     }
 

@@ -1,5 +1,6 @@
 package io.mosip.vciclient.preAuthCodeFlow
 
+import io.mosip.vciclient.proof.ProofBindingContext
 import io.mosip.vciclient.authorizationServer.AuthorizationServerResolver
 import io.mosip.vciclient.constants.Constants
 import io.mosip.vciclient.constants.ProofJwtCallback
@@ -20,7 +21,7 @@ import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
 
-class PreAuthCodeFlowService(
+internal class PreAuthCodeFlowService(
     private val authServerResolver: AuthorizationServerResolver = AuthorizationServerResolver(),
     private val tokenService: TokenService = TokenService(),
     private val credentialExecutor: CredentialRequestExecutor = CredentialRequestExecutor(),
@@ -28,7 +29,7 @@ class PreAuthCodeFlowService(
 ) {
     suspend fun requestCredentials(
         issuerMetadata: IssuerMetadata,
-        jwtProofSigningAlgorithms: List<String>,
+        proofBindingContext: ProofBindingContext,
         getTokenResponse: TokenResponseCallback,
         getProofs: ProofsCallback,
         credentialConfigurationId: String,
@@ -48,9 +49,7 @@ class PreAuthCodeFlowService(
             val nonce = resolveNonce(issuerMetadata, downloadTimeoutInMillis, dpopManager)
             val proofs = try {
                 getProofs(
-                    issuerMetadata.credentialIssuer,
-                    nonce,
-                    jwtProofSigningAlgorithms
+                    proofBindingContext.toCredentialRequestProofMetadata(issuerMetadata.credentialIssuer, nonce)
                 )
             } catch (e: Exception) {
                 throw DownloadFailedException(
@@ -73,7 +72,7 @@ class PreAuthCodeFlowService(
 
     suspend fun requestCredentialsDraft13(
         issuerMetadata: IssuerMetadata,
-        jwtProofSigningAlgorithms: List<String>,
+        proofBindingContext: ProofBindingContext,
         getTokenResponse: TokenResponseCallback,
         getProofJwt: ProofJwtCallback,
         credentialConfigurationId: String,
@@ -93,9 +92,7 @@ class PreAuthCodeFlowService(
             val nonce = NonceService.extractNonceFromTokenResponse(token)
             val jwt = try {
                 getProofJwt(
-                    issuerMetadata.credentialIssuer,
-                    nonce,
-                    jwtProofSigningAlgorithms
+                    proofBindingContext.toCredentialRequestProofMetadata(issuerMetadata.credentialIssuer, nonce)
                 )
             } catch (e: Exception) {
                 throw DownloadFailedException(

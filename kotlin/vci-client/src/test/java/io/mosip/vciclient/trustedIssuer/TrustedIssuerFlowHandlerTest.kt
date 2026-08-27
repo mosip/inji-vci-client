@@ -1,5 +1,7 @@
 package io.mosip.vciclient.trustedIssuer
 
+import io.mosip.vciclient.proof.ProofBindingContext
+import io.mosip.vciclient.proof.CredentialRequestProofMetadata
 import com.google.gson.JsonPrimitive
 import io.mosip.vciclient.credential.response.CredentialItem
 import io.mockk.coEvery
@@ -59,7 +61,7 @@ class TrustedIssuerFlowHandlerTest {
                 getProofs = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = 10_000,
-                jwtProofAlgorithmsSupported = listOf("ES256"),
+                proofBindingContext = ProofBindingContext(proofSigningAlgorithmsSupported = listOf("ES256"), proofTypesSupported = listOf("jwt")),
                 dpopManager = any()
             )
         } returns expectedResponse
@@ -69,7 +71,7 @@ class TrustedIssuerFlowHandlerTest {
             credentialConfigurationId = credentialConfigurationId,
             clientMetadata = clientMetadata,
             getTokenResponse = tokenResponseCallback,
-            getProofs = { _, _, _ -> CredentialRequestProofs(proofs = listOf("proof-1")) },
+            getProofs = { _ -> CredentialRequestProofs(proofs = listOf("proof-1")) },
             authorizationMethods = authorizationMethods,
             downloadTimeoutInMillis = 10_000
         )
@@ -99,7 +101,7 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = 10_000,
-                jwtProofAlgorithmsSupported = listOf("ES256"),
+                proofBindingContext = ProofBindingContext(proofSigningAlgorithmsSupported = listOf("ES256"), proofTypesSupported = listOf("jwt")),
                 dpopManager = any()
             )
         } returns draft13Response
@@ -109,7 +111,7 @@ class TrustedIssuerFlowHandlerTest {
             credentialConfigurationId = credentialConfigurationId,
             clientMetadata = clientMetadata,
             getTokenResponse = tokenResponseCallback,
-            getProofs = { _, _, _ -> CredentialRequestProofs(proofs = listOf("proof-1")) },
+            getProofs = { _ -> CredentialRequestProofs(proofs = listOf("proof-1")) },
             authorizationMethods = authorizationMethods,
             downloadTimeoutInMillis = 10_000
         )
@@ -136,14 +138,19 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = any(),
-                jwtProofAlgorithmsSupported = listOf("ES256"),
+                proofBindingContext = ProofBindingContext(proofSigningAlgorithmsSupported = listOf("ES256"), proofTypesSupported = listOf("jwt")),
                 dpopManager = any()
             )
         } coAnswers {
             @Suppress("UNCHECKED_CAST")
-            val getProofJwt =
-                invocation.args[4] as suspend (String, String?, List<String>) -> String
-            getProofJwt(credentialIssuer, "nonce-123", listOf("ES256"))
+            val getProofJwt = invocation.args[4] as suspend (CredentialRequestProofMetadata) -> String
+            getProofJwt(
+                CredentialRequestProofMetadata(
+                    credentialIssuer = credentialIssuer,
+                    nonce = "nonce-123",
+                    proofSigningAlgorithmsSupported = listOf("ES256"),
+                )
+            )
             CredentialResponseDraft13(credential = JsonPrimitive("unused"))
         }
 
@@ -154,7 +161,7 @@ class TrustedIssuerFlowHandlerTest {
                     credentialConfigurationId = credentialConfigurationId,
                     clientMetadata = clientMetadata,
                     getTokenResponse = tokenResponseCallback,
-                    getProofs = { _, _, _ -> CredentialRequestProofs(proofs = emptyList()) },
+                    getProofs = { _ -> CredentialRequestProofs(proofs = emptyList()) },
                     authorizationMethods = authorizationMethods
                 )
             }
@@ -184,7 +191,7 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = any(),
-                jwtProofAlgorithmsSupported = listOf("ES256"),
+                proofBindingContext = ProofBindingContext(proofSigningAlgorithmsSupported = listOf("ES256"), proofTypesSupported = listOf("jwt")),
                 dpopManager = any()
             )
         } returns draft13Response
@@ -194,7 +201,7 @@ class TrustedIssuerFlowHandlerTest {
             credentialConfigurationId = credentialConfigurationId,
             clientMetadata = clientMetadata,
             getTokenResponse = tokenResponseCallback,
-            getProofs = { _, _, _ -> CredentialRequestProofs(proofs = listOf("proof-1", "proof-2")) },
+            getProofs = { _ -> CredentialRequestProofs(proofs = listOf("proof-1", "proof-2")) },
             authorizationMethods = authorizationMethods
         )
 
@@ -207,7 +214,7 @@ class TrustedIssuerFlowHandlerTest {
                 getProofJwt = any(),
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = any(),
-                jwtProofAlgorithmsSupported = listOf("ES256"),
+                proofBindingContext = ProofBindingContext(proofSigningAlgorithmsSupported = listOf("ES256"), proofTypesSupported = listOf("jwt")),
                 dpopManager = any()
             )
         }

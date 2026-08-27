@@ -14,6 +14,7 @@ import io.mosip.vciclient.dpop.DPoPManager
 import io.mosip.vciclient.exception.DownloadFailedException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataResult
 import io.mosip.vciclient.issuerMetadata.IssuerMetadataService
+import io.mosip.vciclient.proof.toProofBindingContext
 
 class TrustedIssuerFlowHandler internal constructor(
     private val authService: AuthorizationCodeFlowService = AuthorizationCodeFlowService(),
@@ -30,9 +31,7 @@ class TrustedIssuerFlowHandler internal constructor(
         dpopManager: DPoPManager = DPoPManager(),
     ): CredentialResponse {
         val issuerMetadata = loadIssuerMetadata(credentialIssuer, credentialConfigurationId)
-        val proofSigningAlgorithms = issuerMetadata.extractJwtProofSigningAlgorithms(
-            credentialConfigurationId
-        )
+        val proofBindingContext = issuerMetadata.toProofBindingContext(credentialConfigurationId)
 
         return when (issuerMetadata.issuerMetadata.specVersion) {
             OID4VCIVersion.V1 -> authService.requestCredentials(
@@ -43,13 +42,13 @@ class TrustedIssuerFlowHandler internal constructor(
                 getProofs = getProofs,
                 authorizationMethods = authorizationMethods,
                 downloadTimeOutInMillis = downloadTimeoutInMillis,
-                jwtProofAlgorithmsSupported = proofSigningAlgorithms,
+                proofBindingContext = proofBindingContext,
                 dpopManager = dpopManager
             )
 
             OID4VCIVersion.DRAFT13 -> {
-                val proofJwtCallback: ProofJwtCallback = { issuer, nonce, algorithms ->
-                    val proofs = getProofs(issuer, nonce, algorithms)
+                val proofJwtCallback: ProofJwtCallback = { proofRequestMetadata ->
+                    val proofs = getProofs(proofRequestMetadata)
                     proofs.firstProof
                         ?: throw DownloadFailedException("Draft13 issuer requires a single JWT proof")
                 }
@@ -61,7 +60,7 @@ class TrustedIssuerFlowHandler internal constructor(
                     getProofJwt = proofJwtCallback,
                     authorizationMethods = authorizationMethods,
                     downloadTimeOutInMillis = downloadTimeoutInMillis,
-                    jwtProofAlgorithmsSupported = proofSigningAlgorithms,
+                    proofBindingContext = proofBindingContext,
                     dpopManager = dpopManager
                 )
                 CredentialResponse(

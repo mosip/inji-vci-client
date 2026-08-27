@@ -37,7 +37,7 @@ class VCIClientTest {
         mockkConstructor(TrustedIssuerFlowHandler::class)
         mockkConstructor(IssuerMetadataService::class)
 
-        getProofs = { _, _, _ ->
+        getProofs = { _ ->
             CredentialRequestProofs(proofs = listOf("mock.jwt.proof"))
         }
     }
