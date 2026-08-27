@@ -1,5 +1,6 @@
 package io.mosip.vciclient.preAuthCodeFlow
 
+import io.mosip.vciclient.proof.ProofBindingContext
 import com.google.gson.JsonPrimitive
 import io.mosip.vciclient.credential.response.CredentialItem
 import io.mockk.coEvery
@@ -84,12 +85,12 @@ class PreAuthCodeFlowServiceV1Test {
 
         val response = service.requestCredentials(
             issuerMetadata = issuerMetadata,
-            jwtProofSigningAlgorithms = listOf("ES256"),
+            proofBindingContext = ProofBindingContext(proofSigningAlgorithmsSupported = listOf("ES256")),
             getTokenResponse = { error("unused") },
-            getProofs = { issuer, nonce, algorithms ->
-                assertEquals("https://issuer.example.com", issuer)
-                assertEquals("nonce-123", nonce)
-                assertEquals(listOf("ES256"), algorithms)
+            getProofs = { proofRequest ->
+                assertEquals("https://issuer.example.com", proofRequest.credentialIssuer)
+                assertEquals("nonce-123", proofRequest.nonce)
+                assertEquals(listOf("ES256"), proofRequest.proofSigningAlgorithmsSupported)
                 CredentialRequestProofs(proofs = listOf("proof-1"))
             },
             credentialConfigurationId = "UniversityDegreeCredential",
@@ -113,9 +114,9 @@ class PreAuthCodeFlowServiceV1Test {
             runBlocking {
                 service.requestCredentials(
                     issuerMetadata = issuerMetadata,
-                    jwtProofSigningAlgorithms = listOf("ES256"),
+                    proofBindingContext = ProofBindingContext(proofSigningAlgorithmsSupported = listOf("ES256")),
                     getTokenResponse = { error("unused") },
-                    getProofs = { _, _, _ -> throw IllegalArgumentException("proof generation failed") },
+                    getProofs = { _ -> throw IllegalArgumentException("proof generation failed") },
                     credentialConfigurationId = "UniversityDegreeCredential",
                     offer = offer
                 )

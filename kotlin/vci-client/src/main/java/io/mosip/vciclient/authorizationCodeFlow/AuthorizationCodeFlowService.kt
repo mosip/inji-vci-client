@@ -22,6 +22,7 @@ import io.mosip.vciclient.exception.VCIClientException
 import io.mosip.vciclient.issuerMetadata.IssuerMetadata
 import io.mosip.vciclient.nonce.NonceService
 import io.mosip.vciclient.pkce.PKCESessionManager
+import io.mosip.vciclient.proof.ProofBindingContext
 import io.mosip.vciclient.proof.jwt.JWTProof
 import io.mosip.vciclient.token.TokenResponse
 import io.mosip.vciclient.token.TokenService
@@ -46,7 +47,7 @@ internal class AuthorizationCodeFlowService(
         authorizationMethods: List<AuthorizationMethod>,
         credentialOffer: CredentialOffer? = null,
         downloadTimeOutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
-        jwtProofAlgorithmsSupported: List<String>,
+        proofBindingContext: ProofBindingContext,
         traceabilityId: String? = null,
         dpopManager: DPoPManager = DPoPManager(),
     ): CredentialResponse {
@@ -68,9 +69,7 @@ internal class AuthorizationCodeFlowService(
             )
             val proofs = try {
                 getProofs(
-                    issuerMetadata.credentialIssuer,
-                    nonce,
-                    jwtProofAlgorithmsSupported
+                    proofBindingContext.toCredentialRequestProofMetadata(issuerMetadata.credentialIssuer, nonce)
                 )
             } catch (e: Exception) {
                 throw DownloadFailedException(
@@ -100,7 +99,7 @@ internal class AuthorizationCodeFlowService(
         authorizationMethods: List<AuthorizationMethod>,
         credentialOffer: CredentialOffer? = null,
         downloadTimeOutInMillis: Long = Constants.DEFAULT_NETWORK_TIMEOUT_IN_MILLIS,
-        jwtProofAlgorithmsSupported: List<String>,
+        proofBindingContext: ProofBindingContext,
         traceabilityId: String? = null,
         dpopManager: DPoPManager = DPoPManager(),
     ): CredentialResponseDraft13 {
@@ -118,9 +117,7 @@ internal class AuthorizationCodeFlowService(
             val nonce = NonceService.extractNonceFromTokenResponse(token)
             val jwt = try {
                 getProofJwt(
-                    issuerMetadata.credentialIssuer,
-                    nonce,
-                    jwtProofAlgorithmsSupported
+                    proofBindingContext.toCredentialRequestProofMetadata(issuerMetadata.credentialIssuer, nonce)
                 )
             } catch (e: Exception) {
                 throw DownloadFailedException(

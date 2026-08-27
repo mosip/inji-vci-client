@@ -55,12 +55,12 @@ class VCIClientWrapper {
                     )
                 ),
                 getTokenResponse = { exchangeToken(it, proxy = false) },
-                getProofs = { credentialIssuer, nonce, _ ->
+                getProofs = { proofRequestMetadata ->
                     CredentialRequestProofs(
                         proofs = listOf(
                             signProofJWT(
-                                cNonce = nonce,
-                                issuer = credentialIssuer,
+                                cNonce = proofRequestMetadata.nonce,
+                                issuer = proofRequestMetadata.credentialIssuer,
                                 isTrusted = false,
                             )
                         )
@@ -97,12 +97,12 @@ class VCIClientWrapper {
                     )
                 ),
                 getTokenResponse = { exchangeToken(it, proxy = true) },
-                getProofs = { credentialIssuer, nonce, _ ->
+                getProofs = { proofRequestMetadata ->
                     CredentialRequestProofs(
                         proofs = listOf(
                             signProofJWT(
-                                cNonce = nonce,
-                                issuer = credentialIssuer,
+                                cNonce = proofRequestMetadata.nonce,
+                                issuer = proofRequestMetadata.credentialIssuer,
                                 isTrusted = true
                             )
                         )
