@@ -34,6 +34,24 @@ class IssuerMetadataResultTest {
     }
 
     @Test
+    fun `should drop non string entries from the signing algorithm list`() {
+        val result = resultWith(
+            mapOf(
+                "proof_types_supported" to mapOf(
+                    "jwt" to mapOf(
+                        "proof_signing_alg_values_supported" to listOf("ES256", 42, null, "RS256")
+                    )
+                )
+            )
+        )
+
+        assertEquals(
+            listOf("ES256", "RS256"),
+            result.extractJwtProofSigningAlgorithms(credentialConfigurationId)
+        )
+    }
+
+    @Test
     fun `should extract every advertised proof type`() {
         val result = resultWith(
             mapOf(

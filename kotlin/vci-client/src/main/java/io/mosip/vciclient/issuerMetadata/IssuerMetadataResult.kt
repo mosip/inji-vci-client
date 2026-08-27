@@ -7,9 +7,9 @@ data class IssuerMetadataResult(
 ) {
     fun extractJwtProofSigningAlgorithms(credentialConfigurationId: String): List<String> {
         val jwt = proofTypesSupported(credentialConfigurationId)?.get("jwt") as? Map<*, *>
-        val jwtProofSigningAlgorithmsSupported = jwt?.get("proof_signing_alg_values_supported") as? List<String>
+        val jwtProofSigningAlgorithmsSupported = jwt?.get("proof_signing_alg_values_supported") as? List<*>
 
-        return jwtProofSigningAlgorithmsSupported ?: emptyList()
+        return jwtProofSigningAlgorithmsSupported?.filterIsInstance<String>() ?: emptyList()
     }
 
     fun extractSupportedProofTypes(credentialConfigurationId: String): List<String> {
