@@ -198,7 +198,9 @@ class CredentialRequestExecutor(
     /**
      * Sends the credential request, applying DPoP when the token response carried
      * `token_type=DPoP`. A `use_dpop_nonce` challenge is retried once with the server supplied
-     * nonce; a Bearer-only challenge triggers a best-effort Bearer retry per RFC 9449 section 7.2.
+     * nonce; a 401 whose challenge is not DPoP-related (Bearer, another scheme, or none at all)
+     * triggers a best-effort Bearer retry, so a resource server that does not understand DPoP
+     * can still be served.
      */
     private fun sendCredentialRequest(
         baseRequest: Request,
@@ -244,12 +246,12 @@ class CredentialRequestExecutor(
                     ).persistIssuerNonce(dpopManager)
                 }
 
-                !challenge.isDpop && challenge.isBearer -> {
-                    // RFC 9449 §7.2: Only downgrade to Bearer if the AS explicitly
-                    // signals Bearer is acceptable. Log as a security-relevant event.
+                !challenge.isDpop -> {
+                    // The resource server did not answer with a DPoP challenge, so it likely does
+                    // not understand DPoP. Log the downgrade as a security-relevant event.
                     logger.warning(
-                        "DPoP token downgraded to Bearer: AS does not require DPoP " +
-                        "(WWW-Authenticate: ${failure.headers?.get(Constants.WWW_AUTHENTICATE_HEADER)})"
+                        "DPoP token downgraded to Bearer: resource server returned a non-DPoP challenge " +
+                        "(WWW-Authenticate: ${failure.headers?.get(Constants.WWW_AUTHENTICATE_HEADER) ?: "none"})"
                     )
                     sendRequest(withBearer(baseRequest, accessToken), timeoutMillis)
                 }
